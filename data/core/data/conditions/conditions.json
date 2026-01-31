@@ -1,0 +1,19 @@
+{
+    "can_do_agriculture": {
+        "scope": [
+            "company",
+            "tradenode",
+            "country"
+        ],
+        "description": "Allows agriculture-related production and buildings"
+    },
+
+    "mechanical_agriculture": {
+        "scope": [
+            "company",
+            "tradenode",
+            "country"
+        ],
+        "description": "Allows mechanical-based agriculture production and buildings"
+    }
+}

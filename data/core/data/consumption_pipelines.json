@@ -1,0 +1,16 @@
+{
+    "core_poor_food_consumption_001": {
+        "name": "Poor food consumption",
+        "categories": ["consumption"],
+        "inputs": [
+        { "item_id": "core_grain_005", "amount": 12 },
+        { "item_id": "core_meat_006", "amount": 4 },
+        { "item_id": "core_fish_007", "amount": 6 },
+        { "item_id": "core_fruit_008", "amount": 6 },
+        { "item_id": "core_alcohol_030", "amount": 2 }
+        ],
+        "outputs": [
+        { "item_id": "core_happiness_043", "amount": 10 }
+        ]
+    }
+}

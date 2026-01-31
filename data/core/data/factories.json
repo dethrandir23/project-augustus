@@ -1,0 +1,211 @@
+{
+    "core_sawmill_001": {
+        "name": "Sawmill",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "processing",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_lumber_001"
+        ]
+    },
+    "core_brickworks_002": {
+        "name": "Brickworks",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "processing",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_brick_002"
+        ]
+    },
+    "core_glassworks_003": {
+        "name": "Glassworks",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "processing",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_glass_003"
+        ]
+    },
+    "core_steel_mill_004": {
+        "name": "Steel Mill",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "metallurgy",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_steel_004"
+        ]
+    },
+    "core_machine_factory_005": {
+        "name": "Machine Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "heavy_industry",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_machinery_021"
+        ]
+    },
+    "core_tool_factory_006": {
+        "name": "Tool Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "manufacturing",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_tools_005"
+        ]
+    },
+    "core_textile_mill_007": {
+        "name": "Textile Mill",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "textile",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_cloth_cotton_009",
+            "core_cloth_wool_010"
+        ]
+    },
+    "core_clothing_factory_008": {
+        "name": "Clothing Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "manufacturing",
+            "consumer",
+            "luxury"
+        ],
+        "pipelines": [
+            "core_clothes_011",
+            "core_fine_clothes_012"
+        ]
+    },
+    "core_food_plant_009": {
+        "name": "Food Plant",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "food",
+            "consumer"
+        ],
+        "pipelines": [
+            "core_food_rations_013"
+        ]
+    },
+    "core_furniture_factory_010": {
+        "name": "Furniture Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "manufacturing",
+            "consumer"
+        ],
+        "pipelines": [
+            "core_furniture_006"
+        ]
+    },
+    "core_paper_mill_011": {
+        "name": "Paper Mill",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "processing",
+            "industrial"
+        ],
+        "pipelines": [
+            "core_paper_007"
+        ]
+    },
+    "core_arms_factory_012": {
+        "name": "Arms Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "military",
+            "manufacturing"
+        ],
+        "pipelines": [
+            "core_firearm_017",
+            "core_ammunition_019"
+        ]
+    },
+    "core_explosives_factory_013": {
+        "name": "Explosives Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "military",
+            "processing"
+        ],
+        "pipelines": [
+            "core_gunpowder_016"
+        ]
+    },
+    "core_shipyard_014": {
+        "name": "Shipyard",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "heavy_industry",
+            "transport"
+        ],
+        "pipelines": [
+            "core_ship_hull_020"
+        ]
+    },
+    "core_alcohol_factory_015": {
+        "name": "Alcohol Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "food",
+            "consumer"
+        ],
+        "pipelines": [
+            "core_alcohol_grain_014",
+            "core_alcohol_fruit_015"
+        ]
+    },
+    "core_book_factory_016": {
+        "name": "Book Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "manufacturing",
+            "consumer"
+        ],
+        "pipelines": [
+            "core_books_008"
+        ]
+    },
+    "core_artillery_factory_017": {
+        "name": "Artillery Factory",
+        "max_workers": 1000,
+        "required_techs": [],
+        "categories": [
+            "military",
+            "heavy_industry"
+        ],
+        "pipelines": [
+            "core_artillery_018"
+        ]
+    }
+}

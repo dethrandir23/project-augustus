@@ -1,0 +1,11 @@
+{
+  "production": {
+    "description": "Production and economic technologies"
+  },
+  "trade": {
+    "description": "Trading and social technologies"
+  },
+  "infrastructure": {
+    "description": "Infrastructure and logistics technologies"
+  }
+}

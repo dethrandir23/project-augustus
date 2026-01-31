@@ -1,0 +1,45 @@
+{
+    "core_basic_agriculture_001": {
+        "name": "Basic Agriculture",
+        "categories": [
+            "production"
+        ],
+        "tier": 1,
+        "research_points": 1000,
+        "unlocked_at_start": true,
+        "requires": [],
+        "unlocks": [
+            "can_do_agriculture"
+        ],
+        "effects": [
+            {
+                "type": "category_efficiency",
+                "category": "agriculture",
+                "value": 0.10
+            }
+        ]
+    },
+    "core_advanced_agriculture_002": {
+        "name": "Advanced Agriculture",
+        "categories": [
+            "production"
+        ],
+        "tier": 2,
+        "research_points": 3000,
+        "unlocked_at_start": false,
+        "requires": [
+            "core_basic_agriculture_001"
+        ],
+        "unlocks": [
+            "can_do_agriculture",
+            "mechanical_agriculture"
+        ],
+        "effects": [
+            {
+                "type": "category_efficiency",
+                "category": "agriculture",
+                "value": 0.4
+            }
+        ]
+    }
+}
