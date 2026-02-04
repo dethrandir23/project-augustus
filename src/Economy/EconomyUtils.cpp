@@ -1,118 +1,87 @@
-/**
- * @file EconomyUtils.cpp
- * @author Bekir Efe Öztürk (@dethrandir23)
- * @brief Implementation of economic utility functions.
- * @version 0.1
- * @date 2026-01-29
- * @copyright Copyright (c) 2026
- */
-
 #include "EconomyUtils.h"
-#include "../Core/Enums.h"
-#include "../Core/Types.h"
-#include "../Economy/Pipeline.h"
-#include <string>
-#include <vector>
+#include <algorithm> // std::find_if için
 
-EconomyUtils::ProductionResult EconomyUtils::processProduction(
-    std::vector<Resource> &inventory, 
-    const std::vector<Pipeline> &pipelines, 
-    double globalEfficiency         
-) {
-  ProductionResult result;
+namespace EconomyUtils {
 
-  /** * @todo Optimization Idea: Instead of checking if (req.type == NONE), 
-   * define NONE type coefficient as 0. This would replace branching (if/else) 
-   * with pure mathematical operations for better performance.
-   */
-
-  for (const auto &pipe : pipelines) {
-
-    // --- STEP 1: INPUT VALIDATION ---
-    bool resourcesAvailable = true;
-
-    // Check inputs if the pipeline has requirements
-    if (!pipe.inputResources.empty()) {
-      for (const auto &req : pipe.inputResources) {
-
-        // Key Logic: specific check for NONE type. It's free/null, so skip.
-        if (req.type == ItemType::NONE)
-          continue;
-
-        bool found = false;
-        for (const auto &item : inventory) {
-          if (item.type == req.type && item.quantity >= req.quantity) {
-            found = true;
-            break;
-          }
+    // --- HELPER (Private) ---
+    // Envanterdeki bir item'ı bulmak için yardımcı fonksiyon
+    ItemStack* findStack(std::vector<ItemStack>& inv, const std::string& id) {
+        for (auto& stack : inv) {
+            if (stack.id == id) return &stack;
         }
-        if (!found) {
-          resourcesAvailable = false;
-          break;
+        return nullptr;
+    }
+
+    // --- IMPLEMENTATION ---
+
+    void addToInventory(std::vector<ItemStack> &inventory, const std::string& itemId, float qty) {
+        ItemStack* stack = findStack(inventory, itemId);
+        if (stack) {
+            stack->quantity += qty;
+        } else {
+            inventory.push_back({itemId, qty});
         }
-      }
     }
 
-    // --- STEP 2: CONSUMPTION AND PRODUCTION ---
-    if (resourcesAvailable) {
-      // A) Consume Inputs (Again, skipping NONE)
-      for (const auto &req : pipe.inputResources) {
-        if (req.type == ItemType::NONE)
-          continue;
-
-        for (auto &item : inventory) {
-          if (item.type == req.type) {
-            item.quantity -= req.quantity;
-            /** @note Future improvement: Implement cleanup for items reaching 0 quantity here. */
-            break;
-          }
+    bool removeFromInventory(std::vector<ItemStack> &inventory, const std::string& itemId, float qty) {
+        ItemStack* stack = findStack(inventory, itemId);
+        if (stack && stack->quantity >= qty) {
+            stack->quantity -= qty;
+            
+            // Eğer miktar 0'a düşerse vector'den silmeli miyiz?
+            // Şimdilik 0 olarak kalsın, performans için sürekli resize yapmayalım.
+            // İstersen buraya cleanup logic eklersin.
+            return true;
         }
-      }
-
-      // B) Produce Outputs
-      for (const auto &out : pipe.outputProducts) {
-        float qty = out.quantity * pipe.efficiency * globalEfficiency;
-        result.producedItems.push_back({out.type, out.price, qty});
-      }
+        return false;
     }
-  }
 
-  return result;
-}
-
-void EconomyUtils::addToInventory(std::vector<Resource> &inventory, ItemType type, float qty) {
-  for (auto &item : inventory) {
-    if (item.type == type) {
-      item.quantity += qty;
-      return;
+    float getItemAmount(const std::vector<ItemStack> &inventory, const std::string& itemId) {
+        for (const auto& stack : inventory) {
+            if (stack.id == itemId) return stack.quantity;
+        }
+        return 0.0f;
     }
-  }
-  // If not found, add new
-  inventory.push_back({type, qty});
-}
 
-void EconomyUtils::addToInventory(std::vector<Product> &inventory, ItemType type, float qty) {
-  for (auto &item : inventory) {
-    if (item.type == type) {
-      item.quantity += qty;
-      return;
-    }
-  }
-  // If not found, add new (price is implicitly 0 or default in this overload)
-  inventory.push_back({type, 0.0, qty}); 
-}
+    ProductionResult processProduction(
+        std::vector<ItemStack> &inventory, 
+        const std::vector<PipelineData> &pipelines, 
+        double globalEfficiency
+    ) {
+        ProductionResult result;
 
-void EconomyUtils::addToInventoryAmount(std::vector<Product> &inventory, ItemType type, float qty, double price) {
-  for (auto &item : inventory) {
-    if (item.type == type) {
-      // Update weighted average price
-      item.price = ((item.price * item.quantity) + (price * qty)) /
-                   (item.quantity + qty);
-      // Update quantity
-      item.quantity += qty;
-      return;
+        for (const auto& pipe : pipelines) {
+            
+            // ADIM 1: Girdiler Yeterli mi Kontrolü
+            bool canProduce = true;
+            
+            // PipelineData içindeki "inputs" artık vector<ItemStack> (PipelineManager'da öyle yapmıştık)
+            for (const auto& input : pipe.inputs) {
+                float currentAmount = getItemAmount(inventory, input.id);
+                if (currentAmount < input.quantity) {
+                    canProduce = false;
+                    break; 
+                }
+            }
+
+            // ADIM 2: Tüketim ve Üretim
+            if (canProduce) {
+                // A) Tüket
+                for (const auto& input : pipe.inputs) {
+                    removeFromInventory(inventory, input.id, input.quantity);
+                }
+
+                // B) Üret
+                for (const auto& output : pipe.outputs) {
+                    float producedQty = output.quantity * globalEfficiency;
+                    
+                    // Sonuç listesine ekle
+                    result.producedItems.push_back({output.id, producedQty});
+                }
+            }
+        }
+
+        return result;
     }
-  }
-  // If not found, add new entry
-  inventory.push_back({type, price, qty});
-}
+
+} // namespace

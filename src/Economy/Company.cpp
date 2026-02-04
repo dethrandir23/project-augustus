@@ -1,267 +1,185 @@
-/**
- * @file Company.cpp
- * @author Bekir Efe Öztürk (@dethrandir23)
- * @brief Implementation of the Company class logic.
- * @details Handles the interactions between the company entity, its workforce, 
- * and its factories within the global Gamestate.
- * @version 0.1
- * @date 2026-01-29
- * @copyright Copyright (c) 2026
- */
-
 #include "Company.h"
-#include "../Game/Gamestate.h" // Full definition required here
-#include <vector>
+#include "../Economy/EconomyUtils.h"
+#include "../Game/Gamestate.h"
+#include "../Registry/PerkManager.h"
+#include "../Registry/TechnologyManager.h"
+#include "../Core/ModifierKeys.h"
 
-// ==========================================
-// Getters & Setters
-// ==========================================
-
-void Company::setName(const std::string &newName) { name = newName; }
-std::string Company::getName() const { return name; }
-
-void Company::setId(const uuids::uuid &newId) { id = newId; }
-uuids::uuid Company::getId() const { return id; }
-
-void Company::setCapital(size_t cap) { capital = cap; }
-size_t Company::getCapital() const { return capital; }
-
-void Company::setDebt(size_t d) { debt = d; }
-size_t Company::getDebt() const { return debt; }
-
-void Company::setProfit(size_t p) { profit = p; }
-size_t Company::getProfit() const { return profit; }
-
-// ==========================================
-// Manpower Logic
-// ==========================================
-
-void Company::addManpower(size_t count) { manpower += count; }
-
-void Company::removeManpower(size_t count) {
-  if (manpower >= count)
-    manpower -= count;
-  else
-    manpower = 0; // Prevent underflow
+// --- Storage Helpers ---
+void Company::addItem(const std::string &itemId, float amount) {
+  EconomyUtils::addToInventory(storage, itemId, amount);
 }
 
-void Company::reduceManpower(float ratio) {
-  setManpower(static_cast<size_t>(manpower * ratio));
+float Company::getItemAmount(const std::string &itemId) const {
+  return EconomyUtils::getItemAmount(storage, itemId);
 }
 
-void Company::setManpower(size_t count) { manpower = count; }
-size_t Company::getManpower() const { return manpower; }
-
-// ==========================================
-// Factory Management
-// ==========================================
-
-void Company::addFactory(const uuids::uuid &factoryId) {
-  factories.push_back(factoryId);
-}
-
-std::vector<uuids::uuid> Company::getFactoryIds() const { return factories; }
-
-/**
- * @brief Removes a factory reference from the company's list.
- * @details This uses the erase-remove idiom. It does NOT delete the factory 
- * object itself from memory or the Gamestate, only the company's ownership record.
- */
-void Company::removeFactoryRef(const uuids::uuid &factoryID) {
-  factories.erase(std::remove(factories.begin(), factories.end(), factoryID),
+void Company::removeFactoryRef(const uuids::uuid &fid) {
+  factories.erase(std::remove(factories.begin(), factories.end(), fid),
                   factories.end());
 }
 
-// ==========================================
-// Gameplay Loops
-// ==========================================
+  void Company::addTechnology(const std::string &techId) {
+    knownTechnologies.push_back(techId);
+  }
 
-/**
- * @brief Distributes available manpower to owned factories.
- * @details Algorithm:
- * 1. Cleans up invalid factory IDs.
- * 2. Calculates total manpower deficit across all factories.
- * 3. Distributes available company manpower evenly among factories with needs.
- * @param gamestate Reference to the global state to access Factory objects.
- */
-void Company::fillEmployeesOfFactories(Gamestate &gamestate) {
-  size_t requestedEmployees = 0;
-  size_t unfilledFactories = 0;
+  const std::vector<std::string> &Company::getKnownTechnologies() const {
+    return knownTechnologies;
+  }
 
-  // Step 1: Sanitation
-  cleanDeadFactories(gamestate);
-
-  // Step 2: Needs Assessment
-  for (const auto &fid : factories) {
-    Factory *f = gamestate.getFactory(fid);
+void Company::recruitWorkersFromNode(const uuids::uuid& nodeId, size_t count, Gamestate& gamestate) {
+    // 1. Şehri Gamestate'den güvenle al
+    TradeNode* node = gamestate.getTradeNode(nodeId);
     
-    // Safety check (redundant after cleanDeadFactories but good practice)
-    if (!f) continue;
+    // Eğer şehir yoksa (yıkılmışsa vs.) işlem iptal
+    if (!node) return;
 
-    if (f->getEmployeeCount() < Constants::MAX_EMPLOYEES_PER_FACTORY) {
-      unfilledFactories++;
-      requestedEmployees +=
-          Constants::MAX_EMPLOYEES_PER_FACTORY - f->getEmployeeCount();
-    }
-  }
+    // 2. İşçileri çek
+    size_t recruited = node->recruitWorkers(count);
+    
+    // 3. Şirkete ekle
+    this->addManpower(recruited);
+    
+    double baseCost = EconomyManager::data.recruit_base;
+    double costPerWorker = calculateModifier(ModifierKeys::Manpower::HIRE_COST, baseCost);
+    double totalCost = recruited * costPerWorker;
 
-  if (requestedEmployees == 0 || unfilledFactories == 0)
-    return;
-
-  // Calculate fair share per factory
-  size_t manpowerPerFactory = manpower / unfilledFactories;
-
-  // Step 3: Assignment
-  for (const auto &fid : factories) {
-    Factory *f = gamestate.getFactory(fid);
-    if (!f) continue;
-
-    if (f->getEmployeeCount() < Constants::MAX_EMPLOYEES_PER_FACTORY) {
-      size_t added = f->addEmployees(manpowerPerFactory);
-      removeManpower(added); // Deduct from company pool
-    }
-  }
+    // 5. Para transferi
+    this->capital -= totalCost;
+    node->addCapital(totalCost);
 }
 
-/**
- * @brief Supplies factories with required raw materials from company storage.
- * @details Transfers ownership of resources from Company -> Factory based on
- * factory requirements.
- */
-void Company::fillResourcesOfFactories(Gamestate &gamestate) {
-  cleanDeadFactories(gamestate);
-
-  for (const auto &fid : factories) {
-    Factory *factory = gamestate.getFactory(fid);
-    if (!factory) continue;
-
-    auto requiredResources = factory->listRequiredResources();
-    for (const auto &res : requiredResources) {
-      // Find matching resource in company storage
-      for (auto &companyRes : resources) {
-        if (companyRes.type == res.type) {
-          // Transfer only what is needed or what is available
-          float quantityToTransfer = std::min(companyRes.quantity, res.quantity);
-
-          factory->addToResources({{res.type, quantityToTransfer}});
-          companyRes.quantity -= quantityToTransfer;
-          
-          break; // Move to next required resource
-        }
-      }
+  // 1. Perk Ekleme
+void Company::addPerk(const std::string& perkId) {
+    // Önce PerkManager'dan default süresini öğrenelim
+    int duration = -1;
+    if (PerkManager::perks.count(perkId)) {
+        duration = PerkManager::perks.at(perkId).default_duration;
     }
-  }
+
+    // Listeye ekle
+    activePerks.push_back({perkId, duration});
 }
 
-/**
- * @brief Triggers the production tick for all owned factories.
- */
-void Company::processFactories(Gamestate &gamestate) {
-  cleanDeadFactories(gamestate);
+void Company::tickPerks() {
+    activePerks.erase(std::remove_if(activePerks.begin(), activePerks.end(),
+        [](ActivePerk &p) {
+            if (p.remainingDuration == -1) return false;
 
-  for (const auto &fid : factories) {
-    Factory *factory = gamestate.getFactory(fid);
-    if (factory) {
-      factory->processPipelines();
-    }
-  }
+            p.remainingDuration--;
+
+            return p.remainingDuration <= 0;
+        }),
+        activePerks.end());
 }
 
-/**
- * @brief Collects finished goods from factories.
- * @details Implements a Weighted Average Price algorithm to merge new products 
- * with existing inventory.
- * Formula: ((OldPrice * OldQty) + (NewPrice * NewQty)) / TotalQty
- */
-void Company::collectOutputs(Gamestate &gamestate) {
-  cleanDeadFactories(gamestate);
-
-  for (const auto &fid : factories) {
-    Factory *factory = gamestate.getFactory(fid);
-    if (!factory) continue;
-
-    auto factoryOutputs = factory->collectOutputs();
-    for (const auto &product : factoryOutputs) {
-      bool found = false;
-      for (auto &invProduct : inventory) {
-        if (invProduct.type == product.type) {
-          // Weighted Average Price Calculation
-          invProduct.price = ((invProduct.price * invProduct.quantity) +
-                              (product.price * product.quantity)) /
-                             (invProduct.quantity + product.quantity);
-          invProduct.quantity += product.quantity;
-          found = true;
-          break;
-        }
-      }
-      // If product type not in inventory, add as new
-      if (!found) {
-        inventory.push_back(product);
-      }
-    }
-  }
+void Company::removePerk(const std::string &perkID) {
+    activePerks.erase(std::remove_if(activePerks.begin(), activePerks.end(),
+        [perkID](ActivePerk &p) {
+            return p.perkId == perkID;
+        }),
+        activePerks.end());
 }
 
-// ==========================================
-// Resources & Inventory
-// ==========================================
+// --- Main Loop ---
+void Company::manageFactories(Gamestate &gamestate) {
 
-void Company::addResource(const Resource &resource) {
-  for (auto &res : resources) {
-    if (res.type == resource.type) {
-      res.quantity += resource.quantity;
-      return;
-    }
-  }
-  resources.push_back(resource);
-}
-
-const std::vector<Resource> &Company::getResources() const { return resources; }
-const std::vector<Product> &Company::getInventory() const { return inventory; }
-
-/**
- * @brief Calculates net worth based on liquid assets (capital/profit/debt).
- * @note Currently excludes the valuation of inventory and factory assets.
- */
-int Company::calculateNetWorth() const {
-  return static_cast<int>(capital + profit - debt);
-}
-
-/**
- * @brief Validates the factory list against the Gamestate.
- * @details Removes IDs of factories that return nullptr from Gamestate (destroyed or invalid).
- * Uses std::remove_if to ensure safe deletion while iterating.
- */
-void Company::cleanDeadFactories(Gamestate &gamestate) {
+  // 1. Ölü fabrikaları temizle (Lambda ile)
   factories.erase(std::remove_if(factories.begin(), factories.end(),
-                                 [&gamestate](const uuids::uuid &id) {
-                                   return gamestate.getFactory(id) == nullptr;
+                                 [&](const uuids::uuid &fid) {
+                                   return gamestate.getFactory(fid) == nullptr;
                                  }),
                   factories.end());
+
+  // 2. Her fabrika için işlem yap
+  for (const auto &fid : factories) {
+    Factory *factory = gamestate.getFactory(fid);
+    if (!factory)
+      continue;
+
+    // A) İŞÇİ GÖNDER (Basit mantık: Herkese eşit dağıt)
+    // (İleride burası Priority sistemine göre değişebilir)
+    if (manpower > 0) {
+      size_t added = factory->addEmployees(10); // Örnek: Her tick 10 işçi yolla
+      removeManpower(added);
+    }
+
+    // B) HAMMADDE GÖNDER
+    // Fabrikanın neye ihtiyacı var? (Factory artık listRequiredResources
+    // döndürmüyor ama processPipelines içinde bakıyor. Burada manuel transfer
+    // yapmamız lazım)
+    // **NOT:** Modern sistemde fabrika direkt Company deposundan çekse daha
+    // kolay olmaz mı? Ama şimdilik senin "transfer" mantığını koruyalım:
+
+    auto missingInputs = factory->getMissingInputs();
+
+    for (const auto &req : missingInputs) {
+      // Şirketin deposunda bu maldan ne kadar var?
+      float availableInCompany = getItemAmount(req.id);
+
+      if (availableInCompany > 0) {
+        // İhtiyaç kadar mı gönderelim, elde ne varsa onu mu?
+        float amountToSend = std::min(availableInCompany, req.quantity);
+
+        // Transfer işlemi:
+        // 1. Şirketten düş (EconomyUtils kullan)
+        EconomyUtils::removeFromInventory(storage, req.id, amountToSend);
+
+        // 2. Fabrikaya ekle
+        factory->addInput(req.id, amountToSend);
+      }
+    }
+
+    factory->produce(1.0);
+
+    auto outputs = factory->collectOutputs();
+    for (const auto &item : outputs) {
+      addItem(item.id, item.quantity);
+    }
+  }
 }
 
-// ==========================================
-// JSON Serialization
-// ==========================================
+float Company::calculateModifier(const std::string& modifierType, float baseValue) {
+    float additive = 0.0f;
+    float multiplicative = 1.0f;
+
+    for(const auto& perkId : activePerks) {
+        const auto& perk = PerkManager::perks.at(perkId.to_string());
+        
+        for(const auto& effect : perk.effects) {
+            if(effect.type == modifierType) {
+                if(effect.mode == "additive") additive += effect.value;
+                else if(effect.mode == "multiplicative") multiplicative *= (1.0f + effect.value);
+            }
+        }
+    }
+
+    for(const auto& techId : knownTechnologies) {
+        const auto& tech = TechnologyManager::techs.at(techId);
+        for(const auto& effect : tech.effects) {
+            if(effect.type == modifierType) {
+                 if(effect.type == "additive") additive += effect.value;
+                 else multiplicative *= (1.0f + effect.value);
+            }
+        }
+    }
+
+    // Sonuç: (Baz Değer + Eklemeler) * Çarpanlar
+    return (baseValue + additive) * multiplicative;
+}
 
 void to_json(nlohmann::json &j, const Company &c) {
-  j = nlohmann::json{
-      {"id", uuids::to_string(c.getId())},
-      {"name", c.getName()},
-      {"manpower", c.getManpower()},
-      {"capital", c.getCapital()},
-      {"debt", c.getDebt()},
-      {"profit", c.getProfit()},
-  };
-
-  // Serialize Factory IDs
-  nlohmann::json factoriesJson = nlohmann::json::array();
-  for (const auto &fid : c.getFactoryIds()) {
-    factoriesJson.push_back(uuids::to_string(fid));
+  j = nlohmann::json{{"id", uuids::to_string(c.id)},
+                     {"name", c.name},
+                     {"manpower", c.manpower},
+                     {"capital", c.capital},
+                     {"debt", c.debt},
+                     {"techs", c.knownTechnologies},
+                     {"perks", c.activePerks},
+                     {"storage", c.storage},
+                     // Factory ID'leri stringe çevir
+                     {"factories", nlohmann::json::array()}};
+  for (const auto &fid : c.factories) {
+    j["factories"].push_back(uuids::to_string(fid));
   }
-  j["factories"] = factoriesJson;
-
-  // Serialize Resources and Inventory
-  j["resources"] = c.getResources();
-  j["inventory"] = c.getInventory();
 }
