@@ -1,199 +1,143 @@
-/**
- * @file Gamestate.cpp
- * @author Bekir Efe Öztürk (@dethrandir23)
- * @brief Implementation of the Gamestate data management logic.
- * @version 0.1
- * @date 2026-01-29
- * @copyright Copyright (c) 2026
- */
-
 #include "Gamestate.h"
-#include "../../lib/nlohmann/json.hpp"
+#include <iostream>
 
-// ==========================================
-// Entity Retrieval
-// ==========================================
-
-Factory *Gamestate::getFactory(const uuids::uuid &id) {
-  auto it = factories.find(id);
-  if (it != factories.end()) {
-    return &it->second;
-  }
-  return nullptr;
+// --- Entity Getters ---
+Factory* Gamestate::getFactory(const uuids::uuid& id) {
+    auto it = factories.find(id); return (it != factories.end()) ? &it->second : nullptr;
+}
+Company* Gamestate::getCompany(const uuids::uuid& id) {
+    auto it = companies.find(id); return (it != companies.end()) ? &it->second : nullptr;
+}
+Market* Gamestate::getMarket(const uuids::uuid& id) {
+    auto it = markets.find(id); return (it != markets.end()) ? &it->second : nullptr;
+}
+TradeNode* Gamestate::getTradeNode(const uuids::uuid& id) {
+    auto it = nodes.find(id); return (it != nodes.end()) ? &it->second : nullptr;
 }
 
-Company *Gamestate::getCompany(const uuids::uuid &id) {
-  auto it = companies.find(id);
-  if (it != companies.end()) {
-    return &it->second;
-  }
-  return nullptr;
+// --- Date System ---
+void Gamestate::advanceDate() {
+    currentTurn++;
+    currentDay++;
+    if (currentDay > 30) { currentDay = 1; currentMonth++; }
+    if (currentMonth > 12) { currentMonth = 1; currentYear++; }
 }
 
-Market *Gamestate::getMarket(const uuids::uuid &id) {
-  auto it = markets.find(id);
-  if (it != markets.end()) {
-    return &it->second;
-  }
-  return nullptr;
-}
-
-TradeNode *Gamestate::getTradeNode(const uuids::uuid &id) {
-  auto it = nodes.find(id);
-  if (it != nodes.end()) {
-    return &it->second;
-  }
-  return nullptr;
-}
-
-// ==========================================
-// Player Management
-// ==========================================
-
-uuids::uuid Gamestate::getPlayerCompanyId() const { return playerCompanyId; }
-void Gamestate::setPlayerCompanyId(const uuids::uuid &id) {
-  playerCompanyId = id;
-}
-
-/**
- * @brief Creates the player's initial company setup.
- * @details Generates a UUID, sets default starting capital (10,000), 
- * and registers it in the companies map.
- */
-uuids::uuid Gamestate::createPlayerCompany(const std::string &name) {
-  uuids::uuid newId = IdUtils::generateUuid();
-  Company newCompany(newId, name);
-  newCompany.setCapital(10000); // Starting Capital
-  companies.emplace(newId, newCompany);
-  playerCompanyId = newId;
-  return newId;
-}
-
-// ==========================================
-// Serialization
-// ==========================================
-
-std::string Gamestate::serialize() const {
-  nlohmann::json j = serializeGamestate(*this);
-  return j.dump();
-}
-
-bool Gamestate::deserialize(const std::string &serialized) {
-  // @todo Implement deserialization logic (JSON -> Gamestate Objects)
-  return false;
-}
-
-// ==========================================
-// Spatial Data
-// ==========================================
-
-Position Gamestate::getPosition(const uuids::uuid &id) const {
-  auto it = entityPositions.find(id);
-  if (it != entityPositions.end()) {
-    return it->second;
-  }
-  return {-1, -1}; // Invalid/Error position
-}
-
-void Gamestate::setPosition(const uuids::uuid &id, const Position &pos) {
-  entityPositions[id] = pos;
-}
-
-// ==========================================
-// Data Management (Add/Clear)
-// ==========================================
-
-void Gamestate::addMarket(const uuids::uuid &id, const Market &market) {
-  markets.emplace(id, market);
-}
-
-void Gamestate::addTradeNode(const uuids::uuid &id, const TradeNode &node) {
-  nodes.emplace(id, node);
-}
-
-void Gamestate::addFactory(const uuids::uuid &id, const Factory &factory) {
-  factories.emplace(id, factory);
-}
-
-void Gamestate::addCompany(const uuids::uuid &id, const Company &company) {
-  companies.emplace(id, company);
+std::string Gamestate::getDateString() const {
+    return std::to_string(currentDay) + "/" + std::to_string(currentMonth) + "/" + std::to_string(currentYear);
 }
 
 void Gamestate::clear() {
-  markets.clear();
-  nodes.clear();
-  companies.clear();
-  factories.clear();
-  entityPositions.clear();
+    markets.clear(); nodes.clear(); companies.clear(); factories.clear();
+    instanceIdToUUID.clear();
+    currentTurn = 0;
 }
 
-// ==========================================
-// Direct Accessors
-// ==========================================
+bool Gamestate::loadScenario(const std::string& scenarioId) {
+    clear();
 
-std::unordered_map<uuids::uuid, Market> &Gamestate::getMarkets() {
-  return markets;
+    if (!ScenarioManager::scenarios.count(scenarioId)) return false;
+    const auto& scen = ScenarioManager::scenarios.at(scenarioId);
+
+    if (!MapManager::maps.count(scen.map_id)) return false;
+    const auto& mapDef = MapManager::maps.at(scen.map_id);
+
+    // 1. Marketleri Yarat (MarketManager + Scenario verisiyle)
+    for (const auto& nodeDef : mapDef.nodes) {
+        std::string mStrId = nodeDef.default_market_id;
+        
+        // Scenario override kontrolü
+        for(const auto& nOver : scen.nodes) {
+            if(nOver.instance_id == nodeDef.instance_id && !nOver.market_id.empty())
+                mStrId = nOver.market_id;
+        }
+
+        if (instanceIdToUUID.find(mStrId) == instanceIdToUUID.end()) {
+            uuids::uuid mUUID = IdUtils::generateUuid();
+            // MarketManager'dan ismi çek, yoksa ID'yi kullan
+            std::string mName = mStrId;
+            if(MarketManager::markets.count(mStrId)) mName = MarketManager::markets.at(mStrId).name;
+
+            markets.emplace(mUUID, Market(mUUID, mName));
+            instanceIdToUUID[mStrId] = mUUID;
+        }
+    }
+
+    // 2. TradeNode'ları Yarat
+    for (const auto& nodeDef : mapDef.nodes) {
+        std::string mStrId = nodeDef.default_market_id;
+        // (Scenario override logic burada da çalışır...)
+        uuids::uuid mUUID = instanceIdToUUID[mStrId];
+
+        TradeNode newNode(nodeDef.template_id, mUUID);
+        newNode.setName(nodeDef.name);
+
+        // Senaryo Özelleştirmeleri
+        for(const auto& nOver : scen.nodes) {
+            if(nOver.instance_id == nodeDef.instance_id) {
+                if (nOver.population_override > 0) newNode.setPopulation(nOver.population_override);
+                
+                // EKSTRA PIPELINES (İstediğin özellik kanka!)
+                for(const auto& pipeId : nOver.extra_pipelines) {
+                    newNode.getStorage().push_back({pipeId, 0.0f}); // Pipeline listesi olarak değil, referans olarak eklenir
+                }
+            }
+        }
+
+        nodes.emplace(newNode.getId(), newNode);
+        instanceIdToUUID[nodeDef.instance_id] = newNode.getId();
+        markets.at(mUUID).addNode(newNode.getId());
+    }
+
+    // 3. Şirketleri Yarat (CompanyManager Template Sistemiyle)
+    for (const auto& compDef : scen.companies) {
+        uuids::uuid cUUID = IdUtils::generateUuid();
+        
+        // Şablonu (Template) kullanıyoruz!
+        Company newComp;
+        if (CompanyManager::templates.count(compDef.template_id)) {
+            const auto& tmpl = CompanyManager::templates.at(compDef.template_id);
+            newComp = Company(cUUID, compDef.name_override.empty() ? "Company" : compDef.name_override);
+            newComp.setCapital(compDef.start_capital > 0 ? compDef.start_capital : tmpl.start_capital);
+            newComp.setManpower(tmpl.start_manpower);
+            // Başlangıç teknolojileri ve perkleri ekle
+            newComp.knownTechnologies = tmpl.start_techs;
+            for(const auto& pId : tmpl.start_perks) newComp.addPerk(pId);
+        } else {
+            // Şablon yoksa düz şirket yarat
+            newComp = Company(cUUID, compDef.name_override);
+            newComp.setCapital(compDef.start_capital);
+        }
+
+        companies.emplace(cUUID, newComp);
+        instanceIdToUUID[compDef.instance_id] = cUUID;
+
+        if (compDef.instance_id == "debug_small_company") playerCompanyId = cUUID;
+    }
+
+    return true;
 }
-std::unordered_map<uuids::uuid, TradeNode> &Gamestate::getNodes() {
-  return nodes;
-}
-std::unordered_map<uuids::uuid, Company> &Gamestate::getCompanies() {
-  return companies;
-}
-std::unordered_map<uuids::uuid, Factory> &Gamestate::getFactories() {
-  return factories;
-}
-std::unordered_map<uuids::uuid, Position> &Gamestate::getPositions() {
-  return entityPositions;
+
+template <typename T>
+nlohmann::json mapToJson(const std::unordered_map<uuids::uuid, T>& map) {
+    nlohmann::json j = nlohmann::json::object();
+    for (const auto& [id, item] : map) {
+        j[uuids::to_string(id)] = item; 
+    }
+    return j;
 }
 
-// ==========================================
-// Global Serialization Helper
-// ==========================================
+nlohmann::json serializeGamestate(const Gamestate& g) {
+    nlohmann::json j;
 
-/**
- * @brief Serializes the complete game state into a JSON object.
- * @details Iterates through all entity maps and converts them using their respective to_json functions.
- */
-nlohmann::json serializeGamestate(const Gamestate &gamestate) {
-  nlohmann::json j;
+    j["turn"] = g.currentTurn;
+    j["date"] = g.getDateString();
+    j["player_id"] = uuids::to_string(g.playerCompanyId);
+    
+    j["markets"] = mapToJson(g.markets);
+    j["nodes"] = mapToJson(g.nodes);
+    j["companies"] = mapToJson(g.companies);
+    j["factories"] = mapToJson(g.factories);
 
-  j["playerCompanyId"] = uuids::to_string(gamestate.getPlayerCompanyId());
-
-  // Companies
-  nlohmann::json companiesJson;
-  for (const auto &[id, company] : gamestate.companies) {
-    companiesJson[uuids::to_string(id)] = company;
-  }
-  j["companies"] = companiesJson;
-
-  // Factories
-  nlohmann::json factoriesJson;
-  for (const auto &[id, factory] : gamestate.factories) {
-    factoriesJson[uuids::to_string(id)] = factory;
-  }
-  j["factories"] = factoriesJson;
-
-  // Markets
-  nlohmann::json marketsJson;
-  for (const auto &[id, market] : gamestate.markets) {
-    marketsJson[uuids::to_string(id)] = market;
-  }
-  j["markets"] = marketsJson;
-
-  // TradeNodes
-  nlohmann::json nodesJson;
-  for (const auto &[id, node] : gamestate.nodes) {
-    nodesJson[uuids::to_string(id)] = node;
-  }
-  j["tradeNodes"] = nodesJson;
-
-  // Positions
-  nlohmann::json positionsJson;
-  for (const auto &[id, pos] : gamestate.entityPositions) {
-    positionsJson[uuids::to_string(id)] = pos;
-  }
-  j["positions"] = positionsJson;
-
-  return j;
+    return j;
 }
