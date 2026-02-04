@@ -31,6 +31,7 @@ public:
             // std::cerr << JSON Parse Error: << e.what() << std::endl;
             return false;
         }
+        return false;
     }
 
 private:

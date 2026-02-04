@@ -37,7 +37,30 @@ struct MarketListing {
     double price;   ///< Unit price for this specific listing
 };
 
+struct GameEffect {
+    std::string type;     // Örn: "debt_interest", "production_efficiency"
+    std::string category; // Örn: "agriculture" (veya boş "all")
+    float value;          // Örn: 0.10 (+%10) veya -0.05 (-%5)
+    std::string mode;     // "additive" (topla) veya "multiplicative" (çarp) - Default: additive
+};
+
 // --- JSON SERIALIZATION ---
+
+inline void from_json(const nlohmann::json& j, GameEffect& e) {
+    j.at("type").get_to(e.type);
+    e.value = j.at("value").get<float>();
+    e.category = j.value("category", "all");
+    e.mode = j.value("mode", "additive");
+}
+
+struct ActivePerk {
+    std::string perkId;
+    int remainingDuration; // -1 never ends
+
+    std::string to_string() const {
+      return perkId;
+    }
+};
 
 // 1. Position
 inline void to_json(nlohmann::json &j, const Position &p) {
@@ -70,4 +93,16 @@ inline void to_json(nlohmann::json &j, const MarketListing &m) {
 inline void from_json(const nlohmann::json &j, MarketListing &m) {
   j.at("item").get_to(m.item);
   j.at("price").get_to(m.price);
+}
+
+inline void to_json(nlohmann::json &j, const ActivePerk &a) {
+    j = nlohmann::json{
+        {"perk_id", a.perkId},
+        {"remaining_duration", a.remainingDuration}
+    };
+}
+
+inline void from_json(const nlohmann::json &j, ActivePerk &a) {
+    j.at("perk_id").get_to(a.perkId);
+    j.at("remaining_duration").get_to(a.remainingDuration);
 }
