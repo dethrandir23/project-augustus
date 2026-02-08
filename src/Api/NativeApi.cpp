@@ -1,23 +1,22 @@
 /**
- * @file GameApi.cpp
+ * @file WebApi.cpp
  * @author Bekir Efe Öztürk (@dethrandir23)
- * @brief The WebAssembly API Interface.
- * @details This file contains the bindings exposed to the JavaScript frontend
- * via Emscripten. It connects the JS world to the C++ Engine Core.
- * @version 0.2 (Refactored)
+ * @brief The native API Interface.
+ * @details This file contains the API for native C++ applications.
+ * @version 0.3 (Refactored & Logged)
  * @date 2026-02-04
  */
 
+#include "NativeApi.h"
 #include "../../lib/nlohmann/json.hpp"
-#include <emscripten/bind.h>
 #include <string>
 #include <vector>
 
 // Core Engine Components
+#include "../Game/GameManager.h"
+#include "../Game/Gamestate.h"
+#include "../Game/InputHandler.h"
 #include "../Registry/GameLoader.h"
-#include "GameManager.h"
-#include "Gamestate.h"
-#include "InputHandler.h"
 
 // DevTools
 #include "../DevTools/Console.h"
@@ -35,10 +34,9 @@
 #include "../Registry/ScenarioManager.h"
 #include "../Registry/TechnologyManager.h"
 #include "../Registry/TradeNodeManager.h"
+#include "../Registry/EventManager.h"
 
-// Singleton Instances
-static Gamestate globalGamestate;
-static GameLoader loader;
+namespace GameApi {
 
 /**
  * @brief Initializes the engine and registers all JSON handlers.
@@ -91,6 +89,11 @@ void initEngine() {
                            CompanyManager::load_from_json(j, src);
                          });
 
+    loader.RegisterHandler("MARKET_DEFINITIONS",
+                         [](const nlohmann::json &j, const std::string &src) {
+                           MarketManager::load_from_json(j, src);
+                         });
+
   // 4. Map & Scenario
   loader.RegisterHandler("MAP_DEFINITION",
                          [](const nlohmann::json &j, const std::string &src) {
@@ -100,6 +103,12 @@ void initEngine() {
                          [](const nlohmann::json &j, const std::string &src) {
                            ScenarioManager::load_from_json(j, src);
                          });
+
+  loader.RegisterHandler("EVENT_DEFINITIONS", [](const nlohmann::json &j, const std::string &src){
+    EventManager::load_from_json(j, src);
+  });
+
+  Console::log("Game initialized successfully.");
 }
 
 /**
@@ -110,7 +119,7 @@ bool loadGameFiles(const std::vector<std::string> &file_contents,
   bool allSuccess = true;
   for (size_t i = 0; i < file_contents.size(); ++i) {
     if (!loader.load_file_content(file_contents[i], file_names[i])) {
-      // Loglama sistemi olunca buraya yazarız
+      Console::log("Error loading file: " + file_names[i], LogType::ERROR);
       allSuccess = false;
     }
   }
@@ -123,22 +132,22 @@ bool loadGameFiles(const std::vector<std::string> &file_contents,
  * @return true if successful.
  */
 bool startScenario(const std::string &scenarioId) {
-  return globalGamestate.loadScenario(scenarioId);
-}
-
-/**
- * @brief Loads the pixel data for the current map.
- * @details JS reads the image, passes the raw pixels here.
- */
-void loadMapImage(int width, int height, const std::vector<uint32_t> &pixels) {
-  // Gamestate içindeki Map objesini init et
-  globalGamestate.getMap().init(globalGamestate.getMap().getId(), pixels);
+  if(globalGamestate.loadScenario(scenarioId)) {
+    Console::log("Scenario loaded successfully.");
+    return true;
+  } else {
+    Console::log("Failed to load scenario.", LogType::ERROR);
+    return false;
+  }
 }
 
 /**
  * @brief Advances the simulation by one tick.
  */
-void step() { GameManager::stepGamestate(globalGamestate); }
+void step() {
+  GameManager::stepGamestate(globalGamestate);
+  Console::log("Game stepped");
+}
 
 /**
  * @brief Returns the full game state as JSON.
@@ -151,59 +160,19 @@ std::string getSerializedState() {
  * @brief Handles player input (CLI commands, etc.)
  */
 bool sendInput(const std::string &input) {
-  return InputHandler::handleInput(globalGamestate, input);
+  if (InputHandler::handleInput(globalGamestate, input)) {
+    Console::log("Input handled successfully.");
+    return true;
+  } else {
+    Console::log("Failed to handle input.", LogType::ERROR);
+    return false;
+  }
 }
 
-/**
- * @brief Emscripten Binding Definitions.
- */
-EMSCRIPTEN_BINDINGS(my_game_module) {
-  // Core Functions
-  emscripten::function("initEngine", &initEngine);
-  emscripten::function("loadGameFiles", &loadGameFiles);
-  emscripten::function("startScenario", &startScenario);
-  emscripten::function("loadMapImage", &loadMapImage); // Harita resmi için yeni
+void logToConsole(const std::string &message, LogType type) {
+  Console::log(message, type);
+}
 
-  // Game Loop
-  emscripten::function("step", &step);
-  emscripten::function("getSerializedState", &getSerializedState);
-  emscripten::function("sendInput", &sendInput);
+std::vector<std::string> readConsole() { return Console::getLogMessages(); }
 
-  // Data Types
-  emscripten::register_vector<Log>("LogList");
-  emscripten::register_vector<std::string>("StringList");
-  emscripten::register_vector<uint32_t>("PixelList");
-
-  emscripten::enum_<LogType>("LogType")
-      .value("INFO", LogType::INFO)
-      .value("ERROR", LogType::ERROR)
-      .value("WARNING", LogType::WARNING);
-
-  // Struct registration
-  emscripten::value_object<Log>("Log")
-      .field("message", &Log::message)
-      .field("logType", &Log::logType)
-      .field("timestamp", &Log::timestamp);
-
-  // Console class bindings
-  emscripten::class_<Console>("Console")
-      .class_function("help", &Console::help)
-      .class_function("parseInput", &Console::parseInput)
-      .class_function(
-          "log",
-          emscripten::select_overload<void(const std::string &)>(&Console::log))
-      .class_function(
-          "logWithType",
-          emscripten::select_overload<void(const std::string &, LogType)>(
-              &Console::log))
-      .class_function("logObject",
-                      emscripten::select_overload<void(Log)>(&Console::log))
-
-      .class_function("readLog", &Console::readLog)
-      .class_function("getLog", &Console::getLog)
-      .class_function("clearLogs", &Console::clearLogs)
-      .class_function("removeLog", &Console::removeLog)
-      .class_function("getLogCount", &Console::getLogCount)
-      .class_function("getLogs", &Console::getLogs)
-      .class_function("getLogMessages", &Console::getLogMessages);
-};
+}
