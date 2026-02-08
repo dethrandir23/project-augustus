@@ -1,10 +1,13 @@
 #pragma once
 
 #include <chrono>
+#include <iomanip>
 #include <string>
 #include <vector>
 
 enum class LogType { INFO, ERROR, WARNING };
+
+std::string logTypeToStr(LogType type);
 
 struct Log {
   std::string message;
@@ -15,7 +18,10 @@ struct Log {
 
   Log(const std::string &msg, LogType type) : message(msg), logType(type) {
     auto now = std::chrono::system_clock::now();
-    timestamp = std::chrono::system_clock::to_time_t(now);
+    auto now_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_time_t), "%Y-%m-%d %H:%M:%S");
+    timestamp = ss.str();
   }
 };
 

@@ -19,6 +19,19 @@
 
 std::vector<Log> Console::logs;
 
+std::string logTypeToStr(LogType type) {
+  switch (type) {
+  case LogType::INFO:
+    return "INFO";
+  case LogType::ERROR:
+    return "ERROR";
+  case LogType::WARNING:
+    return "WARNING";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 std::string Console::help() {
   // raw string
   std::string help = R"(
