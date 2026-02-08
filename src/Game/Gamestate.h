@@ -36,6 +36,10 @@ public:
     // Getters
     uuids::uuid getPlayerCompanyId() const { return playerCompanyId; }
     Map& getMap() { return map; }
+    int getCurrentTurn() const { return currentTurn; }
+    int getCurrentYear() const { return currentYear; }
+    int getCurrentMonth() const { return currentMonth; }
+    int getCurrentDay() const { return currentDay; }
 
     // adders
     void addFactory(const Factory& f) { factories.emplace(f.getId(), f); }
