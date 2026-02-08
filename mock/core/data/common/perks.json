@@ -1,0 +1,28 @@
+{
+    "registry_type": "PERK_DEFINITIONS",
+    "entries": [
+        {
+            "id": "core_newborn_company_001",
+            "name": "Newborn Company",
+            "description": "desc_core_newborn_company_001",
+            "unlocks": [],
+            "effects": [
+                {
+                    "type": "debt_interest_rate",
+                    "value": -0.10,
+                    "mode": "multiplicative"
+                },
+                {
+                    "type": "production_efficiency",
+                    "category": "all",
+                    "value": 0.05,
+                    "mode": "multiplicative"
+                },
+                {   "type": "hire_personal_cost",
+                    "value": -0.10,
+                    "mode": "multiplicative"
+                }
+            ]
+        }
+    ]
+}
