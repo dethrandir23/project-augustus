@@ -1,0 +1,5 @@
+{
+  "key": "shift+f5",
+  "command": "workbench.action.tasks.runTask",
+  "args": "clean-build"
+}
