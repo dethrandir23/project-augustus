@@ -1,0 +1,27 @@
+{
+    "registry_type": "COMPANY_DEFINITIONS",
+    "entries": [
+        {
+            "id": "core_startup_company_001",
+            "namespace": "core_startup_company",
+            "manpower": 2000,
+            "capital": 10000,
+            "debt": 0,
+            "perks": [],
+            "technologies": [
+                "core_basic_agriculture_001"
+            ],
+            "inventory": [
+                {
+                    "id": "core_wood_001",
+                    "amount": 100
+                },
+                {
+                    "id": "core_stone_002",
+                    "amount": 100
+                }
+            ],
+            "factories": []
+        }
+    ]
+}

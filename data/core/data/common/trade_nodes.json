@@ -1,0 +1,15 @@
+{
+    "registry_type": "TRADENODE_DEFINITIONS",
+    "entries": [
+        {
+            "id": "core_village",
+            "name_pool": "core_village_names",
+            "initial_population": { "min": 500, "max": 1200 },
+            "initial_capital": 100,
+            
+            "local_pipelines": ["core_basic_agriculture_001"],
+            
+            "consumption_profile": ["core_basic_consumption"]
+        }
+    ]
+}

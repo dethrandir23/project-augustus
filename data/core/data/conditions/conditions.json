@@ -1,19 +1,15 @@
 {
-    "can_do_agriculture": {
-        "scope": [
-            "company",
-            "tradenode",
-            "country"
-        ],
-        "description": "Allows agriculture-related production and buildings"
-    },
-
-    "mechanical_agriculture": {
-        "scope": [
-            "company",
-            "tradenode",
-            "country"
-        ],
-        "description": "Allows mechanical-based agriculture production and buildings"
-    }
+    "registry_type": "CONDITION_DEFINITIONS",
+    "entries": [
+        {
+            "id": "can_do_agriculture",
+            "scope": ["company", "tradenode"],
+            "description": "Allows farming."
+        },
+        {
+            "id": "mechanical_agriculture",
+            "scope": ["company"],
+            "description": "Allows usage of tractors."
+        }
+    ]
 }

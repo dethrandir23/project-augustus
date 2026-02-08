@@ -1,4 +1,13 @@
 {
+  "production": {
+    "description": "Production and economic technologies"
+  },
+  "trade": {
+    "description": "Trading and social technologies"
+  },
+  "infrastructure": {
+    "description": "Infrastructure and logistics technologies"
+  },
   "processing": {
     "name": "Processing",
     "description": "Factories that process raw resources into usable materials.",
@@ -63,5 +72,40 @@
     "name": "Transport",
     "description": "Factories producing vehicles or transportation infrastructure.",
     "icon": "factory_transport"
+  },
+x
+    "agriculture": { "name": "Agricultural Production" },
+  "processing": { "name": "Raw Processing" },
+  "manufacturing": { "name": "Manufacturing" },
+  "military": { "name": "Military Production" },
+  "luxury": { "name": "Luxury Crafting" },
+
+  "consumption": { "name": "Consumption" },
+  "raw": {
+    "description": "Unprocessed natural resources"
+  },
+  "agriculture": {
+    "description": "Agricultural goods and food production"
+  },
+  "industrial": {
+    "description": "Industrial and processed materials"
+  },
+  "consumer": {
+    "description": "Consumer goods used by population"
+  },
+  "military": {
+    "description": "Military equipment and supplies"
+  },
+  "luxury": {
+    "description": "High-value luxury goods"
+  },
+  "transport": {
+    "description": "Transportation and logistics equipment"
+  },
+  "social": {
+    "description": "Social effects"
   }
 }
+
+}
+

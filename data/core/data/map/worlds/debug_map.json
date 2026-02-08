@@ -1,0 +1,18 @@
+{
+    "registry_type": "MAP_DEFINITION",
+    "id": "core_debug_map",
+    "name": "Debug Map",
+    "description": "desc_debug_map",
+    "width": 200,
+    "height": 200,
+    "background_texture": "debug_map_background.png",
+    "nodes": [
+        {
+            "instance_id": "core_debug_london",
+            "template_id": "core_metropolis_001",
+            "name": "London",
+            "x": 40, "y": 80,
+            "terrain": "plains"
+        }  
+    ]
+}

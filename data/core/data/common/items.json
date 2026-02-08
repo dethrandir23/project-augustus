@@ -4,6 +4,7 @@
     {
       "id": "core_none_000",
       "name": "none",
+      "type": "physical",
       "description": "desc_core_none_000",
       "base_price": 0,
       "categories": []
@@ -11,6 +12,7 @@
     {
       "id": "core_wood_001",
       "name": "wood",
+      "type": "physical",
       "description": "desc_core_wood_001",
       "base_price": 10,
       "categories": ["raw"]
@@ -18,6 +20,7 @@
     {
       "id": "core_stone_002",
       "name": "stone",
+      "type": "physical",
       "description": "desc_core_stone_002",
       "base_price": 8,
       "categories": ["raw"]
@@ -25,6 +28,7 @@
     {
       "id": "core_clay_003",
       "name": "clay",
+      "type": "physical",
       "description": "desc_core_clay_003",
       "base_price": 6,
       "categories": ["raw"]
@@ -32,6 +36,7 @@
     {
       "id": "core_sand_004",
       "name": "sand",
+      "type": "physical",
       "description": "desc_core_sand_004",
       "base_price": 5,
       "categories": ["raw"]
@@ -39,6 +44,7 @@
     {
       "id": "core_grain_005",
       "name": "grain",
+      "type": "physical",
       "description": "desc_core_grain_005",
       "base_price": 12,
       "categories": ["agriculture", "raw"]
@@ -46,6 +52,7 @@
     {
       "id": "core_meat_006",
       "name": "meat",
+      "type": "physical",
       "description": "desc_core_meat_006",
       "base_price": 18,
       "categories": ["agriculture", "consumer"]
@@ -53,6 +60,7 @@
     {
       "id": "core_fish_007",
       "name": "fish",
+      "type": "physical",
       "description": "desc_core_fish_007",
       "base_price": 16,
       "categories": ["agriculture", "consumer"]
@@ -60,6 +68,7 @@
     {
       "id": "core_fruit_008",
       "name": "fruit",
+      "type": "physical",
       "description": "desc_core_fruit_008",
       "base_price": 14,
       "categories": ["agriculture", "consumer"]
@@ -67,6 +76,7 @@
     {
       "id": "core_wool_009",
       "name": "wool",
+      "type": "physical",
       "description": "desc_core_wool_009",
       "base_price": 15,
       "categories": ["raw", "agriculture"]
@@ -74,6 +84,7 @@
     {
       "id": "core_cotton_010",
       "name": "cotton",
+      "type": "physical",
       "description": "desc_core_cotton_010",
       "base_price": 14,
       "categories": ["raw", "agriculture"]
@@ -81,6 +92,7 @@
     {
       "id": "core_silk_011",
       "name": "silk",
+      "type": "physical",
       "description": "desc_core_silk_011",
       "base_price": 40,
       "categories": ["raw", "luxury"]
@@ -88,6 +100,7 @@
     {
       "id": "core_dye_012",
       "name": "dye",
+      "type": "physical",
       "description": "desc_core_dye_012",
       "base_price": 20,
       "categories": ["industrial"]
@@ -95,6 +108,7 @@
     {
       "id": "core_hides_013",
       "name": "hides",
+      "type": "physical",
       "description": "desc_core_hides_013",
       "base_price": 22,
       "categories": ["raw", "agriculture"]
@@ -102,6 +116,7 @@
     {
       "id": "core_iron_ore_014",
       "name": "iron_ore",
+      "type": "physical",
       "description": "desc_core_iron_ore_014",
       "base_price": 20,
       "categories": ["raw"]
@@ -109,6 +124,7 @@
     {
       "id": "core_coal_015",
       "name": "coal",
+      "type": "physical",
       "description": "desc_core_coal_015",
       "base_price": 18,
       "categories": ["raw"]
@@ -116,6 +132,7 @@
     {
       "id": "core_copper_ore_016",
       "name": "copper_ore",
+      "type": "physical",
       "description": "desc_core_copper_ore_016",
       "base_price": 22,
       "categories": ["raw"]
@@ -123,6 +140,7 @@
     {
       "id": "core_gold_ore_017",
       "name": "gold_ore",
+      "type": "physical",
       "description": "desc_core_gold_ore_017",
       "base_price": 80,
       "categories": ["raw", "luxury"]
@@ -130,6 +148,7 @@
     {
       "id": "core_sulphur_018",
       "name": "sulphur",
+      "type": "physical",
       "description": "desc_core_sulphur_018",
       "base_price": 25,
       "categories": ["raw"]
@@ -137,6 +156,7 @@
     {
       "id": "core_saltpeter_019",
       "name": "saltpeter",
+      "type": "physical",
       "description": "desc_core_saltpeter_019",
       "base_price": 28,
       "categories": ["raw"]
@@ -144,6 +164,7 @@
     {
       "id": "core_lumber_020",
       "name": "lumber",
+      "type": "physical",
       "description": "desc_core_lumber_020",
       "base_price": 35,
       "categories": ["industrial"]
@@ -151,6 +172,7 @@
     {
       "id": "core_brick_021",
       "name": "brick",
+      "type": "physical",
       "description": "desc_core_brick_021",
       "base_price": 30,
       "categories": ["industrial"]
@@ -158,6 +180,7 @@
     {
       "id": "core_glass_022",
       "name": "glass",
+      "type": "physical",
       "description": "desc_core_glass_022",
       "base_price": 45,
       "categories": ["industrial"]
@@ -165,6 +188,7 @@
     {
       "id": "core_steel_023",
       "name": "steel",
+      "type": "physical",
       "description": "desc_core_steel_023",
       "base_price": 90,
       "categories": ["industrial"]
@@ -172,6 +196,7 @@
     {
       "id": "core_cloth_024",
       "name": "cloth",
+      "type": "physical",
       "description": "desc_core_cloth_024",
       "base_price": 40,
       "categories": ["industrial"]
@@ -179,6 +204,7 @@
     {
       "id": "core_paper_025",
       "name": "paper",
+      "type": "physical",
       "description": "desc_core_paper_025",
       "base_price": 38,
       "categories": ["industrial"]
@@ -186,6 +212,7 @@
     {
       "id": "core_gunpowder_026",
       "name": "gunpowder",
+      "type": "physical",
       "description": "desc_core_gunpowder_026",
       "base_price": 120,
       "categories": ["military", "industrial"]
@@ -193,6 +220,7 @@
     {
       "id": "core_food_rations_027",
       "name": "food_rations",
+      "type": "physical",
       "description": "desc_core_food_rations_027",
       "base_price": 35,
       "categories": ["consumer", "agriculture"]
@@ -200,6 +228,7 @@
     {
       "id": "core_clothes_028",
       "name": "clothes",
+      "type": "physical",
       "description": "desc_core_clothes_028",
       "base_price": 80,
       "categories": ["consumer"]
@@ -207,6 +236,7 @@
     {
       "id": "core_furniture_029",
       "name": "furniture",
+      "type": "physical",
       "description": "desc_core_furniture_029",
       "base_price": 110,
       "categories": ["consumer"]
@@ -214,6 +244,7 @@
     {
       "id": "core_alcohol_030",
       "name": "alcohol",
+      "type": "physical",
       "description": "desc_core_alcohol_030",
       "base_price": 95,
       "categories": ["consumer"]
@@ -221,6 +252,7 @@
     {
       "id": "core_tools_031",
       "name": "tools",
+      "type": "physical",
       "description": "desc_core_tools_031",
       "base_price": 150,
       "categories": ["industrial"]
@@ -228,6 +260,7 @@
     {
       "id": "core_fine_clothes_032",
       "name": "fine_clothes",
+      "type": "physical",
       "description": "desc_core_fine_clothes_032",
       "base_price": 400,
       "categories": ["luxury", "consumer"]
@@ -235,6 +268,7 @@
     {
       "id": "core_jewelry_033",
       "name": "jewelry",
+      "type": "physical",
       "description": "desc_core_jewelry_033",
       "base_price": 600,
       "categories": ["luxury"]
@@ -242,6 +276,7 @@
     {
       "id": "core_books_034",
       "name": "books",
+      "type": "physical",
       "description": "desc_core_books_034",
       "base_price": 220,
       "categories": ["consumer"]
@@ -249,6 +284,7 @@
     {
       "id": "core_simple_weapon_035",
       "name": "simple_weapon",
+      "type": "physical",
       "description": "desc_core_simple_weapon_035",
       "base_price": 180,
       "categories": ["military"]
@@ -256,6 +292,7 @@
     {
       "id": "core_firearm_036",
       "name": "firearm",
+      "type": "physical",
       "description": "desc_core_firearm_036",
       "base_price": 450,
       "categories": ["military"]
@@ -263,6 +300,7 @@
     {
       "id": "core_ammunition_037",
       "name": "ammunition",
+      "type": "physical",
       "description": "desc_core_ammunition_037",
       "base_price": 140,
       "categories": ["military"]
@@ -270,6 +308,7 @@
     {
       "id": "core_artillery_038",
       "name": "artillery",
+      "type": "physical",
       "description": "desc_core_artillery_038",
       "base_price": 1200,
       "categories": ["military"]
@@ -277,6 +316,7 @@
     {
       "id": "core_armor_039",
       "name": "armor",
+      "type": "physical",
       "description": "desc_core_armor_039",
       "base_price": 350,
       "categories": ["military"]
@@ -284,6 +324,7 @@
     {
       "id": "core_wagon_040",
       "name": "wagon",
+      "type": "physical",
       "description": "desc_core_wagon_040",
       "base_price": 500,
       "categories": ["transport", "industrial"]
@@ -291,6 +332,7 @@
     {
       "id": "core_ship_hull_041",
       "name": "ship_hull",
+      "type": "physical",
       "description": "desc_core_ship_hull_041",
       "base_price": 900,
       "categories": ["transport", "industrial"]
@@ -298,6 +340,7 @@
     {
       "id": "core_machinery_042",
       "name": "machinery",
+      "type": "physical",
       "description": "desc_core_machinery_042",
       "base_price": 1500,
       "categories": ["industrial"]
@@ -305,7 +348,16 @@
     {
       "id": "core_happiness_043",
       "name": "happiness",
+      "type": "abstract",
       "description": "desc_core_happiness_043",
+      "base_price": 0,
+      "categories": ["social"]
+    },
+    {
+      "id": "core_public_order",
+      "name": "Public Order",
+      "type": "abstract",
+      "description": "desc_core_public_order",
       "base_price": 0,
       "categories": ["social"]
     }

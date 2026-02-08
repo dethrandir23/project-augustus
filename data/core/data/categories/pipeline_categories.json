@@ -1,9 +1,0 @@
-{
-  "agriculture": { "name": "Agricultural Production" },
-  "processing": { "name": "Raw Processing" },
-  "manufacturing": { "name": "Manufacturing" },
-  "military": { "name": "Military Production" },
-  "luxury": { "name": "Luxury Crafting" },
-
-  "consumption": { "name": "Consumption" }
-}
