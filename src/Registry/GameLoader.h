@@ -2,6 +2,7 @@
 
 #include "../../lib/nlohmann/json.hpp"
 #include "../../lib/uuid/uuid.h"
+#include "../DevTools/Console.h"
 
 class GameLoader {
 public:
@@ -24,11 +25,11 @@ public:
                 handlers[type](j, file_name);
                 return true;
             } else {
-                // std::cerr << "Warning: Unknown registry type " << type << " in file " << file_name
+                Console::log("Warning: Unknown registry type " + type + " in file " + file_name, LogType::WARNING);
             }
 
         } catch (const std::exception &e) {
-            // std::cerr << JSON Parse Error: << e.what() << std::endl;
+            Console::log("JSON Parse Error: " + std::string(e.what()), LogType::ERROR);
             return false;
         }
         return false;

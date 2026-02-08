@@ -3,6 +3,7 @@
 #include "../../lib/nlohmann/json.hpp"
 #include <string>
 #include <vector>
+#include "../DevTools/Console.h"
 
 struct ItemData {
   std::string id;
@@ -33,8 +34,7 @@ public:
         items[id] = {id, name, description_id, categories, base_price};
       }
     } catch (std::exception &e) {
-      // std::cout << "Error while loading file " << source << " because: " <<
-      // e.what << std::endl;
+      Console::log("Error while loading file " + source + " because: " + e.what(), LogType::ERROR);
     }
   }
 };
