@@ -1,5 +1,5 @@
 /**
- * @file WebApi.cpp
+ * @file NativeApi.cpp
  * @author Bekir Efe Öztürk (@dethrandir23)
  * @brief The native API Interface.
  * @details This file contains the API for native C++ applications.
@@ -25,6 +25,7 @@
 #include "../Registry/CompanyManager.h" // Template Manager
 #include "../Registry/ConditionManager.h"
 #include "../Registry/EconomyManager.h"
+#include "../Registry/EventManager.h"
 #include "../Registry/FactoryManager.h"
 #include "../Registry/ItemManager.h"
 #include "../Registry/MapManager.h"
@@ -34,10 +35,10 @@
 #include "../Registry/ScenarioManager.h"
 #include "../Registry/TechnologyManager.h"
 #include "../Registry/TradeNodeManager.h"
-#include "../Registry/EventManager.h"
 
 namespace GameApi {
-
+ Gamestate globalGamestate;
+ GameLoader loader;  
 /**
  * @brief Initializes the engine and registers all JSON handlers.
  * @details Call this ONCE at the start of the application.
@@ -89,7 +90,7 @@ void initEngine() {
                            CompanyManager::load_from_json(j, src);
                          });
 
-    loader.RegisterHandler("MARKET_DEFINITIONS",
+  loader.RegisterHandler("MARKET_DEFINITIONS",
                          [](const nlohmann::json &j, const std::string &src) {
                            MarketManager::load_from_json(j, src);
                          });
@@ -104,9 +105,10 @@ void initEngine() {
                            ScenarioManager::load_from_json(j, src);
                          });
 
-  loader.RegisterHandler("EVENT_DEFINITIONS", [](const nlohmann::json &j, const std::string &src){
-    EventManager::load_from_json(j, src);
-  });
+  loader.RegisterHandler("EVENT_DEFINITIONS",
+                         [](const nlohmann::json &j, const std::string &src) {
+                           EventManager::load_from_json(j, src);
+                         });
 
   Console::log("Game initialized successfully.");
 }
@@ -132,13 +134,21 @@ bool loadGameFiles(const std::vector<std::string> &file_contents,
  * @return true if successful.
  */
 bool startScenario(const std::string &scenarioId) {
-  if(globalGamestate.loadScenario(scenarioId)) {
+  if (globalGamestate.loadScenario(scenarioId)) {
     Console::log("Scenario loaded successfully.");
     return true;
   } else {
     Console::log("Failed to load scenario.", LogType::ERROR);
     return false;
   }
+}
+
+void SetPlayer(const std::string &companyName, const std::string &companyId) {
+    CompanyTemplate tmpl = CompanyManager::templates[companyId];
+    Company company(IdUtils::generateUuid(), tmpl);
+    company.setName(companyName);
+    globalGamestate.setPlayerCompanyId(company.getId());
+    globalGamestate.addCompany(company);
 }
 
 /**
@@ -175,4 +185,17 @@ void logToConsole(const std::string &message, LogType type) {
 
 std::vector<std::string> readConsole() { return Console::getLogMessages(); }
 
+void subscribeToEvents() {
+  globalGamestate.getEventHandler().subscribe([](const Event &e) {
+    // Frontend'e sinyal gönder (JNI, Emscripten vs.)
+    // GameApi::sendToUI("SHOW_EVENT", e.tmpl->id);
+  });
 }
+
+// Event Queue'sunu JSON string olarak döndüren bir API fonksiyonu
+std::string getPendingEvents() {
+  const auto &queue = globalGamestate.getEventHandler().getQueue();
+  nlohmann::json j;
+  return j.dump();
+}
+} // namespace GameApi
