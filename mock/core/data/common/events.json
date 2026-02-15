@@ -12,6 +12,8 @@
             "auto_handle": true,
             "auto_handle_option_index": 0,
             "max_steps_until_handle": 14,
+            "unique": false,
+            "cooldown": 200,
             "triggers": [
                 [
                     {
@@ -53,6 +55,8 @@
             "auto_handle": true,
             "auto_handle_option_index": 0,
             "max_steps_until_handle": 3,
+            "unique": false,
+            "cooldown": 50,
             "triggers": [
                 [
                     {
