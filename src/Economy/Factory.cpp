@@ -81,25 +81,17 @@ void Factory::produce(double globalModifiers) {
 
     // 5. Çıktıları Depoya Ekle
     for (const auto& producedItem : result.producedItems) {
-        EconomyUtils::addToInventory(outputStorage, producedItem.id, producedItem.quantity);
+        outputStorage.add(producedItem.id, producedItem.quantity);
     }
 }
 
 // --- Inventory ---
 void Factory::addInput(const std::string& itemId, float amount) {
-    EconomyUtils::addToInventory(inputStorage, itemId, amount);
-}
-
-std::vector<ItemStack>& Factory::getInputs() {
-    return inputStorage;
-}
-
-std::vector<ItemStack>& Factory::getOutputs() {
-    return outputStorage;
+    inputStorage.add(itemId, amount);
 }
 
 std::vector<ItemStack> Factory::collectOutputs() {
-    std::vector<ItemStack> collected = outputStorage;
+    std::vector<ItemStack> collected = outputStorage.getAllItems();
     outputStorage.clear();
     return collected;
 }
@@ -121,7 +113,7 @@ std::vector<ItemStack> Factory::getMissingInputs() const {
 
         for (const auto& input : pipe.inputs) {
             // Şu an depoda ne kadar var?
-            float currentQty = EconomyUtils::getItemAmount(inputStorage, input.id);
+            float currentQty = inputStorage.getAmount(input.id);
             
             // Gereken miktar (Örn: Pipeline input'u kadar)
             // Not: Burada 'input.quantity' birim başınadır, bunu işçi sayısına göre scale edebilirsin

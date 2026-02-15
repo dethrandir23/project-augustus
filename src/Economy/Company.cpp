@@ -4,14 +4,51 @@
 #include "../Registry/PerkManager.h"
 #include "../Registry/TechnologyManager.h"
 #include "../Core/ModifierKeys.h"
+#include "Registry/NameManager.h"
+
+Company::Company(const uuids::uuid &id, const CompanyTemplate &tmpl) 
+    : id(id) {
+    
+    // 1. İsim belirleme
+    if (!tmpl.name_pool_id.empty()) {
+
+        name = NameManager::getRandomName(tmpl.name_pool_id);
+    } else {
+        name = tmpl.id;
+    }
+    
+    // 2. Başlangıç sermayesi
+    capital = tmpl.start_capital;
+    
+    // 3. Başlangıç işgücü
+    manpower = tmpl.start_manpower;
+    
+    // 4. Başlangıç teknolojileri
+    for (const auto &techId : tmpl.start_techs) {
+        addTechnology(techId);
+    }
+    
+    // 5. Başlangıç envanteri (storage)
+    for (const auto &itemStack : tmpl.start_inventory) {
+        addItem(itemStack.id, itemStack.quantity);
+    }
+    
+    // 6. Başlangıç perk'leri
+    for (const auto &perkId : tmpl.start_perks) {
+        addPerk(perkId);
+    }
+    
+    // 7. Başlangıç borcu (template'de belirtilmemişse 0)
+    debt = 0.0;
+}
 
 // --- Storage Helpers ---
 void Company::addItem(const std::string &itemId, float amount) {
-  EconomyUtils::addToInventory(storage, itemId, amount);
+  inventory.add(itemId, amount);
 }
 
 float Company::getItemAmount(const std::string &itemId) const {
-  return EconomyUtils::getItemAmount(storage, itemId);
+  return inventory.getAmount(itemId);
 }
 
 void Company::removeFactoryRef(const uuids::uuid &fid) {
@@ -123,7 +160,7 @@ void Company::manageFactories(Gamestate &gamestate) {
 
         // Transfer işlemi:
         // 1. Şirketten düş (EconomyUtils kullan)
-        EconomyUtils::removeFromInventory(storage, req.id, amountToSend);
+        inventory.remove(req.id, amountToSend);
 
         // 2. Fabrikaya ekle
         factory->addInput(req.id, amountToSend);
@@ -168,6 +205,10 @@ float Company::calculateModifier(const std::string& modifierType, float baseValu
     return (baseValue + additive) * multiplicative;
 }
 
+bool Company::buyFromMarket(Market& market, const std::vector<ItemStack>& shoppingList) {
+    return market.buyItems(shoppingList, this->inventory, this->capital);
+}
+
 void to_json(nlohmann::json &j, const Company &c) {
   j = nlohmann::json{{"id", uuids::to_string(c.id)},
                      {"name", c.name},
@@ -176,7 +217,7 @@ void to_json(nlohmann::json &j, const Company &c) {
                      {"debt", c.debt},
                      {"techs", c.knownTechnologies},
                      {"perks", c.activePerks},
-                     {"storage", c.storage},
+                     {"storage", c.inventory},
                      // Factory ID'leri stringe çevir
                      {"factories", nlohmann::json::array()}};
   for (const auto &fid : c.factories) {

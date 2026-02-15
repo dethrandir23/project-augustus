@@ -1,4 +1,6 @@
 #include "TradeNode.h"
+#include "World/Market.h"
+#include <unordered_set>
 // #include "Market.h" // Market hazır olunca açacağız
 
 TradeNode::TradeNode(const std::string& tId, uuids::uuid mId) 
@@ -31,7 +33,7 @@ size_t TradeNode::recruitWorkers(size_t count) {
     return available;
 }
 
-void TradeNode::tick(Market& market) {
+void TradeNode::tick(Market& market, Gamestate& gamestate) {
     // 1. Yerel Üretim (Tarla süren köylüler)
     runLocalProduction();
 
@@ -42,7 +44,7 @@ void TradeNode::tick(Market& market) {
     updateDemographics();
 
     // 4. Ticaret (Fazlalıkları Sat)
-    manageBudget(market);
+    manageBudget(market, gamestate);
 }
 
 void TradeNode::runLocalProduction() {
@@ -60,47 +62,72 @@ void TradeNode::runLocalProduction() {
     
     // Çıktıları depoya ekle
     for(const auto& item : result.producedItems) {
-        EconomyUtils::addToInventory(storage, item.id, item.quantity);
+        storage.add(item.id, item.quantity);
     }
 }
 
 void TradeNode::processConsumption(Market& market) {
     std::vector<PipelineData> needs;
+    
+    // 1. İhtiyaç Duyulan Pipeline'ları Yükle
+    // Aynı zamanda toplam ihtiyaç listesini çıkar (Alışveriş listesi için)
+    std::unordered_map<std::string, float> totalRequirements;
+
     for(const auto& pid : consumption_pipeline_ids) {
         if(PipelineManager::pipelines.count(pid)) {
-            needs.push_back(PipelineManager::pipelines.at(pid));
+            const auto& pipe = PipelineManager::pipelines.at(pid);
+            needs.push_back(pipe);
+
+            // Bu pipeline için gereken girdileri topla
+            for(const auto& input : pipe.inputs) {
+                totalRequirements[input.id] += input.quantity;
+            }
         }
     }
 
-    // TODO: Market'ten Eksikleri Satın Al (Market implemente edilince buraya gelecek)
-    // calculateDeficits() -> market.buy() -> addToStorage()
+    // 2. Eksikleri Belirle ve Marketten Al (Otomatik Tedarik)
+    std::vector<ItemStack> shoppingList;
+    
+    for (const auto& [reqId, reqQty] : totalRequirements) {
+        float currentStock = storage.getAmount(reqId);
+        if (currentStock < reqQty) {
+            // Depoda yeterince yok, eksik kadar al
+            float deficit = reqQty - currentStock;
+            shoppingList.push_back({reqId, deficit});
+        }
+    }
 
-    // Tüketimi gerçekleştir (Elimizde yemek varsa yenir, Happiness üretilir)
-    // Not: Tüketimde verimlilik olmaz, o yüzden 1.0
+    if (!shoppingList.empty()) {
+        // Market.h'daki buyItems fonksiyonunu çağırıyoruz
+        // Bu işlem paramız yettiği kadarını depoya ekler
+        market.buyItems(shoppingList, storage, capital);
+    }
+
+    // 3. Tüketimi Gerçekleştir
+    // EconomyUtils inputs/outputs işlemini yapar (Yeterli materyal varsa siler, çıktı üretir)
     auto result = EconomyUtils::processProduction(storage, needs, 1.0);
 
-    // Üretilen "Happiness" veya "Public Order" itemlarını topla
-    // Bunlar envantere girmez, hemen hesaplanır ve silinir.
+    // 4. Mutluluk Hesaplama
     float totalHappinessProduced = 0.0f;
     
     for(const auto& item : result.producedItems) {
-        if (item.id == "core_happiness_043") {
+        if (item.id == "core_happiness_043") { // ID'yi kendi projenin ID'sine göre ayarla
             totalHappinessProduced += item.quantity;
         }
-        // Diğer abstract itemlar (public order vs) burada işlenebilir
+        // Public Order vs burada işlenebilir
     }
 
-    // --- MUTLULUK HESABI ---
-    // Varsayalım ki her 100 kişi için 1 birim mutluluk (Happiness Item) gerekiyor.
-    // Bu oranlar dengelenebilir.
+    // Varsayalım ki her 100 kişi için 1 birim mutluluk gerekiyor
     float requiredHappiness = population * 0.01f; 
     
     if (requiredHappiness > 0) {
         happinessPercentage = std::clamp(totalHappinessProduced / requiredHappiness, 0.0f, 1.0f);
     } else {
-        happinessPercentage = 0.5f; // Nüfus yoksa nötr
+        happinessPercentage = 0.5f; 
     }
 }
+
+
 
 void TradeNode::updateDemographics() {
     // Mutluluk %50'nin üzerindeyse büyü, altındaysa küçül/göç ver.
@@ -122,11 +149,57 @@ void TradeNode::updateDemographics() {
     }
 }
 
-void TradeNode::manageBudget(Market& market) {
-    // TODO: Market implementasyonu sonrası burayı yazacağız.
-    // Logic: Abstract olmayan ve Tüketim için gerekli olmayan her şeyi sat.
-}
+// TradeNode.cpp
 
+// İmza değişikliği: Gamestate referansı lazım! 
+// (Header dosyasında da void manageBudget(Market& market, Gamestate& gamestate); yapmayı unutma)
+void TradeNode::manageBudget(Market& market, Gamestate& gamestate) {
+    
+    // 1. Kritik İhtiyaçları Belirle (Yedekle)
+    std::unordered_set<std::string> essentialItems;
+    for(const auto& pid : consumption_pipeline_ids) {
+        if(PipelineManager::pipelines.count(pid)) {
+            for(const auto& input : PipelineManager::pipelines.at(pid).inputs) {
+                essentialItems.insert(input.id);
+            }
+        }
+    }
+
+    // 2. Envanteri Gez ve Fazlalıkları Bul
+    const auto& currentInventory = storage.getAllItems();
+    
+    for (const auto& item : currentInventory) {
+        // Eğer bu ürün tüketim için gerekli değilse SAT
+        if (essentialItems.find(item.id) == essentialItems.end()) {
+            
+            if (item.quantity > 0.001f) {
+                // --- FİYAT BELİRLEME STRATEJİSİ (AI V1.0) ---
+                double basePrice = 1.0;
+                if (ItemManager::items.count(item.id)) {
+                    basePrice = ItemManager::items.at(item.id).base_price;
+                }
+                
+                // Strateji: Taban fiyatın %5 üstüne koy. (Kâr etmek istiyor)
+                // İstersen market.getPrice(item.id) kullanıp piyasaya göre de verebilirsin.
+                double askPrice = basePrice * 1.05; 
+
+                // --- EMİR OLUŞTUR ---
+                MarketOrder sellOrder(
+                    this->getId(),    // Satıcı: BEN (Node)
+                    item.id,          // Ürün
+                    OrderType::SELL,  // Tip
+                    askPrice,         // Fiyat
+                    item.quantity     // Miktar
+                );
+
+                // --- EMRİ GÖNDER ---
+                // Bu işlem "storage"dan malı anında düşecek (Escrow)
+                market.placeOrder(gamestate, sellOrder);
+            }
+        } 
+        // Kritik ürünler şimdilik cepte kalsın.
+    }
+}
 void to_json(nlohmann::json& j, const TradeNode& n) {
     j = nlohmann::json{
         {"id", uuids::to_string(n.id)},

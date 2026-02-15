@@ -8,12 +8,14 @@
 #include "../Registry/PipelineManager.h" 
 #include "../Registry/NameManager.h"
 #include "../Game/IdUtils.h"
+#include "Core/Inventory.h"
 #include <string>
 #include <vector>
 #include <algorithm>
 
 // Market forward declaration (Çünkü henüz Market.h'ı yenilemedik)
-class Market; 
+class Market;
+class Gamestate;
 
 class TradeNode {
 public:
@@ -21,7 +23,7 @@ public:
     TradeNode(const std::string& templateId, uuids::uuid marketId);
 
     // --- Core Gameplay Loop (Her Tur Çağrılır) ---
-    void tick(Market& market);
+    void tick(Market& market, Gamestate& gamestate);
 
     // --- Interaction ---
     /**
@@ -40,13 +42,14 @@ public:
     void setPopulation(size_t newPop) { population = newPop; }
     inline void addCapital(double amount) { capital += amount; }
     inline double getCapital() const { return capital; }
+    double& getCapitalRef() { return capital; }
     inline void removeCapital(double amount) { capital = (capital > amount) ? (capital - amount) : 0; }
     
     // YENİ: Mutluluk Yüzdesi (0.0 = İsyan, 1.0 = Cennet)
     float getHappinessPercentage() const { return happinessPercentage; }
     
     // Depo Erişim (Company ile aynı mantık)
-    std::vector<ItemStack>& getStorage() { return storage; }
+    Inventory& getStorage() { return storage; }
 
 
     // Serialization
@@ -57,7 +60,7 @@ private:
     void runLocalProduction();      // Köylülerin kendi üretimi
     void processConsumption(Market& market); // Tüketim ve İhtiyaç Giderme
     void updateDemographics();      // Nüfus artışı/azalışı
-    void manageBudget(Market& market); // Fazlalık satışı
+    void manageBudget(Market& market, Gamestate& gamestate); // Fazlalık satışı
 
     // --- Data ---
     uuids::uuid id;
@@ -74,7 +77,7 @@ private:
     double capital = 0.0;
     
     // Storage (Resource + Product + Abstract Items hepsi burada)
-    std::vector<ItemStack> storage;
+    Inventory storage;
     
     // Cache Lists (Template'den yüklenir)
     std::vector<std::string> local_pipeline_ids;

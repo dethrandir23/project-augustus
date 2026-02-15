@@ -4,6 +4,7 @@
 #include "../../lib/uuid/uuid.h"
 #include "../Core/Types.h"
 #include "../Registry/FactoryManager.h"
+#include "Core/Inventory.h"
 #include <string>
 #include <vector>
 
@@ -14,8 +15,8 @@ public:
     void produce(double globalModifiers = 1.0);
 
     void addInput(const std::string& itemId, float amount);
-    std::vector<ItemStack>& getInputs();
-    std::vector<ItemStack>& getOutputs(); 
+    Inventory& getInputStorage() { return inputStorage; }
+    Inventory& getOutputStorage() { return outputStorage; }
     
     std::vector<ItemStack> collectOutputs();
 
@@ -45,6 +46,6 @@ private:
 
     size_t employeeCount = 0;
     
-    std::vector<ItemStack> inputStorage;
-    std::vector<ItemStack> outputStorage;
+    Inventory inputStorage;
+    Inventory outputStorage;
 };

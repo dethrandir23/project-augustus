@@ -8,7 +8,9 @@
  */
 
 #pragma once
-#include "../../lib/nlohmann/json.hpp"
+#include "nlohmann/json.hpp"
+#include "uuid/uuid.h"
+#include "Game/IdUtils.h"
 #include <string>
 #include <utility>
 
@@ -61,6 +63,56 @@ struct ActivePerk {
       return perkId;
     }
 };
+
+enum class OrderType { BUY, SELL };
+
+// Bir Emir (Order) Neye Benzer?
+struct MarketOrder {
+    uuids::uuid id;         // Emrin benzersiz kimliği
+    uuids::uuid ownerId;    // Emri veren Şirket veya Node ID'si
+    std::string itemId;     // Hangi eşya?
+    OrderType type;         // Alış/Satış
+    double price;           // Limit Fiyat (Bundan kötü fiyata işlem yapmam)
+    float quantity;         // Toplam miktar
+    float filledQuantity;   // Ne kadarı gerçekleşti?
+    long timestamp;         // Zaman damgası (Önce gelen önce alır)
+
+    MarketOrder(uuids::uuid owner, std::string item, OrderType type, double price, float qty)
+        : ownerId(owner), itemId(item), type(type), price(price), quantity(qty) 
+    {
+        // Otomatik doldurulanlar:
+        this->id = IdUtils::generateUuid();
+        this->filledQuantity = 0.0f;
+        this->timestamp = std::time(nullptr); // Şu anki zaman
+    }
+
+    // Boş constructor (Serialization için lazım olabilir)
+    MarketOrder() = default;
+
+    // Helper: Tamamlandı mı?
+    bool isComplete() const { return filledQuantity >= quantity; }
+    // Helper: Kalan miktar
+    float remaining() const { return quantity - filledQuantity; }
+};
+
+// --- JSON Serialization ---
+NLOHMANN_JSON_SERIALIZE_ENUM( OrderType, {
+    {OrderType::BUY, "BUY"},
+    {OrderType::SELL, "SELL"},
+})
+
+inline void to_json(nlohmann::json& j, const MarketOrder& o) {
+    j = nlohmann::json{
+        {"id", uuids::to_string(o.id)},
+        {"ownerId", uuids::to_string(o.ownerId)},
+        {"itemId", o.itemId},
+        {"type", o.type},
+        {"price", o.price},
+        {"quantity", o.quantity},
+        {"filled", o.filledQuantity},
+        {"time", o.timestamp}
+    };
+}
 
 // 1. Position
 inline void to_json(nlohmann::json &j, const Position &p) {

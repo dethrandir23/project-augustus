@@ -2,6 +2,7 @@
 
 #include "../Core/Types.h"
 #include "../Registry/PipelineManager.h"
+#include "Core/Inventory.h"
 #include <string>
 #include <vector>
 
@@ -12,15 +13,9 @@ namespace EconomyUtils {
     };
 
     ProductionResult processProduction(
-        std::vector<ItemStack> &inventory, 
+        Inventory &inventory, 
         const std::vector<PipelineData> &pipelines, 
         double globalEfficiency = 1.0           
     );
-
-    void addToInventory(std::vector<ItemStack> &inventory, const std::string& itemId, float qty);
-
-    bool removeFromInventory(std::vector<ItemStack> &inventory, const std::string& itemId, float qty);
-
-    float getItemAmount(const std::vector<ItemStack> &inventory, const std::string& itemId);
 
 } // namespace EconomyUtils

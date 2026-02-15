@@ -5,11 +5,13 @@
 #include "../Core/Types.h"
 #include "../Registry/EconomyManager.h"
 #include "../World/TradeNode.h"
+#include "Core/Inventory.h"
 #include <string>
 #include <vector>
 
 // Forward Declaration
 class Gamestate;
+struct CompanyTemplate;
 
 class Company {
 public:
@@ -17,6 +19,8 @@ public:
   // Explicit ID ve Name constructorları
   Company(const uuids::uuid &id, const std::string &name)
       : id(id), name(name) {}
+
+  Company(const uuids::uuid &id, const CompanyTemplate &tmpl);
 
   // --- Core Properties ---
   void setName(const std::string &name) { this->name = name; }
@@ -29,6 +33,7 @@ public:
     capital = cap;
   } // double daha iyi (küsüratlı paralar için)
   double getCapital() const { return capital; }
+  double& getCapitalRef() { return capital; }
 
   void setDebt(double d) { debt = d; }
   double getDebt() const { return debt; }
@@ -55,7 +60,8 @@ public:
   // Artık hammadde/ürün ayrımı yok. Hepsi storage içinde.
   void addItem(const std::string &itemId, float amount);
   float getItemAmount(const std::string &itemId) const;
-  std::vector<ItemStack> &getStorage() { return storage; }
+Inventory& getInventory() { return inventory; }
+    const Inventory& getInventory() const { return inventory; }
 
   // --- Gameplay Logic ---
   // Bu fonksiyonlar Gamestate üzerinden fabrikalara erişecek
@@ -80,6 +86,11 @@ public:
 
   float calculateModifier(const std::string &modifierType, float baseValue);
 
+  Inventory &getStorage() { return inventory; }
+
+  bool buyFromMarket(Market& market, const std::vector<ItemStack>& shoppingList);
+
+
   // --- Serialization ---
   friend void to_json(nlohmann::json &j, const Company &c);
 
@@ -96,5 +107,5 @@ private:
   std::vector<ActivePerk> activePerks;
 
   std::vector<uuids::uuid> factories;
-  std::vector<ItemStack> storage; // Hem Resource hem Product burada
+  Inventory inventory;
 };
