@@ -1,9 +1,11 @@
 #include "InputHandler.h"
+#include "DevTools/Console.h"
 #include "Gamestate.h"
 #include "GameManager.h"
 #include "../Registry/FactoryManager.h"
 #include "../Economy/EconomyUtils.h"
 #include "Game/IdUtils.h"
+#include "World/Market.h"
 
 InputType InputHandler::stringToInputType(const std::string &str) {
     static const std::unordered_map<std::string, InputType> mapping = {
@@ -23,6 +25,7 @@ InputType InputHandler::stringToInputType(const std::string &str) {
 }
 
 bool InputHandler::handleInput(Gamestate &gamestate, const nlohmann::json &input) {
+
     try {
         if (!input.contains("type") || !input.contains("payload")) return false;
         
@@ -110,37 +113,77 @@ bool InputHandler::handleChangeWorkforce(Gamestate &gamestate, const nlohmann::j
 }
 
 bool InputHandler::handleMarketBuyItem(Gamestate &gamestate, const nlohmann::json &payload) {
+    // 1. Gerekli ID'leri ve Verileri Çek
+    // Eğer payload'da "ownerId" yoksa, varsayılan olarak Player ID'si kullanılır (Fallback)
+    uuids::uuid ownerId;
+    if (payload.contains("ownerId")) {
+        ownerId = uuids::uuid::from_string(payload.at("ownerId").get<std::string>()).value();
+    } else {
+        ownerId = gamestate.getPlayerCompanyId();
+    }
+
     uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
+    std::string itemId = payload.at("itemId").get<std::string>();
+    float amount = payload.at("amount").get<float>();
+    
+    // UI'dan fiyat gelmeli. Gelmiyorsa "Market Fiyatı" varsayılır (Bunu UI tarafında çözmek daha iyi)
+    // Şimdilik zorunlu tutalım:
+    double priceLimit = payload.at("price").get<double>(); 
+
+    // 2. Objeleri Bul
     Market* market = gamestate.getMarket(mId);
     if (!market) return false;
 
-    Company* player = gamestate.getCompany(gamestate.getPlayerCompanyId());
-    if (!player) return false;
+    // Not: Şirket veya Node olup olmadığını kontrol etmemize gerek yok, 
+    // Market::placeOrder içindeki 'getTrader' zaten bunu kontrol edip hata veriyor.
+    
+    // 3. Emri Oluştur (Constructor sayesinde tek satır)
+    MarketOrder order(
+        ownerId,
+        itemId,
+        OrderType::BUY,
+        priceLimit,
+        amount
+    );
 
-    ItemStack order = { payload.at("itemId").get<std::string>(), payload.at("amount").get<float>() };
-    double budget = player->getCapital();
+    // 4. Emri Markete İlet
+    // placeOrder void dönüyor ama içeride hata olursa konsola basıyor.
+    // Burada return true diyebiliriz çünkü emir başarıyla iletildi.
+    market->placeOrder(gamestate, order);
     
-    bool success = market->buyItems({order}, player->getStorage(), budget);
-    player->setCapital(budget); // Parayı güncelle
-    
-    return success;
+    return true; 
 }
 
 bool InputHandler::handleMarketSellItem(Gamestate &gamestate, const nlohmann::json &payload) {
+    // 1. Owner ID Çözümleme
+    uuids::uuid ownerId;
+    if (payload.contains("ownerId")) {
+        ownerId = uuids::uuid::from_string(payload.at("ownerId").get<std::string>()).value();
+    } else {
+        ownerId = gamestate.getPlayerCompanyId();
+    }
+
     uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
+    std::string itemId = payload.at("itemId").get<std::string>();
+    float amount = payload.at("amount").get<float>();
+    double priceLimit = payload.at("price").get<double>(); 
+
     Market* market = gamestate.getMarket(mId);
     if (!market) return false;
 
-    Company* player = gamestate.getCompany(gamestate.getPlayerCompanyId());
-    if (!player) return false;
+    // 2. Satış Emri Oluştur
+    MarketOrder order(
+        ownerId,
+        itemId,
+        OrderType::SELL,
+        priceLimit,
+        amount
+    );
 
-    ItemStack offer = { payload.at("itemId").get<std::string>(), payload.at("amount").get<float>() };
-    double budget = player->getCapital();
-
-    bool success = market->sellItems({offer}, player->getStorage(), budget);
-    player->setCapital(budget);
+    // 3. Markete İlet
+    market->placeOrder(gamestate, order);
     
-    return success;
+    return true;
 }
 
 bool InputHandler::handleAddMoney(Gamestate &gamestate, const nlohmann::json &payload) {
@@ -154,8 +197,10 @@ bool InputHandler::handleAddItem(Gamestate &gamestate, const nlohmann::json &pay
     Company* player = gamestate.getCompany(gamestate.getPlayerCompanyId());
     if (!player) return false;
     
-    EconomyUtils::addToInventory(player->getStorage(), 
-                                 payload.at("itemId").get<std::string>(), 
-                                 payload.at("amount").get<float>());
+    player->getStorage().add(
+        payload.at("itemId").get<std::string>(), 
+        payload.at("amount").get<float>()
+    );
+    
     return true;
 }

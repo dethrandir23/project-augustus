@@ -1,5 +1,6 @@
 #pragma once
 #include "../../lib/nlohmann/json.hpp"
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -7,9 +8,10 @@
 // Core Entities
 #include "../Economy/Company.h"
 #include "../Economy/Factory.h"
-#include "../World/Market.h"
 #include "../World/TradeNode.h"
 #include "../World/Map.h"
+#include "World/Market.h"
+#include "Game/EventHandler.h"
 #include "Game/IdUtils.h"
 
 // Managers (Data Registry)
@@ -40,12 +42,17 @@ public:
     int getCurrentYear() const { return currentYear; }
     int getCurrentMonth() const { return currentMonth; }
     int getCurrentDay() const { return currentDay; }
+    int getGameSpeed() const { return gameSpeed; }
+
+    // Setters
+    void setPlayerCompanyId(const uuids::uuid& id) { playerCompanyId = id; }
+    void setGameSpeed(int speed) { gameSpeed = speed; }
 
     // adders
-    void addFactory(const Factory& f) { factories.emplace(f.getId(), f); }
-    void addCompany(const Company& c) { companies.emplace(c.getId(), c); }
-    void addMarket(const Market& m) { markets.emplace(m.getId(), m); }
-    void addNode(const TradeNode& n) { nodes.emplace(n.getId(), n); }
+    void addFactory(const Factory& f);
+    void addCompany(const Company& c);
+    void addMarket(const Market& m);
+    void addNode(const TradeNode& n);
     
     // Container Access
     auto& getMarkets() { return markets; }
@@ -58,9 +65,23 @@ public:
     // Full Serialization Helper
     friend nlohmann::json serializeGamestate(const Gamestate& g);
 
+    EventHandler& getEventHandler() { return eventHandler; }
+    const EventHandler& getEventHandler() const { return eventHandler; }
+
+    inline std::optional<Company> getPlayerCompany() {
+        if (!companies.count(playerCompanyId))
+            return std::nullopt;
+        return companies[playerCompanyId];
+    }
+
+int gameSpeed = 1;
+bool paused = true;
+float accumulator = 0.0f;
+void togglePause() { paused = !paused; }
 private:
     int currentTurn = 0;
     int currentYear, currentMonth, currentDay;
+
 
     uuids::uuid playerCompanyId;
     std::unordered_map<uuids::uuid, Market> markets;
@@ -70,6 +91,7 @@ private:
 
     Map map;
 
-    // String ID (JSON'daki) -> Gerçek UUID (Engine'deki) eşleşmesi
     std::unordered_map<std::string, uuids::uuid> instanceIdToUUID;
+
+    EventHandler eventHandler;
 };

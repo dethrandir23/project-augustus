@@ -16,7 +16,7 @@ void GameManager::stepGamestate(Gamestate &gamestate) {
     for (auto& [id, node] : gamestate.getNodes()) {
         Market* m = gamestate.getMarket(node.getMarketId());
         if (m) {
-            node.tick(*m);
+            node.tick(*m, gamestate);
         }
     }
 
@@ -31,5 +31,21 @@ void GameManager::stepGamestate(Gamestate &gamestate) {
     for (auto& [id, company] : gamestate.getCompanies()) {
         // company.payWages();
         // company.payDebtInterest();
+    }
+
+    gamestate.getCompanies()[gamestate.getPlayerCompanyId()].addManpower(100);
+
+    gamestate.getEventHandler().tickEvents(gamestate);
+}
+
+void GameManager::update(Gamestate &gamestate, float deltaTime) {
+    if (gamestate.paused) return;
+
+    gamestate.accumulator += deltaTime;
+    float secondsPerTurn = 1.0f / static_cast<float>(gamestate.gameSpeed);
+
+    while (gamestate.accumulator >= secondsPerTurn) {
+        stepGamestate(gamestate);
+        gamestate.accumulator -= secondsPerTurn;
     }
 }

@@ -53,6 +53,9 @@ struct EventTemplate {
   size_t auto_handle_option_index;
   size_t max_steps_until_handle;
 
+  bool unique = false;
+  int cooldown = 0;
+
   std::vector<std::string> scope;
   std::vector<std::vector<Trigger>> triggerGroups;
   std::vector<Option> options;
@@ -75,8 +78,12 @@ public:
         e.auto_handle_option_index = entry.value("auto_handle_option_index", 0);
         e.max_steps_until_handle = entry.value("max_steps_until_handle", 0);
 
-        if(entry.contains("scope")) {
-            e.scope = entry.at("scope").get<std::vector<std::string>>();
+        // EventManager::load_from_json içinde:
+        e.unique = entry.value("unique", false);
+        e.cooldown = entry.value("cooldown", 0);
+
+        if (entry.contains("scope")) {
+          e.scope = entry.at("scope").get<std::vector<std::string>>();
         }
 
         if (entry.contains("triggers")) {

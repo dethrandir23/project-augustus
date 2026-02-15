@@ -1,3 +1,4 @@
+// GameManager.h
 #pragma once
 #include "Gamestate.h"
 
@@ -10,4 +11,6 @@ public:
      * Döngü: Date -> Companies -> Nodes -> Markets -> Financials
      */
     static void stepGamestate(Gamestate &gamestate);
+
+    static void update(Gamestate &gamestate, float deltaTime);
 };

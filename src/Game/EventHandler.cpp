@@ -61,6 +61,7 @@ void EventHandler::unsubscribe(int subscriptionId) {
 
 void EventHandler::tickEvents(Gamestate &gamestate) {
   // four steps
+  int currentTurn = gamestate.getCurrentTurn ();
 
   // 1: Push new events that their conditions meet
   for (const auto &pair : EventManager::events) {
@@ -70,6 +71,10 @@ void EventHandler::tickEvents(Gamestate &gamestate) {
     // (Bunun için ayrı bir kontrol eklenebilir ama şimdilik geçiyorum)
 
     bool shouldTrigger = false;
+
+    if (!canTrigger(pair.second.id, currentTurn)) {
+        continue; 
+    }
 
     // Trigger Groups Logic: (Group1 OR Group2 OR ...)
     for (const auto &group : tmpl.triggerGroups) {
@@ -90,7 +95,8 @@ void EventHandler::tickEvents(Gamestate &gamestate) {
     }
 
     if (shouldTrigger) {
-      this->pushEvent(tmpl.id);
+      pushEvent(tmpl.id);
+      recordTrigger(tmpl.id, currentTurn);
     }
   }
 
@@ -152,4 +158,24 @@ void EventHandler::popEvent(int eventId) {
                                     return event.id == eventId;
                                   }),
                    eventQueue.end());
+}
+
+bool EventHandler::canTrigger(const std::string& eventId, int currentTurn) {
+    if (EventManager::events.find(eventId) == EventManager::events.end()) return false;
+    
+    const auto& tmpl = EventManager::events.at(eventId);
+    
+    if (eventHistory.find(eventId) != eventHistory.end()) {
+        
+        if (tmpl.unique) return false;
+
+        int lastTurn = eventHistory[eventId];
+        if (currentTurn - lastTurn < tmpl.cooldown) return false;
+    }
+
+    return true;
+}
+
+void EventHandler::recordTrigger(const std::string& eventId, int currentTurn) {
+    eventHistory[eventId] = currentTurn;
 }

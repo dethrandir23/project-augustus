@@ -2,6 +2,7 @@
 
 #include "../../lib/nlohmann/json.hpp"
 #include "../Core/Types.h"
+#include "Registry/EventManager.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
