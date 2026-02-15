@@ -1,3 +1,4 @@
+// Console.cpp
 #include "Console.h"
 #include "../../lib/nlohmann/json.hpp"
 #include <ctime>
@@ -32,6 +33,17 @@ std::string logTypeToStr(LogType type) {
   }
 }
 
+LogType strToLogType(const std::string &str) {
+  if (str == "INFO")
+    return LogType::INFO;
+  if (str == "ERROR")
+    return LogType::ERROR;
+  if (str == "WARNING") {
+    return LogType::WARNING;
+  }
+  return LogType::INFO;
+}
+
 std::string Console::help() {
   // raw string
   std::string help = R"(
@@ -46,10 +58,10 @@ std::string Console::help() {
 
 void Console::logHelp() { Console::log(help(), LogType::INFO); }
 
-std::string Console::parseInput(const std::string &input) {
+nlohmann::json Console::parseInput(const std::string &input) {
   try {
     if (input.empty())
-      return "";
+      return nullptr;
 
     std::vector<std::string> tokens;
     std::string token;
@@ -59,7 +71,7 @@ std::string Console::parseInput(const std::string &input) {
     }
 
     if (tokens.empty())
-      return "";
+      return nullptr;
 
     std::string command = tokens[0];
     std::vector<std::string> args;
@@ -78,7 +90,7 @@ std::string Console::parseInput(const std::string &input) {
           if (amount >= 0) {
             j["type"] = "ADD_MONEY";
             j["payload"]["amount"] = amount;
-            return j.dump();
+            return j;
           } else {
             Console::log("Invalid amount: " + args[0], LogType::ERROR);
           }
@@ -97,7 +109,7 @@ std::string Console::parseInput(const std::string &input) {
           if (times >= 0) {
             j["type"] = "STEP_GAME";
             j["payload"]["times"] = times;
-            return j.dump();
+            return j;
           } else {
             Console::log("Invalid times: " + args[0], LogType::ERROR);
           }
@@ -108,15 +120,17 @@ std::string Console::parseInput(const std::string &input) {
         }
       }
 
+    } else if (command == "help") {
+      Console::logHelp();
     } else {
       Console::log("Unknown command: " + command, LogType::ERROR);
     }
 
   } catch (const std::exception &e) {
     Console::log(e.what(), LogType::ERROR);
-    return "";
+    return nullptr;
   }
-  return "";
+  return nullptr;
 }
 
 void Console::log(const std::string &s) {
