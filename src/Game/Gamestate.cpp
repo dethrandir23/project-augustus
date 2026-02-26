@@ -1,30 +1,59 @@
 #include "Gamestate.h"
-#include "World/Market.h"
-#include <iostream>
+#include "Economy/Components/WalletComponent.h"
+#include "Game/Entity/EntityFactory.h"
+#include "Game/Entity/EntityMarket.h"
+#include "Game/Entity/EntityTradeNode.h"
+#include "Game/Entity/EntityCompany.h"
+#include "Registry/ScenarioManager.h"
+#include "Registry/MapManager.h"
+#include "Registry/MarketManager.h"
+#include "Registry/TradeNodeManager.h"
+#include "Registry/CompanyManager.h"
+#include "World/Components/DemographicsComponent.h"
 
-// --- Entity Getters ---
-Factory* Gamestate::getFactory(const uuids::uuid& id) {
-    auto it = factories.find(id); return (it != factories.end()) ? &it->second : nullptr;
-}
-Company* Gamestate::getCompany(const uuids::uuid& id) {
-    auto it = companies.find(id); return (it != companies.end()) ? &it->second : nullptr;
-}
-Market* Gamestate::getMarket(const uuids::uuid& id) {
-    auto it = markets.find(id); return (it != markets.end()) ? &it->second : nullptr;
-}
-TradeNode* Gamestate::getTradeNode(const uuids::uuid& id) {
-    auto it = nodes.find(id); return (it != nodes.end()) ? &it->second : nullptr;
+// --- YENİ ENTITY SİSTEMİ ---
+void Gamestate::addEntity(Entity* entity) {
+    if (entity) {
+        entities[entity->GetId()] = entity;
+    }
 }
 
-void Gamestate::addFactory(const Factory& f) { factories.emplace(f.getId(), f); }
-void Gamestate::addCompany(const Company& c) { companies.emplace(c.getId(), c); }
-void Gamestate::addMarket(const Market& m) { markets.emplace(m.getId(), m); }
-void Gamestate::addNode(const TradeNode& n) { nodes.emplace(n.getId(), n); }
+Entity* Gamestate::getEntity(const uuids::uuid& id) {
+    auto it = entities.find(id);
+    return (it != entities.end()) ? it->second : nullptr;
+}
 
-// --- Date System ---
+void Gamestate::removeEntity(const uuids::uuid& id) {
+    auto it = entities.find(id);
+    if (it != entities.end()) {
+        delete it->second;
+        entities.erase(it);
+    }
+    
+}
+
+std::vector<Entity*> Gamestate::getEntitiesByType(const std::string& type) {
+    std::vector<Entity*> result;
+    for (const auto& [id, entity] : entities) {
+        if (entity->GetType() == type) {
+            result.push_back(entity);
+        }
+    }
+    return result;
+}
+
+void Gamestate::clear() {
+    for (auto& [id, entity] : entities) {
+        delete entity; 
+    }
+    entities.clear();
+    instanceIdToUUID.clear();
+    currentTurn = 0;
+}
+
+// --- ZAMAN SİSTEMİ ---
 void Gamestate::advanceDate() {
-    currentTurn++;
-    currentDay++;
+    currentTurn++; currentDay++;
     if (currentDay > 30) { currentDay = 1; currentMonth++; }
     if (currentMonth > 12) { currentMonth = 1; currentYear++; }
 }
@@ -33,131 +62,104 @@ std::string Gamestate::getDateString() const {
     return std::to_string(currentDay) + "/" + std::to_string(currentMonth) + "/" + std::to_string(currentYear);
 }
 
-void Gamestate::clear() {
-    markets.clear(); nodes.clear(); companies.clear(); factories.clear();
-    instanceIdToUUID.clear();
-    currentTurn = 0;
-}
+// --- SENARYO YÜKLEME ---
+bool Gamestate::loadScenario(const std::string& scenarioId) {
+    clear();
+    if (!ScenarioManager::scenarios.count(scenarioId)) return false;
+    const auto& scen = ScenarioManager::scenarios.at(scenarioId);
 
-    bool Gamestate::loadScenario(const std::string& scenarioId) {
-        clear();
+    // Tarih Yükleme...
+    if (!scen.start_date.empty()) {
+        int y, m, d;
+        if (sscanf(scen.start_date.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
+            currentYear = y; currentMonth = m; currentDay = d;
+        } else { currentYear = 1836; currentMonth = 1; currentDay = 1; }
+    }
 
-        if (!ScenarioManager::scenarios.count(scenarioId)) return false;
-        const auto& scen = ScenarioManager::scenarios.at(scenarioId);
+    if (!MapManager::maps.count(scen.map_id)) return false;
+    const auto& mapDef = MapManager::maps.at(scen.map_id);
 
-        if (!scen.start_date.empty()) {
-            int y, m, d;
-            // sscanf en hızlı yöntemdir bu format için
-            if (sscanf(scen.start_date.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
-                currentYear = y;
-                currentMonth = m;
-                currentDay = d;
-            } else {
-                // Format hatalıysa default
-                currentYear = 1836; currentMonth = 1; currentDay = 1;
-            }
-        } else {
-            currentYear = 1836; currentMonth = 1; currentDay = 1;
+    // 1. Marketleri Yarat
+    for (const auto& nodeDef : mapDef.nodes) {
+        std::string mStrId = nodeDef.default_market_id;
+        // Scenario override kontrolü (Eski kodun aynısı...)
+        for(const auto& nOver : scen.nodes) {
+            if(nOver.instance_id == nodeDef.instance_id && !nOver.market_id.empty())
+                mStrId = nOver.market_id;
         }
 
-        if (!MapManager::maps.count(scen.map_id)) return false;
-        const auto& mapDef = MapManager::maps.at(scen.map_id);
-
-        // 1. Marketleri Yarat (MarketManager + Scenario verisiyle)
-        for (const auto& nodeDef : mapDef.nodes) {
-            std::string mStrId = nodeDef.default_market_id;
+        if (instanceIdToUUID.find(mStrId) == instanceIdToUUID.end()) {
+            std::string mName = MarketManager::markets.count(mStrId) ? MarketManager::markets.at(mStrId).name : mStrId;
             
-            // Scenario override kontrolü
-            for(const auto& nOver : scen.nodes) {
-                if(nOver.instance_id == nodeDef.instance_id && !nOver.market_id.empty())
-                    mStrId = nOver.market_id;
-            }
-
-            if (instanceIdToUUID.find(mStrId) == instanceIdToUUID.end()) {
-                uuids::uuid mUUID = IdUtils::generateUuid();
-                // MarketManager'dan ismi çek, yoksa ID'yi kullan
-                std::string mName = mStrId;
-                if(MarketManager::markets.count(mStrId)) mName = MarketManager::markets.at(mStrId).name;
-
-                markets.emplace(mUUID, Market(mUUID, mName));
-                instanceIdToUUID[mStrId] = mUUID;
-            }
+            // YENİ SİSTEM: createMarket kullanıyoruz
+            Entity* newMarket = createMarket(mName, mStrId); 
+            addEntity(newMarket);
+            instanceIdToUUID[mStrId] = newMarket->GetId();
         }
+    }
 
-        // 2. TradeNode'ları Yarat
-        for (const auto& nodeDef : mapDef.nodes) {
-            std::string mStrId = nodeDef.default_market_id;
-            // (Scenario override logic burada da çalışır...)
-            uuids::uuid mUUID = instanceIdToUUID[mStrId];
+    // 2. Şehirleri (TradeNode) Yarat
+    for (const auto& nodeDef : mapDef.nodes) {
+        std::string mStrId = nodeDef.default_market_id;
+        uuids::uuid mUUID = instanceIdToUUID[mStrId]; // Market'in ID'si
 
-            TradeNode newNode(nodeDef.template_id, mUUID);
-            newNode.setName(nodeDef.name);
+        if (TradeNodeManager::templates.count(nodeDef.template_id)) {
+            const auto& tmpl = TradeNodeManager::templates.at(nodeDef.template_id);
+            
+            // YENİ SİSTEM: createTradeNode kullanıyoruz
+            Entity* newNode = createTradeNode(tmpl, mUUID);
+            newNode->SetName(nodeDef.name);
 
-            // Senaryo Özelleştirmeleri
+            // Senaryo override'ları (Nüfus vb.)
             for(const auto& nOver : scen.nodes) {
                 if(nOver.instance_id == nodeDef.instance_id) {
-                    if (nOver.population_override > 0) newNode.setPopulation(nOver.population_override);
-                    
-                    // EKSTRA PIPELINES (İstediğin özellik kanka!)
+                    if (nOver.population_override > 0) {
+                        newNode->GetComponent<DemographicsComponent>("DemographicsComponent")->population = nOver.population_override;
+                    }
                     for(const auto& pipeId : nOver.extra_pipelines) {
-                        newNode.getStorage().add(pipeId, 0.0f);
+                        newNode->GetComponent<InventoryComponent>("Storage")->Add(pipeId, 0.0f);
                     }
                 }
             }
 
-            nodes.emplace(newNode.getId(), newNode);
-            instanceIdToUUID[nodeDef.instance_id] = newNode.getId();
-            markets.at(mUUID).addNode(newNode.getId());
+            addEntity(newNode);
+            instanceIdToUUID[nodeDef.instance_id] = newNode->GetId();
         }
+    }
 
-        // 3. Şirketleri Yarat (CompanyManager Template Sistemiyle)
-        for (const auto& compDef : scen.companies) {
-            uuids::uuid cUUID = IdUtils::generateUuid();
+    // 3. Şirketleri Yarat
+    for (const auto& compDef : scen.companies) {
+        if (CompanyManager::templates.count(compDef.template_id)) {
+            const auto& tmpl = CompanyManager::templates.at(compDef.template_id);
             
-            // Şablonu (Template) kullanıyoruz!
-            Company newComp;
-            if (CompanyManager::templates.count(compDef.template_id)) {
-                const auto& tmpl = CompanyManager::templates.at(compDef.template_id);
-                newComp = Company(cUUID, compDef.name_override.empty() ? "Company" : compDef.name_override);
-                newComp.setCapital(compDef.start_capital > 0 ? compDef.start_capital : tmpl.start_capital);
-                newComp.setManpower(tmpl.start_manpower);
-                // Başlangıç teknolojileri ve perkleri ekle
-                newComp.knownTechnologies = tmpl.start_techs;
-                for(const auto& pId : tmpl.start_perks) newComp.addPerk(pId);
-            } else {
-                // Şablon yoksa düz şirket yarat
-                newComp = Company(cUUID, compDef.name_override);
-                newComp.setCapital(compDef.start_capital);
+            // YENİ SİSTEM: createCompany kullanıyoruz
+            Entity* newComp = createCompany(tmpl, compDef.name_override);
+
+            if (compDef.start_capital > 0) {
+                newComp->GetComponent<WalletComponent>("WalletComponent")->balance = compDef.start_capital;
             }
 
-            companies.emplace(cUUID, newComp);
-            instanceIdToUUID[compDef.instance_id] = cUUID;
-
+            addEntity(newComp);
+            instanceIdToUUID[compDef.instance_id] = newComp->GetId();
         }
-
-        return true;
     }
 
-template <typename T>
-nlohmann::json mapToJson(const std::unordered_map<uuids::uuid, T>& map) {
-    nlohmann::json j = nlohmann::json::object();
-    for (const auto& [id, item] : map) {
-        j[uuids::to_string(id)] = item; 
-    }
-    return j;
+    return true;
 }
 
+// --- SERİLEŞTİRME (Kısacık oldu!) ---
 nlohmann::json serializeGamestate(const Gamestate& g) {
     nlohmann::json j;
-
     j["turn"] = g.currentTurn;
     j["date"] = g.getDateString();
     j["player_id"] = uuids::to_string(g.playerCompanyId);
     
-    j["markets"] = mapToJson(g.markets);
-    j["nodes"] = mapToJson(g.nodes);
-    j["companies"] = mapToJson(g.companies);
-    j["factories"] = mapToJson(g.factories);
+    // Sadece entityleri dön, hepsi kendi 'to_json'unu biliyor!
+    j["entities"] = nlohmann::json::array();
+    for (const auto& [id, entity] : g.entities) {
+        nlohmann::json ej = *entity; // Entity::to_json çalışır
+        j["entities"].push_back(ej);
+    }
 
     return j;
 }

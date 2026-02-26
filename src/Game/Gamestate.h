@@ -1,94 +1,74 @@
 #pragma once
-#include "../../lib/nlohmann/json.hpp"
+#include "World/Map.h"
+#include "nlohmann/json.hpp"
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-// Core Entities
-#include "../Economy/Company.h"
-#include "../Economy/Factory.h"
-#include "../World/TradeNode.h"
-#include "../World/Map.h"
-#include "World/Market.h"
+#include "Core/ECS/Entity.h"
 #include "Game/EventHandler.h"
 #include "Game/IdUtils.h"
-
-// Managers (Data Registry)
-#include "../Registry/ScenarioManager.h"
-#include "../Registry/MapManager.h"
-#include "../Registry/TradeNodeManager.h"
-#include "../Registry/CompanyManager.h" // Şirket şablonları için
-#include "../Registry/MarketManager.h"  // Market tanımları için
 
 class Gamestate {
 public:
     Gamestate() = default;
+    ~Gamestate() { clear(); } // ÖNEMLİ: Kapanırken entityleri RAM'den siler
 
     bool loadScenario(const std::string& scenarioId);
     void advanceDate();
     std::string getDateString() const;
 
-    // Entity Retrieval
-    Factory* getFactory(const uuids::uuid& id);
-    Company* getCompany(const uuids::uuid& id);
-    Market* getMarket(const uuids::uuid& id);
-    TradeNode* getTradeNode(const uuids::uuid& id);
+    // --- YENİ ECS ENTITY YÖNETİMİ ---
+    void addEntity(Entity* entity);
+    Entity* getEntity(const uuids::uuid& id);
+    void removeEntity(const uuids::uuid& id);
+    
+    // Tüm entityleri (System'ler için) döndürür
+    const std::unordered_map<uuids::uuid, Entity*>& getEntities() const { return entities; }
 
-    // Getters
+    // Sadece belirli bir türdeki (örn: "company") entityleri getirir
+    std::vector<Entity*> getEntitiesByType(const std::string& type);
+
+    // --- Core Getters / Setters ---
     uuids::uuid getPlayerCompanyId() const { return playerCompanyId; }
-    Map& getMap() { return map; }
+    void setPlayerCompanyId(const uuids::uuid& id) { playerCompanyId = id; }
+    
     int getCurrentTurn() const { return currentTurn; }
     int getCurrentYear() const { return currentYear; }
     int getCurrentMonth() const { return currentMonth; }
     int getCurrentDay() const { return currentDay; }
-    int getGameSpeed() const { return gameSpeed; }
 
-    // Setters
-    void setPlayerCompanyId(const uuids::uuid& id) { playerCompanyId = id; }
+    int getGameSpeed() const { return gameSpeed; }
     void setGameSpeed(int speed) { gameSpeed = speed; }
 
-    // adders
-    void addFactory(const Factory& f);
-    void addCompany(const Company& c);
-    void addMarket(const Market& m);
-    void addNode(const TradeNode& n);
-    
-    // Container Access
-    auto& getMarkets() { return markets; }
-    auto& getNodes() { return nodes; }
-    auto& getCompanies() { return companies; }
-    auto& getFactories() { return factories; }
+    Map& getMap() { return map; }
+    const Map& getMap() const { return map; }
 
     void clear();
 
-    // Full Serialization Helper
     friend nlohmann::json serializeGamestate(const Gamestate& g);
 
     EventHandler& getEventHandler() { return eventHandler; }
-    const EventHandler& getEventHandler() const { return eventHandler; }
 
-    inline std::optional<Company> getPlayerCompany() {
-        if (!companies.count(playerCompanyId))
-            return std::nullopt;
-        return companies[playerCompanyId];
+    // Player Company artık bir Entity* dönüyor
+    Entity* getPlayerCompany() {
+        return getEntity(playerCompanyId);
     }
 
-int gameSpeed = 1;
-bool paused = true;
-float accumulator = 0.0f;
-void togglePause() { paused = !paused; }
+    int gameSpeed = 1;
+    bool paused = true;
+    float accumulator = 0.0f;
+    void togglePause() { paused = !paused; }
+
 private:
     int currentTurn = 0;
-    int currentYear, currentMonth, currentDay;
-
+    int currentYear = 1836, currentMonth = 1, currentDay = 1;
 
     uuids::uuid playerCompanyId;
-    std::unordered_map<uuids::uuid, Market> markets;
-    std::unordered_map<uuids::uuid, TradeNode> nodes;
-    std::unordered_map<uuids::uuid, Company> companies;
-    std::unordered_map<uuids::uuid, Factory> factories;
 
+    // --- İŞTE O TEK LİSTE (THE MASTER LIST) ---
+    std::unordered_map<uuids::uuid, Entity*> entities;
     Map map;
 
     std::unordered_map<std::string, uuids::uuid> instanceIdToUUID;
