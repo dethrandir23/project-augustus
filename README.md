@@ -1,4 +1,8 @@
-# PROJECT TRADEFALL
+# PROJECT AUGUSTUS
+
+🌐 [English](README.md) | [Türkçe](docs/README-tr.md)
+
+---
 
 ## Game Concept
 
