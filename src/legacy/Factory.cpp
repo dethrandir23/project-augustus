@@ -126,7 +126,6 @@ std::vector<ItemStack> Factory::getMissingInputs() const {
                 for(auto& m : missing) {
                     if(m.id == input.id) { m.quantity += (needed - currentQty); found = true; break; }
                 }
-                if(!found) missing.push_back({input.id, needed - currentQty});
             }
         }
     }

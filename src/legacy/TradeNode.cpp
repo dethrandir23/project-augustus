@@ -153,6 +153,10 @@ void TradeNode::updateDemographics() {
 
 // İmza değişikliği: Gamestate referansı lazım! 
 // (Header dosyasında da void manageBudget(Market& market, Gamestate& gamestate); yapmayı unutma)
+// TradeNode.cpp
+
+// İmza değişikliği: Gamestate referansı lazım! 
+// (Header dosyasında da void manageBudget(Market& market, Gamestate& gamestate); yapmayı unutma)
 void TradeNode::manageBudget(Market& market, Gamestate& gamestate) {
     
     // 1. Kritik İhtiyaçları Belirle (Yedekle)

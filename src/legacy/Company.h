@@ -5,7 +5,9 @@
 #include "../Core/Types.h"
 #include "../Registry/EconomyManager.h"
 #include "../World/TradeNode.h"
+#include "Core/ECS/Entity.h"
 #include "Core/Inventory.h"
+#include "Registry/CompanyManager.h"
 #include <string>
 #include <vector>
 
