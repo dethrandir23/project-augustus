@@ -1,206 +1,181 @@
 #include "InputHandler.h"
-#include "DevTools/Console.h"
-#include "Gamestate.h"
 #include "GameManager.h"
-#include "../Registry/FactoryManager.h"
-#include "../Economy/EconomyUtils.h"
-#include "Game/IdUtils.h"
-#include "World/Market.h"
+#include "Entity/EntityFactory.h" // createFactory için
+#include "World/Systems/MarketSystem.h" // placeOrder için
+#include "Core/Components/InventoryComponent.h"
+#include "Economy/Components/WalletComponent.h"
+#include "Economy/Components/AssetOwnerComponent.h"
+#include "Economy/Components/WorkforceComponent.h"
+#include "DevTools/Console.h"
+#include <iostream>
 
-InputType InputHandler::stringToInputType(const std::string &str) {
-    static const std::unordered_map<std::string, InputType> mapping = {
-        {"STEP_GAME", InputType::STEP_GAME},
-        {"RESET_GAME", InputType::RESET_GAME},
-        {"BUILD_FACTORY", InputType::BUILD_FACTORY},
-        {"SCRAP_FACTORY", InputType::SCRAP_FACTORY},
-        {"RENAME_FACTORY", InputType::RENAME_FACTORY},
-        {"CHANGE_WORKFORCE", InputType::CHANGE_WORKFORCE},
-        {"MARKET_BUY_ITEM", InputType::MARKET_BUY_ITEM},
-        {"MARKET_SELL_ITEM", InputType::MARKET_SELL_ITEM},
-        {"ADD_MONEY", InputType::ADD_MONEY},
-        {"ADD_ITEM", InputType::ADD_ITEM}
-    };
-    auto it = mapping.find(str);
-    return (it != mapping.end()) ? it->second : InputType::UNKNOWN;
+// Statik değişkeni tanımlama
+std::unordered_map<std::string, InputHandler::ActionCallback> InputHandler::actionRegistry;
+
+void InputHandler::registerAction(const std::string& actionName, ActionCallback callback) {
+    actionRegistry[actionName] = callback;
 }
 
-bool InputHandler::handleInput(Gamestate &gamestate, const nlohmann::json &input) {
-
+bool InputHandler::handleInput(Gamestate& gamestate, const nlohmann::json& input) {
     try {
         if (!input.contains("type") || !input.contains("payload")) return false;
         
-        InputType type = stringToInputType(input.at("type").get<std::string>());
+        std::string type = input.at("type").get<std::string>();
         const auto& payload = input.at("payload");
 
-        switch (type) {
-            case InputType::STEP_GAME:       return handleStepGame(gamestate, payload);
-            case InputType::BUILD_FACTORY:    return handleBuildFactory(gamestate, payload);
-            case InputType::SCRAP_FACTORY:    return handleScrapFactory(gamestate, payload);
-            case InputType::RENAME_FACTORY:   return handleRenameFactory(gamestate, payload);
-            case InputType::CHANGE_WORKFORCE: return handleChangeWorkforce(gamestate, payload);
-            case InputType::MARKET_BUY_ITEM:  return handleMarketBuyItem(gamestate, payload);
-            case InputType::MARKET_SELL_ITEM: return handleMarketSellItem(gamestate, payload);
-            case InputType::ADD_MONEY:        return handleAddMoney(gamestate, payload);
-            case InputType::ADD_ITEM:         return handleAddItem(gamestate, payload);
-            default: return false;
+        // Komut sözlükte var mı bak
+        auto it = actionRegistry.find(type);
+        if (it != actionRegistry.end()) {
+            // Varsa fonksiyonu çalıştır
+            return it->second(gamestate, payload);
+        } else {
+            std::cout << "Bilinmeyen Komut: " << type << std::endl;
+            return false;
         }
-    } catch (...) { return false; }
-}
-
-// --- İşleyiciler ---
-
-bool InputHandler::handleStepGame(Gamestate &gamestate, const nlohmann::json &payload) {
-    size_t times = payload.value("times", 1);
-    for (size_t i = 0; i < times; ++i) {
-        GameManager::stepGamestate(gamestate);
+    } catch (...) { 
+        return false; 
     }
-    return true;
 }
 
-bool InputHandler::handleBuildFactory(Gamestate &gamestate, const nlohmann::json &payload) {
-    std::string templateId = payload.at("templateId").get<std::string>();
-    
-    if (!FactoryManager::factories.count(templateId)) return false;
-
-    uuids::uuid playerId = gamestate.getPlayerCompanyId();
-    Company* player = gamestate.getCompany(playerId);
-    if (!player) return false;
-
-    // Fabrika oluştur ve kaydet
-    Factory newFactory(templateId, playerId);
-    if (payload.contains("customName")) newFactory.setName(payload.at("customName"));
-
-    uuids::uuid fId = newFactory.getId();
-    gamestate.addFactory(newFactory); // Gamestate map'ine ekle
-    player->addFactory(fId);          // Şirkete bağla
-    
-    return true;
-}
-
-bool InputHandler::handleScrapFactory(Gamestate &gamestate, const nlohmann::json &payload) {
-    uuids::uuid fId = uuids::uuid::from_string(payload.at("factoryId").get<std::string>()).value();
-    Factory* f = gamestate.getFactory(fId);
-    if (!f) return false;
-
-    Company* owner = gamestate.getCompany(f->getOwnerId());
-    if (owner) owner->removeFactoryRef(fId);
-
-    // Gamestate'ten tamamen sil (C++ map erase)
-    gamestate.getFactories().erase(fId);
-    return true;
-}
-
-bool InputHandler::handleRenameFactory(Gamestate &gamestate, const nlohmann::json &payload) {
-    uuids::uuid fId = uuids::uuid::from_string(payload.at("factoryId").get<std::string>()).value();
-    Factory* f = gamestate.getFactory(fId);
-    if (!f) return false;
-
-    f->setName(payload.at("newName"));
-    return true;
-}
-
-bool InputHandler::handleChangeWorkforce(Gamestate &gamestate, const nlohmann::json &payload) {
-    uuids::uuid fId = uuids::uuid::from_string(payload.at("factoryId").get<std::string>()).value();
-    int delta = payload.at("delta").get<int>(); // +10 veya -5
-    
-    Factory* f = gamestate.getFactory(fId);
-    if (!f) return false;
-
-    if (delta > 0) f->addEmployees(static_cast<size_t>(delta));
-    else f->setEmployeeCount(f->getEmployeeCount() > abs(delta) ? f->getEmployeeCount() - abs(delta) : 0);
-    
-    return true;
-}
-
-bool InputHandler::handleMarketBuyItem(Gamestate &gamestate, const nlohmann::json &payload) {
-    // 1. Gerekli ID'leri ve Verileri Çek
-    // Eğer payload'da "ownerId" yoksa, varsayılan olarak Player ID'si kullanılır (Fallback)
-    uuids::uuid ownerId;
-    if (payload.contains("ownerId")) {
-        ownerId = uuids::uuid::from_string(payload.at("ownerId").get<std::string>()).value();
-    } else {
-        ownerId = gamestate.getPlayerCompanyId();
+// --- YARDIMCI FONKSİYONLAR ---
+uuids::uuid getTargetCompanyId(Gamestate& gamestate, const nlohmann::json& payload) {
+    if (payload.contains("companyId")) {
+        return uuids::uuid::from_string(payload.at("companyId").get<std::string>()).value();
     }
-
-    uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
-    std::string itemId = payload.at("itemId").get<std::string>();
-    float amount = payload.at("amount").get<float>();
-    
-    // UI'dan fiyat gelmeli. Gelmiyorsa "Market Fiyatı" varsayılır (Bunu UI tarafında çözmek daha iyi)
-    // Şimdilik zorunlu tutalım:
-    double priceLimit = payload.at("price").get<double>(); 
-
-    // 2. Objeleri Bul
-    Market* market = gamestate.getMarket(mId);
-    if (!market) return false;
-
-    // Not: Şirket veya Node olup olmadığını kontrol etmemize gerek yok, 
-    // Market::placeOrder içindeki 'getTrader' zaten bunu kontrol edip hata veriyor.
-    
-    // 3. Emri Oluştur (Constructor sayesinde tek satır)
-    MarketOrder order(
-        ownerId,
-        itemId,
-        OrderType::BUY,
-        priceLimit,
-        amount
-    );
-
-    // 4. Emri Markete İlet
-    // placeOrder void dönüyor ama içeride hata olursa konsola basıyor.
-    // Burada return true diyebiliriz çünkü emir başarıyla iletildi.
-    market->placeOrder(gamestate, order);
-    
-    return true; 
+    return gamestate.getPlayerCompanyId();
 }
 
-bool InputHandler::handleMarketSellItem(Gamestate &gamestate, const nlohmann::json &payload) {
-    // 1. Owner ID Çözümleme
-    uuids::uuid ownerId;
-    if (payload.contains("ownerId")) {
-        ownerId = uuids::uuid::from_string(payload.at("ownerId").get<std::string>()).value();
-    } else {
-        ownerId = gamestate.getPlayerCompanyId();
-    }
+// --- KOMUTLARIN KAYDEDİLMESİ (INIT) ---
+// Motor başlarken bu fonksiyon 1 kere çağrılacak.
+void InputHandler::init() {
 
-    uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
-    std::string itemId = payload.at("itemId").get<std::string>();
-    float amount = payload.at("amount").get<float>();
-    double priceLimit = payload.at("price").get<double>(); 
+    // 1. STEP_GAME
+    registerAction("STEP_GAME", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        size_t times = payload.value("times", 1);
+        for (size_t i = 0; i < times; ++i) {
+            GameManager::tick(gamestate); // stepGamestate -> tick oldu
+        }
+        return true;
+    });
 
-    Market* market = gamestate.getMarket(mId);
-    if (!market) return false;
+    // 2. ADD_MONEY (ECS Mantığıyla)
+    registerAction("ADD_MONEY", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        uuids::uuid targetId = getTargetCompanyId(gamestate, payload);
+        Entity* company = gamestate.getEntity(targetId);
+        if (!company) return false;
 
-    // 2. Satış Emri Oluştur
-    MarketOrder order(
-        ownerId,
-        itemId,
-        OrderType::SELL,
-        priceLimit,
-        amount
-    );
+        auto* wallet = company->GetComponent<WalletComponent>("WalletComponent");
+        if (wallet) {
+            wallet->addMoney(payload.at("amount").get<double>());
+            return true;
+        }
+        return false;
+    });
 
-    // 3. Markete İlet
-    market->placeOrder(gamestate, order);
+    // 3. ADD_ITEM (ECS Mantığıyla)
+    registerAction("ADD_ITEM", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        uuids::uuid targetId = getTargetCompanyId(gamestate, payload);
+        Entity* company = gamestate.getEntity(targetId);
+        if (!company) return false;
+
+        auto* storage = company->GetComponent<InventoryComponent>("MainStorage");
+        if (storage) {
+            storage->Add(payload.at("itemId").get<std::string>(), payload.at("amount").get<float>());
+            return true;
+        }
+        return false;
+    });
+
+    // 4. BUILD_FACTORY (ECS Mantığıyla)
+    registerAction("BUILD_FACTORY", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        std::string templateId = payload.at("templateId").get<std::string>();
+        
+        if (!FactoryManager::factories.count(templateId)) return false;
+        const auto& fData = FactoryManager::factories.at(templateId);
+
+        uuids::uuid ownerId = getTargetCompanyId(gamestate, payload);
+        Entity* ownerCompany = gamestate.getEntity(ownerId);
+        if (!ownerCompany) return false;
+
+        auto* wallet = ownerCompany->GetComponent<WalletComponent>("WalletComponent");
+        auto* assets = ownerCompany->GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+        
+        if (!wallet || !assets) return false;
+
+        // Maliyet kontrolü buraya eklenebilir
+        // if (!wallet->trySpend(fData.buildCost)) return false;
+
+        std::string customName = payload.value("customName", "");
+        
+        // Factory Yarat (Demin yazdığımız Builder/Factory metodu)
+        //Entity* newFactory = EntityBuilder::createFactory(fData, ownerId, customName); // pointer döndürdüğünü varsaydım
+        Entity* newFactory = createFactory(fData, ownerId, customName);
+
+        // Gamestate'e kaydet
+        gamestate.addEntity(newFactory);
+        
+        // Şirketin varlıklarına ekle
+        assets->addAsset(newFactory->GetId());
+
+        return true;
+    });
+
+    // 5. SCRAP_FACTORY (ECS Mantığıyla)
+    registerAction("SCRAP_FACTORY", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        uuids::uuid fId = uuids::uuid::from_string(payload.at("factoryId").get<std::string>()).value();
+        Entity* factory = gamestate.getEntity(fId);
+        if (!factory) return false;
+
+        // Sahibini bulup listesinden çıkaralım
+        auto* ownerComp = factory->GetComponent<OwnerComponent>("OwnerComponent");
+        if (ownerComp) {
+            Entity* owner = gamestate.getEntity(ownerComp->getOwnerId());
+            if (owner) {
+                auto* assets = owner->GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+                if (assets) assets->removeAsset(fId);
+            }
+        }
+
+        // Gamestate'ten tamamen sil
+        // Not: std::unordered_map'ten silmek için Gamestate'e bir removeEntity(uuid) metodu eklemelisin.
+        gamestate.removeEntity(fId); 
+        return true;
+    });
+
+    // 6. MARKET_BUY_ITEM (Yeni MarketSystem ile)
+    registerAction("MARKET_BUY_ITEM", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        uuids::uuid ownerId = getTargetCompanyId(gamestate, payload);
+        uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
+        
+        MarketOrder order(
+            ownerId,
+            payload.at("itemId").get<std::string>(),
+            OrderType::BUY,
+            payload.at("price").get<double>(),
+            payload.at("amount").get<float>()
+        );
+
+        MarketSystem::placeOrder(gamestate, mId, order);
+        return true;
+    });
+
+    // 7. MARKET_SELL_ITEM (Yeni MarketSystem ile)
+    registerAction("MARKET_SELL_ITEM", [](Gamestate& gamestate, const nlohmann::json& payload) {
+        uuids::uuid ownerId = getTargetCompanyId(gamestate, payload);
+        uuids::uuid mId = uuids::uuid::from_string(payload.at("marketId").get<std::string>()).value();
+        
+        MarketOrder order(
+            ownerId,
+            payload.at("itemId").get<std::string>(),
+            OrderType::SELL,
+            payload.at("price").get<double>(),
+            payload.at("amount").get<float>()
+        );
+
+        MarketSystem::placeOrder(gamestate, mId, order);
+        return true;
+    });
     
-    return true;
-}
-
-bool InputHandler::handleAddMoney(Gamestate &gamestate, const nlohmann::json &payload) {
-    Company* player = gamestate.getCompany(gamestate.getPlayerCompanyId());
-    if (!player) return false;
-    player->setCapital(player->getCapital() + payload.at("amount").get<double>());
-    return true;
-}
-
-bool InputHandler::handleAddItem(Gamestate &gamestate, const nlohmann::json &payload) {
-    Company* player = gamestate.getCompany(gamestate.getPlayerCompanyId());
-    if (!player) return false;
-    
-    player->getStorage().add(
-        payload.at("itemId").get<std::string>(), 
-        payload.at("amount").get<float>()
-    );
-    
-    return true;
+    // Diğerleri RENAME_FACTORY, CHANGE_WORKFORCE...
+    // Onları da benzer mantıkla (Entity üzerinden component çekerek) buraya eklersin.
 }
