@@ -19,6 +19,7 @@ struct CompanyTemplate {
     std::vector<std::string> start_techs;
     std::vector<ItemStack> start_inventory;
     std::vector<std::string> start_perks;
+    // TODO: add start factories
 };
 
 class CompanyManager {
