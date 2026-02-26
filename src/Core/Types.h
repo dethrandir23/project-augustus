@@ -55,6 +55,25 @@ inline void from_json(const nlohmann::json& j, GameEffect& e) {
     e.mode = j.value("mode", "additive");
 }
 
+struct Location {
+    double x = 0;
+    double y = 0;
+
+    Location(double x, double y) : x(x), y(y) {}
+    Location() = default;
+
+    bool operator==(const Location& other) const {
+        return x == other.x && y == other.y;
+    }
+};
+
+struct LocationHash {
+    std::size_t operator()(const Location& loc) const {
+        return std::hash<double>()(loc.x) ^ (std::hash<double>()(loc.y) << 1);
+    }
+
+};
+
 struct ActivePerk {
     std::string perkId;
     int remainingDuration; // -1 never ends
