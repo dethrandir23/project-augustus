@@ -37,13 +37,18 @@
 #include "../Registry/TradeNodeManager.h"
 
 namespace GameApi {
- Gamestate globalGamestate;
+ Gamestate* globalGamestate = nullptr;
  GameLoader loader;  
 /**
  * @brief Initializes the engine and registers all JSON handlers.
  * @details Call this ONCE at the start of the application.
  */
 void initEngine() {
+
+  if (!globalGamestate) {
+      globalGamestate = new Gamestate();
+  }
+
   // 1. Basic Economy & Items
   loader.RegisterHandler("ITEM_DEFINITIONS",
                          [](const nlohmann::json &j, const std::string &src) {

@@ -39,7 +39,7 @@
 namespace GameApi {
 
 // Singleton Instances
-extern Gamestate globalGamestate;
+extern Gamestate* globalGamestate;
 extern GameLoader loader;
 
 /**
