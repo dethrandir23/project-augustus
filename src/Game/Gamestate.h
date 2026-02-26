@@ -1,11 +1,10 @@
 #pragma once
-#include "World/Map.h"
-#include "nlohmann/json.hpp"
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+#include "nlohmann/json.hpp"
+#include "World/Map.h"
 #include "Core/ECS/Entity.h"
 #include "Game/EventHandler.h"
 #include "Game/IdUtils.h"
@@ -67,7 +66,6 @@ private:
 
     uuids::uuid playerCompanyId;
 
-    // --- İŞTE O TEK LİSTE (THE MASTER LIST) ---
     std::unordered_map<uuids::uuid, Entity*> entities;
     Map map;
 
