@@ -4,13 +4,20 @@
 
 class GameManager {
 public:
-    GameManager() = delete;
+    GameManager() = delete; // Statik class
 
     /**
-     * @brief Simülasyonu 1 tur ilerletir.
-     * Döngü: Date -> Companies -> Nodes -> Markets -> Financials
+     * @brief Simülasyonu 1 tur ilerletir. (Eski adıyla stepGamestate)
      */
-    static void stepGamestate(Gamestate &gamestate);
+    static void tick(Gamestate &gamestate);
 
     static void update(Gamestate &gamestate, float deltaTime);
+
+private:
+    // --- Sistemler (Systems) ---
+    static void processPerks(Gamestate& gamestate);
+    static void processDemographics(Gamestate& gamestate);
+    static void processCompanyLogistics(Gamestate& gamestate);
+    static void processFactories(Gamestate& gamestate); // YENİ: Fabrikaları çalıştırır
+    static void processTradeNodes(Gamestate& gamestate);
 };
