@@ -1,0 +1,24 @@
+# AI Model Configuration File
+# This file contains AI model behavior parameters
+
+[model]
+# Model inference parameters
+top_k = 50
+top_p = 0.9
+
+# Activation function - possible values: "sigmoid", "softmax", "relu"
+activation_function = "softmax"
+
+[temperature]
+# Different risk levels for temperature values
+# Low temperature = more consistent, low-risk outputs
+# High temperature = more creative, high-risk outputs
+
+conservative = 0.2    # Very low, almost deterministic (risk-averse)
+balanced = 0.7        # Balanced, moderate creativity (medium risk)
+creative = 1.2        # High, risky and creative outputs (risk-seeking)
+
+[metadata]
+version = "1.0"
+description = "AI model configuration file"
+created_date = "2026-03-01"
