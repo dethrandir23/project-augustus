@@ -12,7 +12,9 @@
 class Gamestate {
 public:
     Gamestate() = default;
-    ~Gamestate() { clear(); } // ÖNEMLİ: Kapanırken entityleri RAM'den siler
+    ~Gamestate() { clear(); }
+
+    bool loadFromSave(const json &j);
 
     bool loadScenario(const std::string& scenarioId);
     void advanceDate();
@@ -47,6 +49,7 @@ public:
     void clear();
 
     friend nlohmann::json serializeGamestate(const Gamestate& g);
+    friend Gamestate deserializeGamestate(const nlohmann::json& j);
 
     EventHandler& getEventHandler() { return eventHandler; }
 

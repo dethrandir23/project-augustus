@@ -11,7 +11,63 @@
 #include "Registry/CompanyManager.h"
 #include "World/Components/DemographicsComponent.h"
 
-// --- YENİ ENTITY SİSTEMİ ---
+bool Gamestate::loadFromSave(const nlohmann::json &j) {
+    try {
+        // 1. Önceki dünyayı kıyamete sürükle (Temizle)
+        this->clear(); 
+
+        // 2. Temel Zaman ve Tur Verileri
+        this->currentTurn = j.value("turn", 0);
+        
+        // Tarihi string'den (Örn: "15/4/1836") tekrar integer değerlere parçala
+        std::string dateStr = j.value("date", "1/1/1836");
+        int d = 1, m = 1, y = 1836;
+        if (sscanf(dateStr.c_str(), "%d/%d/%d", &d, &m, &y) == 3) {
+            this->currentDay = d;
+            this->currentMonth = m;
+            this->currentYear = y;
+        }
+
+        // 3. Oyuncu ID'si (Kameranın / UI'ın takip edeceği kişi)
+        if (j.contains("player_id")) {
+            std::string pIdStr = j.at("player_id").get<std::string>();
+            if (!pIdStr.empty()) {
+                auto parsedOpt = uuids::uuid::from_string(pIdStr);
+                if (parsedOpt.has_value()) {
+                    this->playerCompanyId = parsedOpt.value();
+                }
+            }
+        }
+
+        // 4. ENTITY'LERİ DİRİLT (Asıl Sihir Burada)
+        if (j.contains("entities") && j.at("entities").is_array()) {
+            for (const auto& entityJson : j.at("entities")) {
+                
+                Entity* newEntity = new Entity();
+                
+                newEntity->UpdateFromJson(entityJson); 
+                
+                // Dünyaya ekle!
+                this->addEntity(newEntity);
+            }
+        }
+
+        // İPUCU: Eğer MapComponent vs kullanıyorsan ve Map'in bir Cache sistemi varsa,
+        // dünyayı yükledikten hemen sonra Cache'i tazelemelisin!
+        // ornekMapSistemi.BuildCache(*this);
+
+        Console::log("Oyun basariyla yuklendi! Turn: " + std::to_string(this->currentTurn), LogType::INFO);
+        return true;
+
+    } catch (const nlohmann::json::exception& e) {
+        Console::log("Save dosyasi JSON format hatasi: " + std::string(e.what()), LogType::ERROR);
+        return false;
+    } catch (const std::exception& e) {
+        Console::log("Save dosyasi yuklenirken genel hata: " + std::string(e.what()), LogType::ERROR);
+        return false;
+    }
+}
+
 void Gamestate::addEntity(Entity* entity) {
     if (entity) {
         entities[entity->GetId()] = entity;
@@ -157,7 +213,7 @@ nlohmann::json serializeGamestate(const Gamestate& g) {
     // Sadece entityleri dön, hepsi kendi 'to_json'unu biliyor!
     j["entities"] = nlohmann::json::array();
     for (const auto& [id, entity] : g.entities) {
-        nlohmann::json ej = *entity; // Entity::to_json çalışır
+        nlohmann::json ej = entity->ToJson();
         j["entities"].push_back(ej);
     }
 
