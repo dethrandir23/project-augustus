@@ -25,4 +25,18 @@ public:
 
         if(change > 0) population += change;
     }
+
+    nlohmann::json ToJson() const override {
+        return {
+            {"population", population},
+            {"recruitablePop", recruitablePop},
+            {"happiness", happiness}
+        };
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        population = j.value("population", (size_t)0);
+        recruitablePop = j.value("recruitablePop", (size_t)0);
+        happiness = j.value("happiness", 0.5f);
+    }
 };

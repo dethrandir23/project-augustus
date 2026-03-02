@@ -12,6 +12,16 @@ public:
 
     std::string GetComponentType() const override { return "AIControllerComponent"; }
 
+    // ToJson and UpdateFromJson
+    nlohmann::json ToJson() const override {
+        return nlohmann::json::object();
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        // Currently no persistent state to load
+    }
+    
+
     // hookable functions
     // void addDesireModifier(const std::string& action, float amount) {
     //     dynamicDesires[action] += amount;

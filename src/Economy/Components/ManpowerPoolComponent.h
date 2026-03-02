@@ -19,4 +19,12 @@ public:
         }
         return false;
     }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        availableWorkers = j.value("balance", 0); // JSON'daki key ile eşleşmeli
+    }
+
+    nlohmann::json ToJson() const override {
+        return nlohmann::json{{"balance", availableWorkers}};
+    }
 };

@@ -30,4 +30,29 @@ public:
         return books.at(itemId).lastTradedPrice;
     }
 
+    nlohmann::json ToJson() const override {
+        nlohmann::json j_books = nlohmann::json::object();
+        for (const auto& [itemId, book] : books) {
+            j_books[itemId] = {
+                {"itemId", book.itemId},
+                {"lastTradedPrice", book.lastTradedPrice}
+            };
+        }
+        return {
+            {"taxRate", taxRate},
+            {"books", j_books}
+        };
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        taxRate = j.value("taxRate", 0.05f);
+        if (j.contains("books") && j["books"].is_object()) {
+            for (auto it = j["components"].begin(); it != j["components"].end(); ++it) {
+                auto& book = books[it.key()];
+                book.itemId = it.value().value("itemId", it.key());
+                book.lastTradedPrice = it.value().value("lastTradedPrice", 0.0);
+            }
+        }
+    }
+
 };

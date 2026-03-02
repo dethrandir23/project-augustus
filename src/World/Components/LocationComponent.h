@@ -34,6 +34,14 @@ public:
         location.y += dy;
     }
 
+    nlohmann::json ToJson() const override {
+        return {{"x", GetX()}, {"y", GetY()}};
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        SetPosition(j.value("x", 0.0), j.value("y", 0.0));
+    }
+
 private:
     Location location;
 };

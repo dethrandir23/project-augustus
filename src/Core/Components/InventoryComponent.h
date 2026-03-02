@@ -34,13 +34,13 @@ public:
 
     Inventory& GetInternalInventory() { return inventory; }
 
-    friend void to_json(nlohmann::json& j, const InventoryComponent& c) {
-        j = c.inventory; 
-        j["type"] = c.GetComponentType();
+    nlohmann::json ToJson() const override {
+        nlohmann::json j = inventory;
+        return j;
     }
 
-    friend void from_json(const nlohmann::json& j, InventoryComponent& c) {
-        c.inventory = j.get<Inventory>();
+    void UpdateFromJson(const nlohmann::json& j) override {
+        inventory = j.get<Inventory>();
     }
 
 private:

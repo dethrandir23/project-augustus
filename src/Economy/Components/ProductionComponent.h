@@ -19,7 +19,6 @@ public:
 
     std::string GetComponentType() const override { return "ProductionComponent"; }
 
-    // --- Helpers ---
     void addPipeline(const std::string& id) {
         if (std::find(activePipelineIds.begin(), activePipelineIds.end(), id) == activePipelineIds.end()) {
             activePipelineIds.push_back(id);
@@ -30,18 +29,17 @@ public:
         activePipelineIds.erase(std::remove(activePipelineIds.begin(), activePipelineIds.end(), id), activePipelineIds.end());
     }
 
-    // --- Serialization ---
-    friend void to_json(nlohmann::json& j, const ProductionComponent& p) {
-        j = nlohmann::json{
-            {"pipelines", p.activePipelineIds},
-            {"efficiency", p.efficiency},
-            {"paused", p.isPaused}
+    nlohmann::json ToJson() const override {
+        return nlohmann::json{
+            {"pipelines", activePipelineIds},
+            {"efficiency", efficiency},
+            {"paused", isPaused}
         };
     }
 
-    friend void from_json(const nlohmann::json& j, ProductionComponent& p) {
-        p.activePipelineIds = j.at("pipelines").get<std::vector<std::string>>();
-        p.efficiency = j.value("efficiency", 1.0f);
-        p.isPaused = j.value("paused", false);
+    void UpdateFromJson(const nlohmann::json& j) override {
+        activePipelineIds = j.at("pipelines").get<std::vector<std::string>>();
+        efficiency = j.value("efficiency", 1.0f);
+        isPaused = j.value("paused", false);
     }
 };

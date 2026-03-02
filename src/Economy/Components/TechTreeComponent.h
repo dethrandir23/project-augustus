@@ -19,4 +19,12 @@ public:
     bool isUnlocked(const std::string& techId) const {
         return std::find(knownTechnologies.begin(), knownTechnologies.end(), techId) != knownTechnologies.end();
     }
+
+    nlohmann::json ToJson() const override {
+        return {{"knownTechnologies", knownTechnologies}};
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        knownTechnologies = j.value("knownTechnologies", std::vector<std::string>{});
+    }
 };

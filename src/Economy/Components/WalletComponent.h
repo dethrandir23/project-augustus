@@ -19,4 +19,13 @@ public:
     }
     
     void addMoney(double amount) { balance += amount; }
+
+    nlohmann::json ToJson() const override {
+        return {{"balance", balance}, {"debt", debt}};
+    }
+
+    void UpdateFromJson(const nlohmann::json& j) override {
+        balance = j.value("balance", 0.0);
+        debt = j.value("debt", 0.0);
+    }
 };
