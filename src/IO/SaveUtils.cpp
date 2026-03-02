@@ -10,7 +10,7 @@ using json = nlohmann::json;
 
 
 // mock for now, for release generate from arguments instead.
-constexpr const char *configPath = "config.toml";
+constexpr const char *configPath = "Config.toml";
 constexpr const char *error_no_path = "no_save_path";
 
 /**
@@ -22,18 +22,31 @@ namespace SaveUtils {
     bool saveGame(const Gamestate &gamestate, const std::string &saveName) {
         if (saveName.empty()) return false;
         
-        std::string savePath = ConfigUtils::get<std::string>(ConfigUtils::loadConfig(configPath),
-                                                        "save_path", 
-                                              "no_save_path");
+auto config = ConfigUtils::loadConfig(configPath);
+    
+    // Debug için: Config yüklendi mi?
+    if (config.empty()) {
+        Console::log("FATAL: Config file NOT found at: " + std::string(configPath), LogType::ERROR);
+        return false; 
+    }
+
+    std::string savePath = ConfigUtils::get<std::string>(config, "storage.save_path", "no_save_path");
         
-        if (savePath == error_no_path) return false;
+    if (savePath == "no_save_path") {
+        Console::log("FATAL: 'save_path' not found in config!", LogType::ERROR);
+        return false;
+    }
 
         try {
-        json j = serializeGamestate(gamestate);
-        std::vector<uint8_t> data = FileUtils::compress(json::to_msgpack(j));
-        
-        fs::path fpath = fs::path(savePath) / saveName;
-        FileUtils::writeFile(fpath.string(), data);
+            if (!fs::exists(savePath)) {
+                Console::log("Creating save path: " + savePath, LogType::INFO);
+                fs::create_directories(savePath);
+            }
+            json j = serializeGamestate(gamestate);
+            std::vector<uint8_t> data = FileUtils::compress(json::to_msgpack(j));
+            
+            fs::path fpath = fs::path(savePath) / saveName;
+            FileUtils::writeFile(fpath.string() + ".save", data);
         } catch (const std::exception &e) {
             Console::log("Save error: " + std::string(e.what()), LogType::ERROR);
             return false;
