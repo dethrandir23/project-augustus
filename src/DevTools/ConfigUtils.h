@@ -13,6 +13,7 @@
 #include "toml/toml.hpp"
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 /**
  * @class ConfigUtils
@@ -56,7 +57,6 @@ public:
    * @brief Gets a value from the config.
    * 
    * Supports dotted paths (e.g., "server.port").
-   * 
    * @tparam T The type of the value to retrieve.
    * @param config The configuration table.
    * @param key The key or dotted path to the value.
@@ -130,4 +130,10 @@ public:
   static void add(toml::table& config, const std::string& key, const T& value) {
       set(config, key, value);
   }
+
+  
+  // TODO :
+  // Note : add cached configs in future for better performance
+  // static std::unordered_map<std::string, toml::table> cachedConfigs;
+
 };

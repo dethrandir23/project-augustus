@@ -9,12 +9,11 @@
 namespace AIPicker {
 
     struct Candidate { 
-        std::string actionId; // Örn: "factory_iron", "pay_loan" vs.
+        std::string actionId;
         double prob; 
     };
 
     inline double calculateProbability(double score, double temperature) {
-        // Sıfıra bölünme hatasını önlemek için ufak bir güvenlik
         if (temperature < 0.001) temperature = 0.001; 
         return std::exp(score / temperature);
     }
@@ -44,20 +43,16 @@ namespace AIPicker {
     inline std::string selectWithNoise(std::vector<Candidate>& candidates, int k, double temperature) {
         if (candidates.empty()) return "";
 
-        // 1. Ham skorları Softmax/Temperature ile olasılığa çevir
         for (auto& c : candidates) {
-            c.prob = calculateProbability(c.prob, temperature); // Önceden c.prob içinde ham skor tutuluyordu varsayıyoruz
+            c.prob = calculateProbability(c.prob, temperature);
         }
 
-        // 2. Adayları olasılığa göre sırala
         std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b){
             return a.prob > b.prob;
         });
 
-        // 3. İlk K tanesini al
         int actualK = std::min((int)candidates.size(), k);
 
-        // 4. Ağırlıklı rastgele seçim yap
         return pickWeighted(candidates, actualK);
     }
 }
