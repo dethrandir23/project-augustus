@@ -12,6 +12,8 @@
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
 #include "World/Systems/MarketSystem.h"
+#include "AI/AIRegistry.h"
+#include "AI/Components/AIControllerComponent.h"
 
 void GameManager::tick(Gamestate &gamestate) {
     gamestate.advanceDate();
@@ -24,6 +26,7 @@ void GameManager::tick(Gamestate &gamestate) {
 
     processTradeNodes(gamestate);
     processDemographics(gamestate);
+    processAI(gamestate);
 
     // DEBUG: TO CHECK IF GAME REALLY TICKS
     // Entity* playerCompany = gamestate.getPlayerCompany();
@@ -188,5 +191,17 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
 
         // 3. BÜTÇE YÖNETİMİ (Fazlalıkları Satış Emri Olarak Gir)
         // İleride yapay zeka buraya satış emirlerini (SELL) girecek.
+    }
+}
+
+void GameManager::processAI(Gamestate& gamestate) {
+    for (auto& [id, entity] : gamestate.getEntities()) {
+        // AI Componenti (Çipi) var mı diye kontrol et
+        if (entity->GetComponent<AIControllerComponent>("AIControllerComponent")) {
+            
+            // Varsa, tipine göre beynini çalıştır!
+            AIRegistry::executeLogic(*entity, gamestate);
+            
+        }
     }
 }

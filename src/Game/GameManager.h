@@ -4,11 +4,8 @@
 
 class GameManager {
 public:
-    GameManager() = delete; // Statik class
+    GameManager() = delete;
 
-    /**
-     * @brief Simülasyonu 1 tur ilerletir. (Eski adıyla stepGamestate)
-     */
     static void tick(Gamestate &gamestate);
 
     static void update(Gamestate &gamestate, float deltaTime);
@@ -18,6 +15,7 @@ private:
     static void processPerks(Gamestate& gamestate);
     static void processDemographics(Gamestate& gamestate);
     static void processCompanyLogistics(Gamestate& gamestate);
-    static void processFactories(Gamestate& gamestate); // YENİ: Fabrikaları çalıştırır
+    static void processFactories(Gamestate& gamestate);
     static void processTradeNodes(Gamestate& gamestate);
+    static void processAI(Gamestate& gamestate);
 };
