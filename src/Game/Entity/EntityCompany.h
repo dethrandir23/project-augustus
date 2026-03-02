@@ -20,21 +20,21 @@ inline Entity* createCompany(const CompanyTemplate &tmpl, const std::string &nam
     auto n = (name != "") ? name : NameManager::getRandomName(tmpl.name_pool_id);
     company->SetName(name);
 
-    company->AddComponent(new WalletComponent);
+    company->AddComponent(new WalletComponent, "WalletComponent");
     company->GetComponent<WalletComponent>("WalletComponent")->balance = tmpl.start_capital;
-    company->AddComponent(new TechTreeComponent);
+    company->AddComponent(new TechTreeComponent, "TechTreeComponent");
     for (const auto &tid : tmpl.start_techs) {
         company->GetComponent<TechTreeComponent>("TechTreeComponent")->unlock(tid);
     }
-    company->AddComponent(new WorkforceComponent);
+    company->AddComponent(new WorkforceComponent, "WorkforceComponent");
     company->GetComponent<WorkforceComponent>("WorkforceComponent")->currentWorkers = tmpl.start_manpower;
 
-    company->AddComponent(new InventoryComponent);
+    company->AddComponent(new InventoryComponent, "Storage");
     for (const auto &item : tmpl.start_inventory) {
         company->GetComponent<InventoryComponent>("Storage")->Add(item.id, item.quantity);
     }
 
-    company->AddComponent(new PerkComponent);
+    company->AddComponent(new PerkComponent, "PerkComponent");
     for (const auto &pid : tmpl.start_perks) {
         auto perk = PerkManager::perks.at(pid);
         company->GetComponent<PerkComponent>("PerkComponent")->addPerk(pid, perk.default_duration);
