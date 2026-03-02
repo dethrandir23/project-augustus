@@ -1,159 +1,94 @@
 #include "../Api/NativeApi.h"
-#include "../DevTools/Console.h"
-#include "Economy/Company.h"
-#include "Game/GameManager.h"
-#include "Icons/IconsFontAwesome6.h"
+#include "DevTools/Console.h"
 #include "ModLoader.h"
-#include "imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
-#include <GLFW/glfw3.h>
-#include <filesystem>
-#include <stdio.h>
-#include "Windows/CompanyInfoWindow.h"
-#include "Windows/GameControlsWindow.h"
-#include "Windows/InventoryWindow.h"
-#include "Windows/ConsoleWindow.h"
-#include "Windows/InventoryWindow.h"
-#include "Windows/MarketWindow.h"
-#include "Panels/ManagerPanel.h"
-#include "Panels/CompanyInfoPanel.h"
-#include "Panels/ConsolePanel.h"
-#include "Panels/GameControls.h"
-#include "Panels/InventoryPanel.h"
-#include "Panels/MarketPanel.h"
-#include "UIManager.h"
 #include "DevTools/ConsoleUtils.h"
+#include <filesystem>
+#include <iostream>
+#include <thread>
+#include <chrono>
 
 namespace fs = std::filesystem;
 
-constexpr const size_t WINDOW_WIDTH = 1280;
-constexpr const size_t WINDOW_HEIGHT = 720;
-constexpr const char *WINDOW_TITLE = "Producer Engine";
-
-void printConsole() {
-  // Console loglarını basan yardımcı fonksiyon (değişmedi)
-  for (const Log &l : Console::getLogs()) {
-    // logTypeToStr fonksiyonunun tanimli oldugunu varsayiyorum
-    std::cout << "[" << logTypeToStr(l.logType) << "] " << l.message << " ["
-              << l.timestamp << "]" << std::endl;
-  }
-}
-
 int main(int argc, char **argv) {
-  // --- 1. ARGUMENT PARSING & MOD LOADING (Aynı kalıyor) ---
-  if (argc != 2) {
-    printf("Usage: %s <load_order.json>\n", argv[0]);
-    return 1;
-  }
+    // --- 1. ARGUMENT PARSING ---
+    if (argc != 2) {
+        std::cerr << "Kullanim: " << argv[0] << " <load_order.json>\n";
+        return 1;
+    }
 
-  auto path = fs::path(argv[1]);
-  if (!fs::exists(path)) {
-    printf("File not found: %s\n", argv[1]);
-    return 1;
-  }
+    auto path = fs::path(argv[1]);
+    if (!fs::exists(path)) {
+        std::cerr << "Dosya bulunamadi: " << argv[1] << "\n";
+        return 1;
+    }
 
-  printf("File found: %s\n", argv[1]);
-  printf("Mods are caching...\n");
+    std::cout << "[INFO] Modlar onbellege aliniyor...\n";
+    if (!ModLoader::loadMods(path)) {
+        std::cerr << "[ERROR] Modlar onbellege alinamadi.\n";
+        return 1;
+    }
 
-  if (!ModLoader::loadMods(path)) {
-    printf("Mods failed to cached.\n");
-    printConsole();
-    return 1;
-  }
+    std::cout << "[INFO] " << ModLoader::getModCount() << " mod basariyla onbellege alindi.\n";
 
-  printf("%zu mods successfully cached.\n", ModLoader::getModCount());
+    // --- 2. ENGINE INIT & DATA LOADING ---
+    GameApi::initEngine();
 
-  // --- 2. ENGINE INIT ---
-  GameApi::initEngine();
+    if (!ModLoader::insertDataIntoEngine(GameApi::loadGameFiles)) {
+        std::cerr << "[ERROR] Mod verileri motora yuklenemedi.\n";
+        return 1;
+    }
 
-  if (!ModLoader::insertDataIntoEngine(GameApi::loadGameFiles)) {
-    printf("Mods failed to load.\n");
-    printConsole();
-    return 1;
-  };
+    std::cout << "[INFO] Modlar motora entegre edildi.\n";
+    std::cout << "[INFO] TradeFall Motoru baslatiliyor...\n";
 
-  printf("%zu mods successfully loaded.\n", ModLoader::getModCount());
-  printf("Starting producer...\n");
+    // --- 3. SENARYO VE OYUNCU KURULUMU ---
+    if (!GameApi::startScenario("debug_scenario")) {
+        std::cerr << "[ERROR] Senaryo yuklenemedi. Cikiliyor...\n";
+        return 1;
+    }
 
-  if (GameApi::startScenario("debug_scenario")) {
-    printf("Scenario loaded.\n");
-  } else {
-    printf("Failed to load scenario.\n");
-    return 1;
-  }
+    // YENİ API: Şirket adı, Template ID'si, isAI = true (Kendi kendine oynasın diye beynini takıyoruz!)
+    GameApi::SetPlayer("TRADEFALL AI INC.", "core_startup_company_001", true);
+    std::cout << "[INFO] Yapay Zeka sirketi masaya oturdu.\n";
 
-  GameApi::SetPlayer("APPLE INC.", "core_startup_company_001");
-  printf("Player set.\n");
-  
-  // GameApi::subscribeToEvents();
-  GLFWwindow *window = UIManager::PrepareWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
-  if (!window) {
-      printf("Failed to create window!\n");
-      return 1;
-  }
+    ConsoleUtils::printConsole();
+    Console::clearLogs();
 
-  UIManager::addWindow(ICON_FA_GEARS " UI Manager", UI::Panels::UIManagerPanel);
-  UIManager::addWindow(ICON_FA_BUILDING " Company", UI::Panels::CompanyInfoPanel);
-  auto consoleId = UIManager::addWindow(ICON_FA_TERMINAL " Console", UI::Panels::ConsolePanel);
-  UIManager::addWindow(ICON_FA_GAMEPAD " Game", UI::Panels::GameControls);
-  UIManager::addWindow(ICON_FA_BOX " Inventory", UI::Panels::InventoryPanel);
-  UIManager::addWindow(ICON_FA_STORE " Market", UI::Panels::MarketPanel);
+    std::cout << "\n===================================================\n";
+    std::cout << "      HEADLESS SIMULASYON BASLIYOR (100 TUR)       \n";
+    std::cout << "===================================================\n\n";
 
-  UIManager::getWindows()[consoleId].flags = ImGuiWindowFlags_MenuBar;
+    // --- 4. HEADLESS GAME LOOP ---
+    // Simülasyonu şimdilik 100 tur çalıştırıp sonuçları görelim
+    for (int i = 1; i <= 100; ++i) {
+        
+        GameApi::step(); // Motoru 1 tick ilerlet
+        
+        // Konsolda biriken logları çek ve ekrana bas
+        auto logs = GameApi::readConsole();
+        for (const auto& logMsg : logs) {
+            std::cout << logMsg << "\n";
+        }
 
-  // Initial Player Data Setup
-  auto playerCompany = GameApi::globalGamestate.getPlayerCompany();
-  if (playerCompany.has_value()) {
-      playerCompany.value().setCapital(1000000.0);
-  }
+        // Simülasyonun akışını gözle takip edebilmek için araya ufak bir gecikme koyuyoruz
+        // İstersen bunu silip 100 turu milisaniyeler içinde bitirmesini izleyebilirsin!
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 
-  // --- 4. GAME LOOP ---
-  while (!glfwWindowShouldClose(window)) {
-      // Çizim Başlangıcı (ImGui NewFrame vb.)
-      UIManager::StartDraw();
+    std::cout << "\n===================================================\n";
+    std::cout << "             SIMULASYON TAMAMLANDI                 \n";
+    std::cout << "===================================================\n";
 
-      // Logic Update
-      // Not: UIManager ImGui context'ini initialize etti, ImGui::GetIO() güvenli.
-      float dt = ImGui::GetIO().DeltaTime; 
-      GameManager::update(GameApi::globalGamestate, dt);
+    // İstersen test bittiğinde oyunun o anki tüm haritasını ve ekonomisini JSON olarak alıp kaydedebilirsin
+    // std::cout << GameApi::getSerializedState() << std::endl;
 
-      // UI Update & Render
-      // Burasi sihirli kisim: Ekledigin tum pencereler burada ciziliyor.
-      UIManager::drawWindows(GameApi::globalGamestate);
+    try {
+      GameApi::saveGame("headless_test_save");
+    } catch (const std::exception& e) {
+      std::cerr << "[ERROR] Oyun kaydedilemedi: " << e.what() << std::endl;
+    }
 
-      // Çizim Bitişi (Render & SwapBuffers)
-      UIManager::EndDraw(window);
-  }
+    ConsoleUtils::printConsole();
 
-  UIManager::Cleanup(window);
-
-  return 0;
+    return 0;
 }
-
-/*
-int main(int, char **) {
-
-  GLFWwindow *window = PrepareWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
-  if (!window)
-    return 1;
-  bool game = true;
-  while (!glfwWindowShouldClose(window) && game) {
-    StartDraw();
-
-// Ekranı kaplayan bir pencere açalım
-// ImGuiIO &io = ImGui::GetIO();
-// ImGui::SetNextWindowSize(io.DisplaySize);
-// ImGui::SetNextWindowPos(ImVec2(0, 0));
-// ImGui::Begin("Ana Pencere", nullptr, ImGuiWindowFlags_NoDecoration |
-ImGuiWindowFlags_NoResize);
-// ImGui::End();
-
-    EndDraw(window);
-  }
-
-  Cleanup(window);
-  return 0;
-}
-
-*/
