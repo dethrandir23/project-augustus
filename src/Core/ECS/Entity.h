@@ -15,7 +15,18 @@ public:
     void AddComponent(Component* component, const std::string& customKey = "");
 
     template <typename T>
-    T* GetComponent(const std::string& key = "");
+    T* GetComponent(const std::string& key = ""){
+        std::string searchKey = key;
+        if (searchKey.empty()) {
+             return nullptr; 
+        }
+
+        auto it = components.find(searchKey);
+        if (it != components.end()) {
+            return dynamic_cast<T*>(it->second);
+        }
+        return nullptr;
+    }
 
     uuids::uuid GetId() const;
     void SetId(const uuids::uuid& newId);
@@ -28,8 +39,8 @@ public:
     void SetType(std::string t);
     std::string GetType() const;
 
-    friend void to_json(nlohmann::json& j, const Entity& e);
-    friend Entity from_json(const nlohmann::json& j);
+    nlohmann::json ToJson();
+    void UpdateFromJson(const nlohmann::json& j);
 
 private:
     uuids::uuid id;
