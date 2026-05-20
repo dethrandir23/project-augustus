@@ -11,9 +11,7 @@ public:
 
     using AILogicFunc = std::function<void(Entity&, Gamestate&)>;
 
-    // Motor başlarken AI'ları kaydedeceğiz
     static void init();
-
 
     static void registerLogic(const std::string& entityType, AILogicFunc logic);
 

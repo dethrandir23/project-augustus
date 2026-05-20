@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace EconomyUtils {
-
+    
     struct ProductionResult {
         std::vector<ItemStack> producedItems;
     };

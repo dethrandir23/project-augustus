@@ -7,6 +7,7 @@
 #include "Game/IdUtils.h"
 #include "Registry/FactoryManager.h"
 
+namespace EntityBuilder {
 // inline for now, move to .cpp file later.
 inline Entity* createFactory(const FactoryData &fData, const uuids::uuid &ownerId, const std::string &customName = "") {
     Entity *factory = new Entity();
@@ -34,4 +35,5 @@ inline Entity* createFactory(const FactoryData &fData, const uuids::uuid &ownerI
     factory->GetComponent<OwnerComponent>("OwnerComponent")->setOwnerId(ownerId);
 
     return factory;
+}
 }

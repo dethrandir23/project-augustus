@@ -13,6 +13,7 @@ public:
     virtual ~Entity();
 
     void AddComponent(Component* component, const std::string& customKey = "");
+    void RemoveComponent(const std::string& key);
 
     template <typename T>
     T* GetComponent(const std::string& key = ""){

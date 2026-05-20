@@ -34,6 +34,15 @@ void Entity::AddComponent(Component* component, const std::string& customKey) {
         components[key] = component;
     }
 
+    void Entity::RemoveComponent(const std::string& key) {
+        auto it = components.find(key);
+        if (it != components.end()) {
+            delete it->second;
+            components.erase(it);
+        }
+        
+    }
+
     uuids::uuid Entity::GetId() const { return id; }
     void Entity::SetId(const uuids::uuid& newId) { id = newId; }
 

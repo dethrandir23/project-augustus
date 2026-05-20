@@ -7,7 +7,7 @@
 class MarketSystem {
 public:
     // 1. Emir Verme (Escrow burada yapılır)
-    static void placeOrder(Gamestate& gamestate, uuids::uuid marketId, MarketOrder order);
+    static void placeOrder(Gamestate& gamestate, uuids::uuid marketId, MarketOrder order, bool isSystemOrder = false);
 
 private:
     // 2. Takas İşlemi (OrderBook içinden callback olarak çağrılır)

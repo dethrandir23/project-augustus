@@ -179,3 +179,12 @@ bool EventHandler::canTrigger(const std::string& eventId, int currentTurn) {
 void EventHandler::recordTrigger(const std::string& eventId, int currentTurn) {
     eventHistory[eventId] = currentTurn;
 }
+
+void EventHandler::markAsHandled(int eventId) {
+    for (auto& ev : eventQueue) {
+        if (ev.id == eventId) {
+            ev.handled = true;
+            break;
+        }
+    }
+}

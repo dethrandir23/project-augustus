@@ -16,6 +16,8 @@ struct FactoryData {
     std::vector<std::string> required_techs;
     std::vector<std::string> categories;
     std::vector<std::string> pipeline_ids;
+
+    double buildCost = 5000.0;
 };
 
 class FactoryManager {

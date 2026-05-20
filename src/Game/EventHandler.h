@@ -25,6 +25,22 @@ struct Event {
     else
       remained_steps = 0;
   }
+
+  nlohmann::json toJson() const {
+    if (!tmpl) return {};
+    nlohmann::json opts = nlohmann::json::array();
+    for (size_t i = 0; i < tmpl->options.size(); ++i) {
+        opts.push_back({{"index", i}, {"text", tmpl->options[i].text}});
+    }
+    return {
+        {"id",              id},
+        {"name",            tmpl->name},
+        {"description",     tmpl->description},
+        {"event_type",      tmpl->eventType},
+        {"options",         opts},
+        {"remained_steps",  remained_steps}
+    };
+}
 };
 
 using EventCallback = std::function<void(const Event &)>;
@@ -46,6 +62,8 @@ public:
 
   bool canTrigger(const std::string &eventId, int currentTurn);
   void recordTrigger(const std::string &eventId, int currentTurn);
+
+  void markAsHandled(int eventId);
 
 private:
   std::vector<Event> eventQueue;

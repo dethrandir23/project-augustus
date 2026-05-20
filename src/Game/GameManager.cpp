@@ -163,21 +163,22 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
         if (!wallet || !storage || !consumption || !marketMember || !demo) continue;
 
         // 1. OTOMATİK TEDARİK (Pazara Alış Emri Gir)
-        auto missing = EconomyUtils::getMissingItems(consumption->templateId, storage->GetInternalInventory());
-        for (const auto& req : missing) {
-            // Fiyatı piyasadan öğrenelim (Marketi bulup sormamız lazım)
-            Entity* marketEntity = gamestate.getEntity(marketMember->marketId);
-            if (marketEntity) {
-                auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
-                if (marketComp) {
-                    double currentPrice = marketComp->getPrice(req.id);
+        // auto missing = EconomyUtils::getMissingItems(consumption->templateId, storage->GetInternalInventory());
+        // for (const auto& req : missing) {
+        //     // Fiyatı piyasadan öğrenelim (Marketi bulup sormamız lazım)
+        //     Entity* marketEntity = gamestate.getEntity(marketMember->marketId);
+        //     if (marketEntity) {
+        //         auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
+        //         if (marketComp) {
+        //             double currentPrice = marketComp->getPrice(req.id);
                     
-                    // Alış Emri Oluştur (MarketSystem üzerinden)
-                    MarketOrder buyOrder(entity->GetId(), req.id, OrderType::BUY, currentPrice, req.quantity);
-                    MarketSystem::placeOrder(gamestate, marketEntity->GetId(), buyOrder);
-                }
-            }
-        }
+        //             // Alış Emri Oluştur (MarketSystem üzerinden)
+        //             MarketOrder buyOrder(entity->GetId(), req.id, OrderType::BUY, currentPrice, req.quantity);
+        //             MarketSystem::placeOrder(gamestate, marketEntity->GetId(), buyOrder);
+        //         }
+        //     }
+        // }
+        // NO MORE REQUIRED AFTER AI COMPONENT.
 
         // 2. TÜKETİM VE MUTLULUK
         EconomyUtils::executeProduction(*entity, "consumption", "Storage");

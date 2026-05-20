@@ -47,7 +47,7 @@ public:
     void UpdateFromJson(const nlohmann::json& j) override {
         taxRate = j.value("taxRate", 0.05f);
         if (j.contains("books") && j["books"].is_object()) {
-            for (auto it = j["components"].begin(); it != j["components"].end(); ++it) {
+            for (auto it = j["books"].begin(); it != j["books"].end(); ++it) {
                 auto& book = books[it.key()];
                 book.itemId = it.value().value("itemId", it.key());
                 book.lastTradedPrice = it.value().value("lastTradedPrice", 0.0);
