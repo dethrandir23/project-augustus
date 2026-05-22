@@ -6,7 +6,7 @@
 #include "Economy/Components/PerkComponent.h"
 #include "Economy/Components/TechTreeComponent.h"
 #include "Economy/Components/WalletComponent.h"
-#include "Economy/Components/WorkforceComponent.h"
+#include "Economy/Components/ManpowerPoolComponent.h"
 #include "Registry/CompanyManager.h"
 #include "Registry/NameManager.h"
 #include "Game/IdUtils.h"
@@ -26,8 +26,7 @@ inline Entity* createCompany(const CompanyTemplate &tmpl, const std::string &nam
     for (const auto &tid : tmpl.start_techs) {
         company->GetComponent<TechTreeComponent>("TechTreeComponent")->unlock(tid);
     }
-    company->AddComponent(new WorkforceComponent, "WorkforceComponent");
-    company->GetComponent<WorkforceComponent>("WorkforceComponent")->currentWorkers = tmpl.start_manpower;
+    company->AddComponent(new ManpowerPoolComponent(tmpl.start_manpower), "ManpowerPoolComponent");
 
     company->AddComponent(new InventoryComponent, "Storage");
     for (const auto &item : tmpl.start_inventory) {

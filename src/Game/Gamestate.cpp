@@ -84,11 +84,18 @@ void Gamestate::removeEntity(const uuids::uuid& id) {
     if (it != entities.end()) {
         delete it->second;
         entities.erase(it);
-    }
+  }
     
-}
+ }
 
-std::vector<Entity*> Gamestate::getEntitiesByType(const std::string& type) {
+ bool Gamestate::handleInput(const nlohmann::json& input) {
+     // This method is a placeholder for now. The real input handling is done
+     // via InputHandler::handleInput which takes Gamestate& as a parameter.
+     // We keep this for potential future use.
+     return true;
+ }
+
+ std::vector<Entity*> Gamestate::getEntitiesByType(const std::string& type) {
     std::vector<Entity*> result;
     for (const auto& [id, entity] : entities) {
         if (entity->GetType() == type) {
@@ -173,7 +180,8 @@ bool Gamestate::loadScenario(const std::string& scenarioId) {
                         newNode->GetComponent<DemographicsComponent>("DemographicsComponent")->population = nOver.population_override;
                     }
                     for(const auto& pipeId : nOver.extra_pipelines) {
-                        newNode->GetComponent<InventoryComponent>("Storage")->Add(pipeId, 0.0f);
+                        auto* localProd = newNode->GetComponent<ProductionComponent>("LocalProduction");
+                        if (localProd) localProd->addPipeline(pipeId);
                     }
                 }
             }

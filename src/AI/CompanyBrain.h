@@ -17,7 +17,7 @@ public:
     void fromJson(const nlohmann::json& j) override;
 
     // --- Configurable Parameters ---
-    float sellThreshold = 500.0f;
+    float sellThreshold = 20.0f;
     float investThreshold = 5000.0f;
     float investMinScore = 0.5f;
     int pickerTopK = 3;
@@ -28,6 +28,7 @@ private:
     std::mt19937 rng;
 
     void manageDebt(Entity& company, Gamestate& gamestate);
+    void buyInputs(Entity& company, Gamestate& gamestate);
     void buildFactories(Entity& company, Gamestate& gamestate);
     void sellSurplus(Entity& company, Gamestate& gamestate);
     void handleEvents(Entity& company, Gamestate& gamestate);

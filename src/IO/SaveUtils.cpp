@@ -102,7 +102,7 @@ auto config = ConfigUtils::loadConfig(configPath);
 
         std::for_each(paths.begin(), paths.end(), [](std::string &p){
             fs::path path = p;
-            p = path.filename().string();
+            p = path.filename().replace_extension("").string();
         });
 
         return paths;

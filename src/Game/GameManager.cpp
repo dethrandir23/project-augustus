@@ -94,7 +94,7 @@ void GameManager::processCompanyLogistics(Gamestate& gamestate) {
     for (auto& [id, entity] : gamestate.getEntities()) {
         if (entity->GetType() != "company") continue;
 
-        auto* mainStorage = entity->GetComponent<InventoryComponent>("MainStorage");
+        auto* mainStorage = entity->GetComponent<InventoryComponent>("Storage");
         auto* manpower = entity->GetComponent<ManpowerPoolComponent>("ManpowerPoolComponent");
         auto* assets = entity->GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
 
@@ -115,7 +115,7 @@ void GameManager::processCompanyLogistics(Gamestate& gamestate) {
             if (manpower->availableWorkers > 0) {
                 size_t space = (facWorkforce->maxWorkers > facWorkforce->currentWorkers) 
                                ? (facWorkforce->maxWorkers - facWorkforce->currentWorkers) : 0;
-                size_t toAdd = std::min(static_cast<size_t>(10), space);
+                size_t toAdd = std::min(static_cast<size_t>(100), space);
                 toAdd = std::min(toAdd, manpower->availableWorkers);
                 facWorkforce->currentWorkers += toAdd;
                 manpower->availableWorkers -= toAdd;
@@ -161,6 +161,9 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
         auto* demo = entity->GetComponent<DemographicsComponent>("DemographicsComponent");
 
         if (!wallet || !storage || !consumption || !marketMember || !demo) continue;
+
+        // 0. YEREL ÜRETİM (Örn: tarım, kumaş vb.)
+        EconomyUtils::executeProduction(*entity, "LocalProduction", "Storage");
 
         // 1. OTOMATİK TEDARİK (Pazara Alış Emri Gir)
         // auto missing = EconomyUtils::getMissingItems(consumption->templateId, storage->GetInternalInventory());

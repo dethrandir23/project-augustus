@@ -18,9 +18,11 @@
             "instance_id": "debug_london",
             "market_id": "core_east_market_001",
             "population": 200000,
-            "additional_pipelines": [
-                "core_cloth_cotton_009"
-            ]
+            "additional_pipelines": ["core_population_demand_024"],
+            "starting_inventory": {
+                "core_grain_005": 500,
+                "core_wood_001": 200
+            }
         }
     ]
 }

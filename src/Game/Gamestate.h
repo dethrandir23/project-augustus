@@ -24,14 +24,16 @@ public:
     void addEntity(Entity* entity);
     Entity* getEntity(const uuids::uuid& id);
     void removeEntity(const uuids::uuid& id);
+    bool handleInput(const nlohmann::json& input);
     
     // Tüm entityleri (System'ler için) döndürür
     const std::unordered_map<uuids::uuid, Entity*>& getEntities() const { return entities; }
 
     // Sadece belirli bir türdeki (örn: "company") entityleri getirir
     std::vector<Entity*> getEntitiesByType(const std::string& type);
-
+    
     // --- Core Getters / Setters ---
+
     uuids::uuid getPlayerCompanyId() const { return playerCompanyId; }
     void setPlayerCompanyId(const uuids::uuid& id) { playerCompanyId = id; }
     

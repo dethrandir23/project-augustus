@@ -5,11 +5,16 @@
 #include "Core/ECS/Entity.h"
 #include "DevTools/Console.h"
 #include "Economy/Components/AssetOwnerComponent.h"
+#include "Economy/Components/ProductionComponent.h"
 #include "Economy/Components/WalletComponent.h"
+#include "Economy/EconomyUtils.h"
+#include "Economy/Orderbook.h"
 #include "Game/Gamestate.h"
 #include "Game/InputHandler.h"
 #include "Registry/FactoryManager.h"
 #include "World/Components/MarketComponent.h"
+#include <iostream>
+#include <unordered_set>
 
 CompanyBrain::CompanyBrain()
     : rng(seed) {}
@@ -27,6 +32,7 @@ nlohmann::json CompanyBrain::makeInput(const std::string& type,
 
 void CompanyBrain::execute(Entity& entity, Gamestate& gamestate) {
     manageDebt(entity, gamestate);
+    buyInputs(entity, gamestate);
     buildFactories(entity, gamestate);
     sellSurplus(entity, gamestate);
     handleEvents(entity, gamestate);
@@ -36,6 +42,67 @@ void CompanyBrain::manageDebt(Entity& company, Gamestate& gamestate) {
     auto* wallet = company.GetComponent<WalletComponent>("WalletComponent");
     if (!wallet || wallet->debt <= 0 || wallet->balance < wallet->debt) return;
     InputHandler::handleInput(gamestate, makeInput("PAY_DEBT", {}, company));
+}
+
+void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
+    auto* storage = company.GetComponent<InventoryComponent>("Storage");
+    auto* wallet  = company.GetComponent<WalletComponent>("WalletComponent");
+    auto* assets  = company.GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+    if (!storage || !wallet || !assets) return;
+
+    if (assets->ownedAssets.empty()) return;
+
+    uuids::uuid marketId;
+    for (auto* me : gamestate.getEntitiesByType("market")) {
+        marketId = me->GetId();
+        break;
+    }
+    if (marketId.is_nil()) return;
+
+    auto* marketEntity = gamestate.getEntity(marketId);
+    if (!marketEntity) return;
+    auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
+    if (!marketComp) return;
+
+    for (const auto& fId : assets->ownedAssets) {
+        Entity* factory = gamestate.getEntity(fId);
+        if (!factory) continue;
+        auto* prod = factory->GetComponent<ProductionComponent>("ProductionComponent");
+        if (!prod) continue;
+        auto* facInput = factory->GetComponent<InventoryComponent>("inputStorage");
+        if (!facInput) continue;
+
+        auto missing = EconomyUtils::getMissingItems(prod->templateId,
+                                                      facInput->GetInternalInventory());
+        if (missing.empty()) continue;
+
+        for (const auto& req : missing) {
+            float inStorage = storage->GetInternalInventory().getAmount(req.id);
+            float stillNeeded = req.quantity - inStorage;
+            if (stillNeeded <= 0.0f) continue;
+
+            OrderBook* orderBook = marketComp->getBook(req.id);
+            if (!orderBook) continue;
+            double bestAsk = orderBook->getBestAsk();
+            // Skip if nobody is selling this item (no sell orders)
+            if (bestAsk <= 0.0) continue;
+            double cost = bestAsk * stillNeeded;
+            if (cost > wallet->balance * 0.3f) {
+                stillNeeded = static_cast<float>((wallet->balance * 0.3) / bestAsk);
+            }
+            if (stillNeeded < 0.1f) continue;
+
+            std::cout << "[BUY] " << company.GetName() << " buying " << req.id << " x" << stillNeeded << " @ " << bestAsk << " (bal=" << wallet->balance << ")" << std::endl;
+
+            InputHandler::handleInput(gamestate,
+                makeInput("MARKET_BUY_ITEM", {
+                    {"marketId", uuids::to_string(marketId)},
+                    {"itemId",   req.id},
+                    {"amount",   stillNeeded},
+                    {"price",    bestAsk}
+                }, company));
+        }
+    }
 }
 
 void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
@@ -59,7 +126,7 @@ void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
 }
 
 void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
-    auto* storage = company.GetComponent<InventoryComponent>("MainStorage");
+    auto* storage = company.GetComponent<InventoryComponent>("Storage");
     auto* assets  = company.GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
     auto* wallet  = company.GetComponent<WalletComponent>("WalletComponent");
     if (!storage || !assets || !wallet) return;
@@ -83,7 +150,29 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
     }
     if (marketId.is_nil()) return;
 
+    // Collect all item IDs that are inputs to any owned factory
+    std::unordered_set<std::string> factoryInputs;
+    for (const auto& fId : assets->ownedAssets) {
+        Entity* factory = gamestate.getEntity(fId);
+        if (!factory) continue;
+        auto* prod = factory->GetComponent<ProductionComponent>("ProductionComponent");
+        if (!prod) continue;
+        if (FactoryManager::factories.count(prod->templateId)) {
+            const auto& fData = FactoryManager::factories.at(prod->templateId);
+            for (const auto& pipeId : fData.pipeline_ids) {
+                if (!PipelineManager::pipelines.count(pipeId)) continue;
+                const auto& pipe = PipelineManager::pipelines.at(pipeId);
+                for (const auto& in : pipe.inputs) {
+                    if (in.id != "core_none_000")
+                        factoryInputs.insert(in.id);
+                }
+            }
+        }
+    }
+
     for (const auto& item : storage->GetAllItems()) {
+        // Don't sell items needed as factory inputs
+        if (factoryInputs.count(item.id)) continue;
         float surplus = item.quantity - sellThreshold;
         if (surplus <= 0.0f) continue;
 

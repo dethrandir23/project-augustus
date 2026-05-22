@@ -61,6 +61,10 @@ public:
     
     // Temizle
     void clear() { items.clear(); }
+    
+    // Weight Management
+    void setMaxWeight(double weight) { maxWeight = weight; }
+    double getMaxWeight() const { return maxWeight; }
 
     // --- Serialization (En büyük rahatlık burada) ---
     friend void to_json(nlohmann::json& j, const Inventory& inv) {

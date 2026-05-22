@@ -57,6 +57,15 @@ uuids::uuid getTargetCompanyId(Gamestate &gamestate,
 // Motor başlarken bu fonksiyon 1 kere çağrılacak.
 void InputHandler::init() {
 
+ // 0. BATCH_EXECUTE
+  registerAction("BATCH_EXECUTE", [](Gamestate &gs, const nlohmann::json &payload) {
+    if (!payload.is_array()) return false;
+    for (const auto &subInput : payload) {
+      if (!gs.handleInput(subInput)) return false;
+    }
+    return true;
+  });
+
   // 1. STEP_GAME
   registerAction("STEP_GAME",
                  [](Gamestate &gamestate, const nlohmann::json &payload) {
@@ -67,7 +76,48 @@ void InputHandler::init() {
                    return true;
                  });
 
-  // 2. ADD_MONEY (ECS Mantığıyla)
+  // 2. SET_PROPERTY (Generic Entity Property Setter)
+  registerAction("SET_PROPERTY", [](Gamestate &gs, const nlohmann::json &payload) {
+    uuids::uuid targetId = getTargetCompanyId(gs, payload);
+    Entity *entity = gs.getEntity(targetId);
+    if (!entity) return false;
+
+    std::string componentName = payload.at("component").get<std::string>();
+    std::string propertyName = payload.at("property").get<std::string>();
+    auto newValue = payload.at("value");
+
+    if (componentName == "WalletComponent") {
+      auto *w = entity->GetComponent<WalletComponent>("WalletComponent");
+      if (w) {
+        if (propertyName == "balance") w->balance = newValue.get<double>();
+        else if (propertyName == "debt") w->debt = newValue.get<double>();
+        else return false;
+        return true;
+      }
+    } else if (componentName == "InventoryComponent") {
+       auto *inv = entity->GetComponent<InventoryComponent>("MainStorage");
+       if (inv) {
+         if (propertyName == "maxWeight") inv->setMaxWeight(newValue.get<double>());
+         else return false;
+         return true;
+       }
+    }
+    return false;
+  });
+
+  // 3. SET_TICK_RATE
+  registerAction("SET_TICK_RATE", [](Gamestate &gs, const nlohmann::json &payload) {
+    // Placeholder for rate adjustment logic
+    return true;
+  });
+
+  // 4. SCHEDULE_EVENT
+  registerAction("SCHEDULE_EVENT", [](Gamestate &gs, const nlohmann::json &payload) {
+    // Placeholder for event scheduling
+    return true;
+  });
+
+  // 5. ADD_MONEY (ECS Mantığıyla)
   registerAction("ADD_MONEY", [](Gamestate &gamestate,
                                  const nlohmann::json &payload) {
     uuids::uuid targetId = getTargetCompanyId(gamestate, payload);

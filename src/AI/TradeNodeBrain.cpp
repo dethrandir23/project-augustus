@@ -85,23 +85,32 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
     double budget     = wallet->balance * budgetRatio;
     if (budget < 1.0) return;
 
-    auto missing = EconomyUtils::getMissingItems(cons->templateId,
-                                                  storage->GetInternalInventory());
-    for (const auto& req : missing) {
-        if (budget <= 0.0) break;
-        double unitPrice = marketComp->getPrice(req.id);
-        if (unitPrice <= 0.0) unitPrice = 1.0;
-        float affordable = static_cast<float>(budget / unitPrice);
-        float toBuy      = std::min(req.quantity, affordable);
-        if (toBuy < 0.01f) continue;
-        InputHandler::handleInput(gamestate,
-            makeInput("MARKET_BUY_ITEM", {
-                {"marketId", uuids::to_string(marketId)},
-                {"itemId",   req.id},
-                {"amount",   toBuy},
-                {"price",    unitPrice}
-            }, node));
-        budget -= toBuy * unitPrice;
+    // Walk all consumption pipelines to find missing inputs
+    for (const auto& pipeId : cons->activePipelineIds) {
+        if (!PipelineManager::pipelines.count(pipeId)) continue;
+        const auto& pipe = PipelineManager::pipelines.at(pipeId);
+        for (const auto& input : pipe.inputs) {
+            if (input.id == "core_none_000") continue;
+            float inStorage = storage->GetInternalInventory().getAmount(input.id);
+            float target = input.quantity * 5.0f;
+            float needed = target - inStorage;
+            if (needed <= 0.0f) continue;
+
+            double unitPrice = marketComp->getPrice(input.id);
+            if (unitPrice <= 0.0) unitPrice = 1.0;
+            float affordable = static_cast<float>(budget / unitPrice);
+            float toBuy = std::min(needed, affordable);
+            if (toBuy < 0.01f) continue;
+
+            InputHandler::handleInput(gamestate,
+                makeInput("MARKET_BUY_ITEM", {
+                    {"marketId", uuids::to_string(marketId)},
+                    {"itemId",   input.id},
+                    {"amount",   toBuy},
+                    {"price",    unitPrice}
+                }, node));
+            budget -= toBuy * unitPrice;
+        }
     }
 }
 

@@ -100,11 +100,82 @@ x
     "description": "High-value luxury goods"
   },
   "transport": {
-    "description": "Transportation and logistics equipment"
+    "description": "Transportation and logistics technologies"
+  },
+  "extraction": {
+    "name": "Extraction",
+    "description": "Facilities that extract raw resources from nature.",
+    "icon": "factory_extraction"
+  },
+  "processing": {
+    "name": "Processing",
+    "description": "Factories that process raw resources into usable materials.",
+    "icon": "factory_processing"
+  },
+  "industrial": {
+    "name": "Industrial",
+    "description": "Large-scale industrial production facilities.",
+    "icon": "factory_industrial"
+  },
+  "manufacturing": {
+    "name": "Manufacturing",
+    "description": "Factories producing finished or semi-finished goods.",
+    "icon": "factory_manufacturing"
+  },
+  "consumer": {
+    "name": "Consumer Goods",
+    "description": "Factories producing goods for everyday consumption.",
+    "icon": "factory_consumer"
+  },
+  "textile": {
+    "name": "Textile",
+    "description": "Factories focused on cloth, clothing, and fiber processing.",
+    "icon": "factory_textile"
+  },
+  "luxury": {
+    "name": "Luxury",
+    "description": "Factories producing high-value luxury goods.",
+    "icon": "factory_luxury"
+  },
+  "food": {
+    "name": "Food Production",
+    "description": "Facilities producing food, drinks, and consumables.",
+    "icon": "factory_food"
+  },
+  "metallurgy": {
+    "name": "Metallurgy",
+    "description": "Metal smelting and refinement facilities.",
+    "icon": "factory_metallurgy"
+  },
+  "military": {
+    "name": "Military",
+    "description": "Factories producing weapons, ammunition, and military equipment.",
+    "icon": "factory_military"
+  },
+  "heavy_industry": {
+    "name": "Heavy Industry",
+    "description": "Capital-intensive factories producing large or complex goods.",
+    "icon": "factory_heavy_industry"
+  },
+  "transport": {
+    "name": "Transport",
+    "description": "Factories producing vehicles or transportation infrastructure.",
+    "icon": "factory_transport"
+  },
+  "agriculture": {
+    "name": "Agriculture",
+    "description": "Agricultural and farming facilities."
+  },
+  "consumption": {
+    "name": "Consumption"
+  },
+  "raw": {
+    "description": "Unprocessed natural resources"
   },
   "social": {
     "description": "Social effects"
   }
+}
 }
 
 }

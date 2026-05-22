@@ -37,6 +37,7 @@ public:
                 f.required_techs = entry.value("required_techs", std::vector<std::string>{});
                 f.categories = entry.value("categories", std::vector<std::string>{});
                 f.pipeline_ids = entry.value("pipelines", std::vector<std::string>{});
+                f.buildCost = entry.value("build_cost", 5000.0);
 
                 factories[f.id] = f;
             }

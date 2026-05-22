@@ -14,6 +14,7 @@ struct TradeNodeTemplate {
     int initial_capital;
     std::vector<std::string> local_pipelines;
     std::vector<std::string> consumption_pipelines;
+    std::vector<ItemStack> start_inventory;
 };
 
 class TradeNodeManager {
@@ -37,6 +38,15 @@ public:
 
                 t.local_pipelines = entry.value("local_pipelines", std::vector<std::string>{});
                 t.consumption_pipelines = entry.value("consumption_profile", std::vector<std::string>{});
+
+                if (entry.contains("starting_inventory")) {
+                    for (const auto& item : entry["starting_inventory"]) {
+                        t.start_inventory.push_back({
+                            item.at("id").get<std::string>(),
+                            item.at("amount").get<float>()
+                        });
+                    }
+                }
 
                 templates[t.id] = t;
             }

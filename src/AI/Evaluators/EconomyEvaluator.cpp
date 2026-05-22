@@ -4,10 +4,23 @@
 #include "Registry/ItemManager.h"
 #include "Registry/PipelineManager.h"
 #include "Economy/Components/WalletComponent.h"
+#include "Economy/Orderbook.h"
 #include "World/Components/MarketComponent.h"
 #include "Core/ECS/Entity.h"
+#include <unordered_set>
 
 namespace EconomyEvaluator {
+
+    // Check if any market has sell orders for this item
+    static bool isItemAvailableOnMarket(Gamestate& gamestate, const std::string& itemId) {
+        for (auto* entity : gamestate.getEntitiesByType("market")) {
+            auto* mComp = entity->GetComponent<MarketComponent>("MarketComponent");
+            if (!mComp) continue;
+            OrderBook* book = mComp->getBook(itemId);
+            if (book && book->getBestAsk() > 0.0) return true;
+        }
+        return false;
+    }
 
     float scoreFactoryProfitability(const std::string& templateId, Gamestate& gamestate) {
         if (FactoryManager::factories.find(templateId) == FactoryManager::factories.end()) {
@@ -17,6 +30,7 @@ namespace EconomyEvaluator {
 
         float expectedCost = 0.0f;
         float expectedRevenue = 0.0f;
+        bool hasUnavailableInput = false;
 
         auto getAveragePrice = [&gamestate](const std::string& itemId) -> float {
             float total = 0.0f;
@@ -25,7 +39,6 @@ namespace EconomyEvaluator {
                 auto* mComp = entity->GetComponent<MarketComponent>("MarketComponent");
                 if (mComp) {
                     double price = mComp->getPrice(itemId);
-                    // Fall back to base_price if market has no trades yet
                     if (price <= 0.0 && ItemManager::items.count(itemId)) {
                         price = static_cast<double>(ItemManager::items.at(itemId).base_price);
                     }
@@ -41,7 +54,15 @@ namespace EconomyEvaluator {
                 const auto& pipe = PipelineManager::pipelines.at(pipeId);
                 
                 for (const auto& in : pipe.inputs) {
-                    expectedCost += getAveragePrice(in.id) * in.quantity;
+                    if (in.id == "core_none_000") continue;
+                    float price = getAveragePrice(in.id);
+                    // Penalize inputs that have no sell orders on any market
+                    if (!isItemAvailableOnMarket(gamestate, in.id)) {
+                        hasUnavailableInput = true;
+                        expectedCost += price * in.quantity * 5.0f;
+                    } else {
+                        expectedCost += price * in.quantity;
+                    }
                 }
                 
                 for (const auto& out : pipe.outputs) {
@@ -49,6 +70,9 @@ namespace EconomyEvaluator {
                 }
             }
         }
+        
+        // Heavy penalty if any input is completely unavailable on market
+        if (hasUnavailableInput) expectedCost *= 2.0f;
         
         return expectedRevenue - expectedCost;
     }

@@ -35,7 +35,11 @@ inline Entity* createTradeNode(const TradeNodeTemplate& tmpl, uuids::uuid market
 
     auto* consumption = new ProductionComponent("consumption");
     consumption->activePipelineIds = tmpl.consumption_pipelines;
-    node->AddComponent(consumption);
+    node->AddComponent(consumption, "consumption");
+
+    for (const auto& item : tmpl.start_inventory) {
+        node->GetComponent<InventoryComponent>("Storage")->Add(item.id, item.quantity);
+    }
 
     return node;
 }

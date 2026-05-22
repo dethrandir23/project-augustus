@@ -33,6 +33,9 @@ public:
     }
 
     Inventory& GetInternalInventory() { return inventory; }
+    
+    void setMaxWeight(double weight) { inventory.setMaxWeight(weight); }
+    double getMaxWeight() const { return inventory.getMaxWeight(); }
 
     nlohmann::json ToJson() const override {
         nlohmann::json j = inventory;
