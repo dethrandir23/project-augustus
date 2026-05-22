@@ -12,7 +12,7 @@
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
 #include "World/Systems/MarketSystem.h"
-#include "AI/AIRegistry.h"
+#include "AI/AIManager.h"
 #include "AI/Components/AIControllerComponent.h"
 
 void GameManager::tick(Gamestate &gamestate) {
@@ -196,13 +196,5 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
 }
 
 void GameManager::processAI(Gamestate& gamestate) {
-    for (auto& [id, entity] : gamestate.getEntities()) {
-        // AI Componenti (Çipi) var mı diye kontrol et
-        if (entity->GetComponent<AIControllerComponent>("AIControllerComponent")) {
-            
-            // Varsa, tipine göre beynini çalıştır!
-            AIRegistry::executeLogic(*entity, gamestate);
-            
-        }
-    }
+    AIManager::processAll(gamestate);
 }

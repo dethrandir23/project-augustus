@@ -1,29 +1,44 @@
 #pragma once
 #include "Core/ECS/Component.h"
+#include "AI/AIBrain.h"
+#include <memory>
 
 class AIControllerComponent : public Component {
 public:
-    // add modifier set later
-
-    // std::string personalityId;
-    // std::unordered_map<std::string, float> dynamicDesires;
-
     AIControllerComponent() = default;
+
+    explicit AIControllerComponent(std::unique_ptr<AIBrain> brain)
+        : brain(std::move(brain)) {}
 
     std::string GetComponentType() const override { return "AIControllerComponent"; }
 
-    // ToJson and UpdateFromJson
+    AIBrain* getBrain() const { return brain.get(); }
+
+    void setBrain(std::unique_ptr<AIBrain> b) { brain = std::move(b); }
+
+    bool hasBrain() const { return brain != nullptr; }
+
+    float riskTolerance = 0.5f;
+    float aggression = 0.5f;
+    float expansionism = 0.5f;
+
     nlohmann::json ToJson() const override {
-        return nlohmann::json::object();
+        auto j = nlohmann::json::object();
+        j["riskTolerance"] = riskTolerance;
+        j["aggression"] = aggression;
+        j["expansionism"] = expansionism;
+        if (brain) {
+            j["brain"] = brain->toJson();
+        }
+        return j;
     }
 
     void UpdateFromJson(const nlohmann::json& j) override {
-        // Currently no persistent state to load
+        if (j.contains("riskTolerance")) riskTolerance = j["riskTolerance"].get<float>();
+        if (j.contains("aggression")) aggression = j["aggression"].get<float>();
+        if (j.contains("expansionism")) expansionism = j["expansionism"].get<float>();
     }
-    
 
-    // hookable functions
-    // void addDesireModifier(const std::string& action, float amount) {
-    //     dynamicDesires[action] += amount;
-    // }
+private:
+    std::unique_ptr<AIBrain> brain;
 };

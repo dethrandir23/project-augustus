@@ -59,13 +59,13 @@ auto config = ConfigUtils::loadConfig(configPath);
         if (saveName.empty()) return false;
 
         std::string savePath = ConfigUtils::get<std::string>(ConfigUtils::loadConfig(configPath),
-                                                        "save_path", 
+                                                        "storage.save_path",
                                               "no_save_path");
         
         if (savePath == error_no_path) return false;
 
         try {
-            fs::path fpath = fs::path(savePath) / saveName;
+            fs::path fpath = fs::path(savePath) / (saveName + ".save");
             if (!FileUtils::exists(fpath.string())) return false;
 
             std::vector<uint8_t> compressedData = FileUtils::readFile(fpath.string());
@@ -93,7 +93,7 @@ auto config = ConfigUtils::loadConfig(configPath);
 
     std::vector<std::string> listSaves() {
         std::string savePath = ConfigUtils::get<std::string>(ConfigUtils::loadConfig(configPath),
-                                                        "save_path", 
+                                                        "storage.save_path",
                                               "no_save_path");
         
         if (savePath == error_no_path) return {};

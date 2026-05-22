@@ -1,6 +1,7 @@
 // src/AI/Evaluators/EconomyEvaluator.cpp
 #include "EconomyEvaluator.h"
 #include "Registry/FactoryManager.h"
+#include "Registry/ItemManager.h"
 #include "Registry/PipelineManager.h"
 #include "Economy/Components/WalletComponent.h"
 #include "World/Components/MarketComponent.h"
@@ -23,7 +24,12 @@ namespace EconomyEvaluator {
             for (auto* entity : gamestate.getEntitiesByType("market")) {
                 auto* mComp = entity->GetComponent<MarketComponent>("MarketComponent");
                 if (mComp) {
-                    total += mComp->getPrice(itemId);
+                    double price = mComp->getPrice(itemId);
+                    // Fall back to base_price if market has no trades yet
+                    if (price <= 0.0 && ItemManager::items.count(itemId)) {
+                        price = static_cast<double>(ItemManager::items.at(itemId).base_price);
+                    }
+                    total += price;
                     count++;
                 }
             }
