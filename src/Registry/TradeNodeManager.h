@@ -1,6 +1,7 @@
 #pragma once
 #include "../../lib/nlohmann/json.hpp"
 #include "../Core/Types.h"
+#include "../DevTools/Console.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -28,7 +29,7 @@ public:
                 t.id = entry.at("id").get<std::string>();
                 t.name_pool_id = entry.value("name_pool", "default_names");
                 t.initial_capital = entry.value("initial_capital", 0);
-                
+
                 if (entry["initial_population"].is_object()) {
                     t.min_pop = entry["initial_population"].value("min", 100);
                     t.max_pop = entry["initial_population"].value("max", 100);
@@ -40,16 +41,26 @@ public:
                 t.consumption_pipelines = entry.value("consumption_profile", std::vector<std::string>{});
 
                 if (entry.contains("starting_inventory")) {
-                    for (const auto& item : entry["starting_inventory"]) {
-                        t.start_inventory.push_back({
-                            item.at("id").get<std::string>(),
-                            item.at("amount").get<float>()
-                        });
+                    auto& si = entry["starting_inventory"];
+                    if (si.is_object()) {
+                        for (auto it = si.begin(); it != si.end(); ++it) {
+                            t.start_inventory.push_back({it.key(), it.value().get<float>()});
+                        }
+                    } else if (si.is_array()) {
+                        for (const auto& item : si) {
+                            t.start_inventory.push_back({
+                                item.at("id").get<std::string>(),
+                                item.at("amount").get<float>()
+                            });
+                        }
                     }
                 }
 
                 templates[t.id] = t;
             }
-        } catch(...) {}
+            Console::log("Loaded " + std::to_string(templates.size()) + " trade node templates from " + src, LogType::INFO);
+        } catch (const std::exception& e) {
+            Console::log("TradeNode load error in " + src + ": " + e.what(), LogType::ERROR);
+        }
     }
 };

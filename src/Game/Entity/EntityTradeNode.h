@@ -10,6 +10,8 @@
 #include "Core/Components/InventoryComponent.h"
 #include "World/Components/DemographicsComponent.h"
 #include "World/Components/MarketMemberComponent.h"
+#include "AI/Components/AIControllerComponent.h"
+#include "AI/TradeNodeBrain.h"
 #include "Game/IdUtils.h"
 
 
@@ -36,6 +38,9 @@ inline Entity* createTradeNode(const TradeNodeTemplate& tmpl, uuids::uuid market
     auto* consumption = new ProductionComponent("consumption");
     consumption->activePipelineIds = tmpl.consumption_pipelines;
     node->AddComponent(consumption, "consumption");
+
+    auto* aiComp = new AIControllerComponent(std::make_unique<TradeNodeBrain>());
+    node->AddComponent(aiComp, "AIControllerComponent");
 
     for (const auto& item : tmpl.start_inventory) {
         node->GetComponent<InventoryComponent>("Storage")->Add(item.id, item.quantity);

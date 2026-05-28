@@ -88,6 +88,7 @@ void Gamestate::removeEntity(const uuids::uuid& id) {
     
  }
 
+ // deprecated
  bool Gamestate::handleInput(const nlohmann::json& input) {
      // This method is a placeholder for now. The real input handling is done
      // via InputHandler::handleInput which takes Gamestate& as a parameter.

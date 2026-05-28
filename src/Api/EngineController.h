@@ -5,13 +5,18 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using EngineCallback = std::function<void(const std::string &, const nlohmann::json &)>;
 
+namespace augustus_engine {
+
 class EngineController {
 public:
-    EngineController();
-    ~EngineController();
+    static EngineController& instance();
+
+    EngineController(const EngineController&) = delete;
+    EngineController& operator=(const EngineController&) = delete;
 
     // --- Init & Data Loading ---
     void init();
@@ -29,14 +34,17 @@ public:
 
     // --- State Queries ---
     std::string getSerializedState();
+    std::string getDeltaState();
     std::string getPlayerState();
     std::string getMarketData(const std::string &marketId);
     std::string getFactoryStatus(const std::string &factoryId);
+    std::string getFactoryTemplates();
     std::string getPendingEvents();
 
     // --- Console ---
     std::vector<std::string> readConsole();
     void logToConsole(const std::string &msg);
+    void logToConsole(const std::string &msg, LogType type);
 
     // --- Save / Load ---
     bool saveGame(const std::string &name);
@@ -50,10 +58,19 @@ public:
     Gamestate &getGamestate() { return gamestate; }
 
 private:
+    EngineController();
+    ~EngineController();
+
     Gamestate gamestate;
     GameLoader loader;
     bool initialized = false;
 
     void registerHandlers();
     void pushToCallbacks(const std::string &eventType, const nlohmann::json &payload);
+    nlohmann::json computeDelta(const nlohmann::json &oldState,
+                                 const nlohmann::json &newState);
+
+    nlohmann::json previousState;
 };
+
+} // namespace augustus_engine

@@ -10,7 +10,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-option(BUILD_AS_STATIC_LIB "Build the game engine as a static library" OFF)
+# # fastnoise
+# set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE)
+# add_subdirectory(deps/FastNoise2)
+
+option(BUILD_AS_STATIC_LIB "Build only the static library" OFF)
+option(BUILD_GODOT_PLUGIN "Build Godot GDExtension plugin (.so)" OFF)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
@@ -24,17 +29,18 @@ file(COPY ${CMAKE_SOURCE_DIR}/fonts DESTINATION ${CMAKE_BINARY_DIR})
 file(GLOB_RECURSE ALL_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE IMGUI_SOURCES "${CMAKE_SOURCE_DIR}/lib/imgui/*.cpp")
 
-# Remove legacy UI code from engine sources
 file(GLOB_RECURSE UI_SOURCES "${CMAKE_SOURCE_DIR}/src/App/UI/*.cpp")
 list(REMOVE_ITEM ALL_SOURCES ${UI_SOURCES})
 
-# Separate main.cpp (entry point) from engine sources
 list(FILTER ALL_SOURCES EXCLUDE REGEX "main\\.cpp$")
+
+# Godot sources are only for the GDExtension plugin build
+list(FILTER ALL_SOURCES EXCLUDE REGEX "src/Godot/")
 set(ENGINE_SOURCES ${ALL_SOURCES})
 
 include(FetchContent)
 
-# ── webview ──
+# ── webview (only linked by the native executable) ──
 FetchContent_Declare(
     webview
     GIT_REPOSITORY https://github.com/webview/webview
@@ -51,35 +57,61 @@ if(EMSCRIPTEN)
     )
 else()
     message(STATUS "Build Type: Native (Linux/Win/Mac)")
-    list(FILTER ENGINE_SOURCES EXCLUDE REGEX "WebApi.cpp$")
+    list(FILTER ENGINE_SOURCES EXCLUDE REGEX "WebApi.cpp$|NativeApi\\.cpp$")
 
-    find_package(OpenGL REQUIRED)
-    find_package(glfw3 QUIET)
+    # glfw/GL only needed by the webview-based executable, not by the engine lib itself
+    set(CORE_LIBS uuid lz4)
 
-    set(NATIVE_LIBS glfw GL uuid lz4)
+    if(NOT BUILD_GODOT_PLUGIN)
+        find_package(OpenGL REQUIRED)
+        find_package(glfw3 QUIET)
+        set(APP_LIBS glfw GL)
+    endif()
 endif()
 
 # ── Engine Static Library ──
-# All engine code compiled as a static library with the public API
-# exposed via the project_augustus namespace (see src/Api/NativeApi.h)
 add_library(augustus_engine STATIC ${ENGINE_SOURCES} ${IMGUI_SOURCES})
-target_link_libraries(augustus_engine PUBLIC webview::core)
 
 if(NOT EMSCRIPTEN)
-    target_link_libraries(augustus_engine PUBLIC ${NATIVE_LIBS})
+    target_link_libraries(augustus_engine PUBLIC ${CORE_LIBS})
 endif()
 
-# ── Executable (optional in native builds) ──
+# ── Godot GDExtension Plugin ──
+if(BUILD_GODOT_PLUGIN)
+    message(STATUS "Building Godot GDExtension plugin")
+
+    FetchContent_Declare(
+        godot-cpp
+        GIT_REPOSITORY https://github.com/godotengine/godot-cpp
+        GIT_TAG godot-4.3-stable
+    )
+    FetchContent_MakeAvailable(godot-cpp)
+
+    file(GLOB_RECURSE GODOT_SOURCES "${CMAKE_SOURCE_DIR}/src/Godot/*.cpp")
+
+    set(GODOT_ENGINE_SOURCES ${ENGINE_SOURCES})
+    list(REMOVE_ITEM GODOT_ENGINE_SOURCES ${IMGUI_SOURCES})
+
+    # add_library(project-augustus-godot SHARED ${GODOT_SOURCES} ${GODOT_ENGINE_SOURCES} ${source}) # fastnoise added
+    # target_link_libraries(project-augustus-godot PRIVATE godot-cpp ${CORE_LIBS} PUBLIC Fastnoise) # fastnoise added
+    add_library(project-augustus-godot SHARED ${GODOT_SOURCES} ${GODOT_ENGINE_SOURCES})
+    target_link_libraries(project-augustus-godot PRIVATE godot-cpp ${CORE_LIBS})
+
+    set_target_properties(project-augustus-godot PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/addons/project-augustus"
+    )
+endif()
+
+# ── Native Executable ──
 if(EMSCRIPTEN)
-    # Emscripten always needs the executable target for the .js/.wasm output
     add_executable(project-augustus "${CMAKE_SOURCE_DIR}/src/App/main.cpp")
     target_link_libraries(project-augustus PRIVATE augustus_engine)
     set_target_properties(project-augustus PROPERTIES SUFFIX ".js")
     target_link_options(project-augustus PRIVATE ${EMSCRIPTEN_FLAGS})
-elseif(NOT BUILD_AS_STATIC_LIB)
+elseif(NOT BUILD_AS_STATIC_LIB AND NOT BUILD_GODOT_PLUGIN)
     add_executable(project-augustus "${CMAKE_SOURCE_DIR}/src/App/main.cpp")
-    target_link_libraries(project-augustus PRIVATE augustus_engine)
-else()
+    target_link_libraries(project-augustus PRIVATE augustus_engine webview::core ${APP_LIBS})
+elseif(BUILD_AS_STATIC_LIB)
     message(STATUS "BUILD_AS_STATIC_LIB=ON: Skipping executable, building only the static library.")
 endif()
 
@@ -109,8 +141,8 @@ target_link_libraries(augustus_tests
 include(Catch)
 catch_discover_tests(augustus_tests)
 
-# ── Headless Test (links against static library) ──
-if(NOT EMSCRIPTEN)
+# ── Headless Test ──
+if(NOT EMSCRIPTEN AND NOT BUILD_GODOT_PLUGIN)
     add_executable(headless_test tests/headless_test.cpp)
     target_link_libraries(headless_test PRIVATE augustus_engine)
     target_compile_definitions(headless_test PRIVATE DATA_ROOT="${CMAKE_SOURCE_DIR}/data/core/data")

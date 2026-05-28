@@ -133,8 +133,7 @@ inline void to_json(nlohmann::json& j, const MarketOrder& o) {
     };
 }
 
-inline MarketOrder from_json(const nlohmann::json& j) {
-    MarketOrder order;
+inline void from_json(const nlohmann::json& j, MarketOrder& order) {
     order.id = uuids::uuid::from_string(j.at("id").get<std::string>()).value();
     order.ownerId = uuids::uuid::from_string(j.at("ownerId").get<std::string>()).value();
     j.at("itemId").get_to(order.itemId);
@@ -143,8 +142,6 @@ inline MarketOrder from_json(const nlohmann::json& j) {
     j.at("quantity").get_to(order.quantity);
     j.at("filled").get_to(order.filledQuantity);
     j.at("time").get_to(order.timestamp);
-    
-    return order;
 }
 
 // 1. Position

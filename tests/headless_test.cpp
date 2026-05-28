@@ -1,4 +1,4 @@
-#include "Api/NativeApi.h"
+#include "Api/EngineController.h"
 #include "DevTools/Console.h"
 #include <filesystem>
 #include <fstream>
@@ -46,7 +46,7 @@ static json loadAllDataFiles(const fs::path& dataRoot) {
     }
 
     Console::log("Loading " + std::to_string(contents.size()) + " data files...");
-    bool ok = project_augustus::loadGameFiles(contents, names);
+    bool ok = augustus_engine::EngineController::instance().loadGameFiles(contents, names);
     report["data_load_success"] = ok;
     return report;
 }
@@ -56,8 +56,8 @@ static void captureSnapshot(json& history, int tick) {
     snap["tick"] = tick;
 
     try {
-        auto state = json::parse(project_augustus::getSerializedState());
-        auto player = json::parse(project_augustus::getPlayerState());
+        auto state = json::parse(augustus_engine::EngineController::instance().getSerializedState());
+        auto player = json::parse(augustus_engine::EngineController::instance().getPlayerState());
 
         snap["turn"] = state.value("turn", 0);
         snap["entities"] = state["entities"].size();
@@ -109,7 +109,7 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     // Phase 1: Engine Init
     std::cout << "[Phase 1] Initializing engine..." << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
-    project_augustus::initEngine();
+    augustus_engine::EngineController::instance().init();
     auto t2 = std::chrono::high_resolution_clock::now();
     results["phases"]["init_time_ms"] = std::chrono::duration<double, std::milli>(t2 - t1).count();
     results["phases"]["init_success"] = true;
@@ -131,7 +131,7 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     // Phase 3: Scenario
     std::cout << "[Phase 3] Starting scenario..." << std::endl;
     t1 = std::chrono::high_resolution_clock::now();
-    bool scenarioOk = project_augustus::startScenario("debug_scenario");
+    bool scenarioOk = augustus_engine::EngineController::instance().startScenario("debug_scenario");
     t2 = std::chrono::high_resolution_clock::now();
     results["phases"]["scenario_time_ms"] = std::chrono::duration<double, std::milli>(t2 - t1).count();
     results["phases"]["scenario_success"] = scenarioOk;
@@ -158,11 +158,11 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     }
 
     t1 = std::chrono::high_resolution_clock::now();
-    project_augustus::setPlayer("Player Corp", "core_startup_company_001", false);
+    augustus_engine::EngineController::instance().setPlayer("Player Corp", "core_startup_company_001", false);
     int aiCreated = 0;
     for (int i = 0; i < numAICompanies; i++) {
         try {
-            project_augustus::setPlayer(
+            augustus_engine::EngineController::instance().setPlayer(
                 "AI Company " + std::to_string(i + 1),
                 "core_startup_company_001", true);
             aiCreated++;
@@ -181,7 +181,7 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     int okTicks = 0, failTicks = 0;
     for (int tick = 1; tick <= totalTicks; tick++) {
         try {
-            project_augustus::step();
+            augustus_engine::EngineController::instance().step();
             okTicks++;
             captureSnapshot(results["tick_history"], tick);
         } catch (const std::exception& e) {
@@ -200,9 +200,9 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     std::cout << "[Phase 6] Analyzing results..." << std::endl;
     json analysis;
     try {
-        auto state = json::parse(project_augustus::getSerializedState());
-        auto player = json::parse(project_augustus::getPlayerState());
-        auto events = json::parse(project_augustus::getPendingEvents());
+        auto state = json::parse(augustus_engine::EngineController::instance().getSerializedState());
+        auto player = json::parse(augustus_engine::EngineController::instance().getPlayerState());
+        auto events = json::parse(augustus_engine::EngineController::instance().getPendingEvents());
 
         analysis["final_turn"] = state.value("turn", 0);
         analysis["final_date"] = state.value("date", "");
@@ -227,7 +227,7 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
         }
         analysis["pending_events"] = events.size();
 
-        auto logs = project_augustus::readConsole();
+        auto logs = augustus_engine::EngineController::instance().readConsole();
         analysis["console_lines"] = logs.size();
 
         results["analysis"] = analysis;
@@ -239,29 +239,29 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     // Phase 7: Save/Load Test
     std::cout << "[Phase 7] Save/Load test..." << std::endl;
     t1 = std::chrono::high_resolution_clock::now();
-    bool saveOk = project_augustus::saveGame("headless_test_save");
+    bool saveOk = augustus_engine::EngineController::instance().saveGame("headless_test_save");
     t2 = std::chrono::high_resolution_clock::now();
     results["phases"]["save_ms"] = std::chrono::duration<double, std::milli>(t2 - t1).count();
     results["phases"]["save_ok"] = saveOk;
 
-    auto saves = project_augustus::listSaves();
+    auto saves = augustus_engine::EngineController::instance().listSaves();
     results["phases"]["saves_list"] = saves;
 
     t1 = std::chrono::high_resolution_clock::now();
-    bool loadOk = project_augustus::loadGame("headless_test_save");
+    bool loadOk = augustus_engine::EngineController::instance().loadGame("headless_test_save");
     t2 = std::chrono::high_resolution_clock::now();
     results["phases"]["load_ms"] = std::chrono::duration<double, std::milli>(t2 - t1).count();
     results["phases"]["load_ok"] = loadOk;
 
     if (loadOk) {
-        auto loadedState = json::parse(project_augustus::getSerializedState());
+        auto loadedState = json::parse(augustus_engine::EngineController::instance().getSerializedState());
         results["phases"]["loaded_turn"] = loadedState.value("turn", -1);
         results["phases"]["load_verified"] = (loadedState.value("turn", -1) == analysis.value("final_turn", -1));
     }
 
     // Phase 8: Market query test
     try {
-        auto md = json::parse(project_augustus::getMarketData("all"));
+        auto md = json::parse(augustus_engine::EngineController::instance().getMarketData("all"));
         results["phases"]["market_query_ok"] = md.is_array();
         results["phases"]["market_count"] = md.size();
     } catch (...) {

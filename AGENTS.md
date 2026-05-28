@@ -1,71 +1,55 @@
 # AGENTS.md
 
 ## Build & Execution
-- **Build**: `cmake -B build && cmake --build build`
-- **Binary Output**: The executable is located in `build/bin/project-augustus`.
-- **Testing**: Uses [Catch2](https://github.com/catchorg/Catch2). Tests are defined in `CMakeLists.txt` and can be run via `ctest --test-dir build` after building.
-- **Emscripten**: The project supports WebAssembly builds via `EMSCRIPTEN=1 cmake ...`.
+- **Native build**: `cmake -B build && cmake --build build` → `build/bin/project-augustus`
+- **Run**: `build/bin/project-augustus mock/load_order.json` (loads mock mod at runtime)
+- **Static lib only**: `BUILD_AS_STATIC_LIB=ON cmake -B build && cmake --build build`
+- **WASM**: `EMSCRIPTEN=1 cmake -B build && cmake --build build`
+- **Godot plugin**: `BUILD_GODOT_PLUGIN=ON cmake -B build && cmake --build build` → `addons/project-augustus/`
+- **C++ Standard**: C++20
+
+## Testing
+- **Framework**: Catch2 v3 (fetched via FetchContent)
+- **Run all**: `ctest --test-dir build`
+- **Unit tests** (4 files in `tests/`): `build/bin/augustus_tests`
+- **Headless integration test**: `build/bin/headless_test <ticks> <companies> <data_root>`
+  - Defaults: 200 ticks, 3 AI companies, uses `data/core/data`
+  - Writes report to `headless_test_report.json`
+  - Defined in CMakeLists.txt with `DATA_ROOT` compile-time define
+  - Auto-registered as ctest `headless_test` (100 ticks, 3 companies, `data/core/data`)
+- **Config.toml**: Required for save/load tests. Headless test creates a temporary one if missing.
+- **Note**: `tests/test_economy.cpp` is currently empty (0 bytes).
 
 ## Architecture
-- **Core**: A custom **Entity Component System (ECS)** implementation.
-    - `src/Core/ECS/`: Base `Entity` and `Component` classes.
-- **UI**: Hybrid architecture.
-    - **Native**: Uses **Dear ImGui** with GLFW/OpenGL3 for development/debug tools.
-    * `src/App/UI/UIManager.cpp`: Manages windowing and ImGui context.
-    - **Web (Planned)**: React/TypeScript frontend communicating via WebSockets/WebView.
-- **Data-Driven**: Game world and entities are defined via **JSON**.
-    - Static definitions: `data/core/`
-    - Runtime saves: **MessagePack** compressed with **LZ4**.
-- **Directory Structure**:
-    - `src/Core`: ECS core and base types.
-    - `src/Game`: High-level gameplay logic.
-    - `src/Economy`: Economic systems (Markets, Orderbooks).
-    - `src/World`: Map, TradeNodes, and world simulation.
-    - `src/App`: Application layer and entry points.
+- **Custom ECS** in `src/Core/ECS/` (Entity + Component base classes)
+- **Engine singleton**: `augustus_engine::EngineController::instance()` in `src/Api/EngineController.h`
+- **Data-driven**: Game world defined via JSON files
+  - `mock/core/data/` = active mod (loaded at runtime via `mock/load_order.json`)
+  - `data/core/` = stale copy, used only by headless test (`DATA_ROOT`)
+- **Runtime saves**: MessagePack + LZ4 compression
+- **Key directories**:
+  - `src/Core/` — ECS base types
+  - `src/Game/` — gamestate, managers, event handler
+  - `src/Economy/` — markets, orderbooks, company brain
+  - `src/World/` — map, trade nodes
+  - `src/App/` — entry point (`main.cpp`)
+- **Native ImGui UI** (`src/App/UI/`): Deprecated/broken after ECS refactor. Excluded by default in CMakeLists.txt.
 
-## Development Conventions
-- **C++ Standard**: C++20.
-- **Dependencies**: Uses `FetchContent` for major dependencies like `webview`, `Catch2`, and `imgui`.
-- **Naming**: Follows standard C++ PascalCase for classes and camelCase for methods/variables.
-- **Data Flow**: `GameState` $\to$ `JSON` $\to$ `MessagePack` $\to$ `LZ4` $\to$ Save File.
+## Frontend (Active UI)
+- **Stack**: React 19, TypeScript 6, Vite 8, zustand (state), @tanstack/react-query
+- **Build**: `npm run build` in `frontend/` → output to `src/frontend/dist/`
+- **Lint**: `npm run lint` (eslint)
+- **Typecheck**: `tsc -b` (part of `npm run build`)
+- **Embedded in native binary**: `main.cpp` reads `src/frontend/dist/index.html`, inlines JS/CSS via `inlineFrontend()`, sets via `webview::set_html()`
+- **Bridge format**: Frontend sends `{type, payload}` (stringified). Bridge in `main.cpp` parses and calls C++ API.
+- **Key components**: `Layout.tsx`, `MainMenu.tsx`, `ScenarioSelect.tsx`, `Dashboard.tsx`, `MarketView.tsx`, `CompanyView.tsx`, `TradeNodeView.tsx`, `EventView.tsx`, `SaveDialog.tsx`, `LoadGame.tsx`
+- **Store**: `frontend/src/store/engineStore.ts` — single zustand store wrapping `EngineBridge`
 
-## Economic Fixes (Session 3)
-### Mod Data Balance for Alpha
-- **`mock/core/data/common/trade_nodes.json`**: Fixed consumption_profile IDs, local_pipelines IDs, upped `initial_capital` to 50000, added `starting_inventory` (200 grain, 100 wood, 100 stone).
-
-- **`mock/core/data/common/pipelines.json`**: Removed `core_water` from basic consumption (item doesn't exist). Added 8 extraction pipelines (wood, stone, clay, sand, coal, iron, sulphur, saltpeter). Added `core_population_demand_024` with demand for intermediate goods (lumber, brick, glass, paper, cloth) plus existing final goods.
-
-- **`mock/core/data/common/factories.json`**: Added 8 extraction factory templates with `build_cost: 3000`.
-
-- **`mock/core/data/scenarios/debug_scenario.json`**: Changed trade node `additional_pipelines` to `core_population_demand_024`, added starting_inventory with grain/wood.
-
-- **`mock/core/data/economy/settings.json`**: Added interest rate and market tax settings.
-
-- **`data/core/`**: Sync'd all changes from mock mod.
-
-### OrderBook Performance
-- **`src/Economy/Orderbook.h`**: Replaced `push_back + std::sort` (O(n log n)) with `std::lower_bound` + `insert` (O(n)) for order insertion. Removed unused `BuyOrderComparator`/`SellOrderComparator` structs. Added `#include <algorithm>`.
-
-### Current State (End of Session 3)
-- **200-tick test**: 0 failures, save/load OK, balance stable at 5000.
-- **AI factories**: 3 built (extraction/low-input preferred).
-- **Demand chain now includes intermediate goods** (lumber, paper, brick, glass, cloth) via `core_population_demand_024`.
-- **Economy**: Better liquidity with higher trade node capital and broader demand. Next bottleneck is supply-chain depth.
-### Problems Fixed
-- **Cold-start economy**: AI always built consuming factories (explosives) first, draining balance on unfilled buy orders.
-- **Starting inventory sold prematurely**: Companies sold their starting 100 wood/stone to the market, making consuming factories appear viable, then had to buy inputs back.
-- **Escrow money wasted**: Buy orders for untraded items locked money forever with no matching sell orders.
-- **No production chain bootstrapping**: Companies built consuming factories before extraction factories existed.
-
-### Changes Made
-1. **`EconomyEvaluator.cpp`**: `scoreFactoryProfitability()` now checks actual market liquidity (`getBestAsk() > 0`) instead of theoretical producibility. Inputs without sell orders get 5x cost penalty × 2x total cost multiplier. This ensures the AI builds extraction (zero-input) factories first.
-2. **`CompanyBrain.cpp` `sellSurplus()`**: Skips selling items that are inputs to any owned factory. Prevents companies from selling their starting inventory needed for production.
-3. **`CompanyBrain.cpp` `buyInputs()`**: Uses `getBestAsk()` instead of `getPrice()` to only buy items with actual sell orders. Uses `getBook()->getBestAsk()` price instead of `lastTradedPrice` so buy orders match existing sell orders at the ask price.
-4. **`Economy/Orderbook.h`**: Added `#pragma once` header guard (was missing, causing double-include errors).
-
-### Current State
-- **200-tick headless test**: 0 failures, save/load OK.
-- **Player balance**: Stable at 5000 (no bankruptcy).
-- **AI factories**: 3 built (1 per company, all extraction/low-input).
-- **Economy**: Stable but not growing — intermediate goods (paper, lumber) lack buyer demand. Trade nodes only consume final goods (tools, clothes, furniture, food). Next step: broaden trade node demand or add market-maker for intermediate goods.
-- **Remaining**: Debug `[BUY]` prints in `CompanyBrain.cpp:94` (harmless, shows market activity).
+## Key Gotchas
+- Mock mod is the active data source; always edit `mock/core/data/` for balance changes
+- `src/App/UI/` (ImGui) is **not compiled** — remove `UI_SOURCES` exclusion from CMakeLists.txt if reviving it
+- `WebApi.cpp` is excluded from native builds via CMakeLists.txt (`#ifdef __EMSCRIPTEN__`-guarded in `main.cpp`); native API bindings live in `EngineController.h` + `main.cpp` webview bindings
+- Headless test needs `Config.toml` at CWD with `[storage] save_path = "..."` for save/load
+- **Never use `std::cout`, `std::cerr`, or `printf` for logging** — always use `Console::log(msg, LogType::INFO/ERROR/WARNING)` from `DevTools/Console.h`. Include via: `#include "DevTools/Console.h"` (relative to `src/`). This ensures output reaches the Godot/webview console.
+- `opencode.json`: only `lsp: true` — no custom instructions configured
+- No CI workflows present in `.github/`

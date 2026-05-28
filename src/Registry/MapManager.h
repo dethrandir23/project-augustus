@@ -48,6 +48,7 @@ public:
                     node.x = entry.at("x").get<int>();
                     node.y = entry.at("y").get<int>();
                     node.terrain = entry.value("terrain", "plains");
+                    node.default_market_id = entry.value("default_market_id", "");
                     
                     m.nodes.push_back(node);
                 }

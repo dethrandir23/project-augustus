@@ -1,8 +1,10 @@
 #include "Entity.h"
+#include "Core/Components/InventoryComponent.h"
 #include "Economy/Components/AssetOwnerComponent.h"
 #include "Economy/Components/ManpowerPoolComponent.h"
 #include "Economy/Components/OwnerComponent.h"
 #include "Economy/Components/PerkComponent.h"
+#include "Economy/Components/ProductionComponent.h"
 #include "Economy/Components/TechTreeComponent.h"
 #include "Economy/Components/WalletComponent.h"
 #include "Economy/Components/WorkforceComponent.h"
@@ -10,6 +12,7 @@
 #include "World/Components/MarketMemberComponent.h"
 #include "World/Components/LocationComponent.h"
 #include "World/Components/DemographicsComponent.h"
+#include "AI/Components/AIControllerComponent.h"
 
 
 Entity::~Entity() {
@@ -69,10 +72,12 @@ void Entity::AddComponent(Component* component, const std::string& customKey) {
     }
 
     Component* CreateComponentByType(const std::string& type) {
-        if (type == "AssetOwnerComponent")   return new AssetOwnerComponent();
+        if (type == "AssetOwnerComponent")     return new AssetOwnerComponent();
+        if (type == "InventoryComponent")      return new InventoryComponent();
         if (type == "ManpowerPoolComponent") return new ManpowerPoolComponent();
         if (type == "OwnerComponent")        return new OwnerComponent();
-        if (type == "PerkComponent")         return new PerkComponent();
+        if (type == "PerkComponent")           return new PerkComponent();
+        if (type == "ProductionComponent")     return new ProductionComponent("");
         if (type == "TechTreeComponent")     return new TechTreeComponent();
         if (type == "WalletComponent")       return new WalletComponent();
         if (type == "WorkforceComponent")    return new WorkforceComponent();
@@ -80,6 +85,7 @@ void Entity::AddComponent(Component* component, const std::string& customKey) {
         if (type == "LocationComponent")     return new LocationComponent(0, 0);
         if (type == "MarketComponent")       return new MarketComponent();
         if (type == "MarketMemberComponent") return new MarketMemberComponent(uuids::uuid{});
+        if (type == "AIControllerComponent") return new AIControllerComponent();
         return nullptr;
     }
 

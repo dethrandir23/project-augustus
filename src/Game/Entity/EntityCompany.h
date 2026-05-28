@@ -18,7 +18,7 @@ inline Entity* createCompany(const CompanyTemplate &tmpl, const std::string &nam
     company->SetType("company");
 
     auto n = (name != "") ? name : NameManager::getRandomName(tmpl.name_pool_id);
-    company->SetName(name);
+    company->SetName(n);
 
     company->AddComponent(new WalletComponent, "WalletComponent");
     company->GetComponent<WalletComponent>("WalletComponent")->balance = tmpl.start_capital;

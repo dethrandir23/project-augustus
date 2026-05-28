@@ -22,6 +22,13 @@
 #include "Registry/TechnologyManager.h"
 #include "Registry/TradeNodeManager.h"
 
+namespace augustus_engine {
+
+EngineController& EngineController::instance() {
+    static EngineController inst;
+    return inst;
+}
+
 EngineController::EngineController() = default;
 EngineController::~EngineController() = default;
 
@@ -107,8 +114,10 @@ bool EngineController::loadGameFiles(const std::vector<std::string> &contents,
 
 bool EngineController::startScenario(const std::string &scenarioId) {
     bool ok = gamestate.loadScenario(scenarioId);
-    if (ok) Console::log("Scenario '" + scenarioId + "' loaded.");
-    else Console::log("Failed to load scenario.", LogType::ERROR);
+    if (ok) {
+        Console::log("Scenario '" + scenarioId + "' loaded.");
+        previousState = nlohmann::json(); // null — next getDeltaState returns full state
+    } else Console::log("Failed to load scenario.", LogType::ERROR);
     return ok;
 }
 
@@ -149,6 +158,52 @@ std::string EngineController::getSerializedState() {
     return serializeGamestate(gamestate).dump();
 }
 
+std::string EngineController::getDeltaState() {
+    nlohmann::json current = serializeGamestate(gamestate);
+
+    if (previousState.is_null()) {
+        previousState = current;
+        return current.dump();
+    }
+
+    nlohmann::json delta = computeDelta(previousState, current);
+    previousState = current;
+    return delta.dump();
+}
+
+nlohmann::json EngineController::computeDelta(const nlohmann::json &oldState,
+                                               const nlohmann::json &newState) {
+    nlohmann::json delta;
+    delta["delta"] = true;
+    delta["turn"] = newState.value("turn", 0);
+    delta["date"] = newState.value("date", "");
+    delta["player_id"] = newState.value("player_id", "");
+    delta["entities"] = nlohmann::json::array();
+    delta["removed"] = nlohmann::json::array();
+
+    std::unordered_map<std::string, nlohmann::json> oldMap;
+    for (const auto &e : oldState["entities"]) {
+        oldMap[e["id"].get<std::string>()] = e;
+    }
+
+    for (const auto &e : newState["entities"]) {
+        std::string id = e["id"].get<std::string>();
+        auto it = oldMap.find(id);
+        if (it == oldMap.end()) {
+            delta["entities"].push_back(e);
+        } else if (it->second != e) {
+            delta["entities"].push_back(e);
+        }
+        oldMap.erase(id);
+    }
+
+    for (const auto &[id, _] : oldMap) {
+        delta["removed"].push_back(id);
+    }
+
+    return delta;
+}
+
 std::string EngineController::getPlayerState() {
     Entity *player = gamestate.getPlayerCompany();
     if (!player) return "{}";
@@ -164,8 +219,6 @@ std::string EngineController::getPlayerState() {
 }
 
 std::string EngineController::getMarketData(const std::string &marketId) {
-    // Search by instance ID or UUID
-    // For now, return all markets
     nlohmann::json arr = nlohmann::json::array();
     for (auto *e : gamestate.getEntitiesByType("market")) {
         arr.push_back(e->ToJson());
@@ -174,12 +227,26 @@ std::string EngineController::getMarketData(const std::string &marketId) {
 }
 
 std::string EngineController::getFactoryStatus(const std::string &factoryId) {
-    // Parse UUID and return that factory's state
     auto opt = uuids::uuid::from_string(factoryId);
     if (!opt.has_value()) return "{}";
     Entity *f = gamestate.getEntity(opt.value());
     if (!f) return "{}";
     return f->ToJson().dump();
+}
+
+std::string EngineController::getFactoryTemplates() {
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& [id, f] : FactoryManager::factories) {
+        nlohmann::json entry;
+        entry["id"] = f.id;
+        entry["name"] = f.name;
+        entry["buildCost"] = f.buildCost;
+        entry["max_workers"] = f.max_workers;
+        entry["categories"] = f.categories;
+        entry["pipelines"] = f.pipeline_ids;
+        arr.push_back(entry);
+    }
+    return arr.dump();
 }
 
 std::string EngineController::getPendingEvents() {
@@ -199,12 +266,18 @@ void EngineController::logToConsole(const std::string &msg) {
     Console::log(msg);
 }
 
+void EngineController::logToConsole(const std::string &msg, LogType type) {
+    Console::log(msg, type);
+}
+
 bool EngineController::saveGame(const std::string &name) {
     return SaveUtils::saveGame(gamestate, name);
 }
 
 bool EngineController::loadGame(const std::string &name) {
-    return SaveUtils::loadGame(gamestate, name);
+    bool ok = SaveUtils::loadGame(gamestate, name);
+    if (ok) previousState = nlohmann::json();
+    return ok;
 }
 
 std::vector<std::string> EngineController::listSaves() {
@@ -212,12 +285,12 @@ std::vector<std::string> EngineController::listSaves() {
 }
 
 void EngineController::registerCallback(EngineCallback cb) {
-    // In WebApi, we'll store the JS callback and call it from pushToCallbacks
-    // For now, store in a vector
-    // This will be handled by WebApi's emscripten::val storage
+    // Stored and called from pushToCallbacks
 }
 
 void EngineController::pushToCallbacks(const std::string &eventType,
                                         const nlohmann::json &payload) {
-    // Overridable in derived WebApi or handled via emscripten::val
+    // Overridden in WebApi or used via registerCallback
 }
+
+} // namespace augustus_engine

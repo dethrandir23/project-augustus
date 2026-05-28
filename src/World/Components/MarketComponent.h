@@ -33,9 +33,18 @@ public:
     nlohmann::json ToJson() const override {
         nlohmann::json j_books = nlohmann::json::object();
         for (const auto& [itemId, book] : books) {
+            double buyVolume = 0, sellVolume = 0;
+            for (const auto& o : book.buyOrders) buyVolume += o.remaining();
+            for (const auto& o : book.sellOrders) sellVolume += o.remaining();
             j_books[itemId] = {
                 {"itemId", book.itemId},
-                {"lastTradedPrice", book.lastTradedPrice}
+                {"lastTradedPrice", book.lastTradedPrice},
+                {"bestBid", book.getBestBid()},
+                {"bestAsk", book.getBestAsk()},
+                {"buyVolume", buyVolume},
+                {"sellVolume", sellVolume},
+                {"buyOrders", book.buyOrders},
+                {"sellOrders", book.sellOrders}
             };
         }
         return {
@@ -51,6 +60,10 @@ public:
                 auto& book = books[it.key()];
                 book.itemId = it.value().value("itemId", it.key());
                 book.lastTradedPrice = it.value().value("lastTradedPrice", 0.0);
+                if (it.value().contains("buyOrders"))
+                    book.buyOrders = it.value()["buyOrders"].get<std::vector<MarketOrder>>();
+                if (it.value().contains("sellOrders"))
+                    book.sellOrders = it.value()["sellOrders"].get<std::vector<MarketOrder>>();
             }
         }
     }

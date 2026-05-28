@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/ECS/Component.h"
 #include "AI/AIBrain.h"
+#include "AI/AIManager.h"
 #include <memory>
 
 class AIControllerComponent : public Component {
@@ -37,6 +38,16 @@ public:
         if (j.contains("riskTolerance")) riskTolerance = j["riskTolerance"].get<float>();
         if (j.contains("aggression")) aggression = j["aggression"].get<float>();
         if (j.contains("expansionism")) expansionism = j["expansionism"].get<float>();
+        if (j.contains("brain") && j["brain"].is_object()) {
+            std::string brainType = j["brain"].value("type", "");
+            if (!brainType.empty()) {
+                auto newBrain = AIManager::createBrain(brainType);
+                if (newBrain) {
+                    newBrain->fromJson(j["brain"]);
+                    setBrain(std::move(newBrain));
+                }
+            }
+        }
     }
 
 private:
