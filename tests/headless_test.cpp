@@ -1,3 +1,4 @@
+#include "Analytics/EconomyStats.h"
 #include "Api/EngineController.h"
 #include "DevTools/Console.h"
 #include <filesystem>
@@ -268,6 +269,16 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
         results["phases"]["market_query_ok"] = false;
     }
 
+    // Phase 9: Economy Analytics
+    std::cout << "[Phase 9] Economy analytics..." << std::endl;
+    try {
+        auto& gs = augustus_engine::EngineController::instance().getGamestate();
+        results["economy"] = Analytics::calculateTotalEconomyStats(gs);
+    } catch (const std::exception& e) {
+        Console::log("Economy analytics error: " + std::string(e.what()), LogType::ERROR);
+        results["economy_error"] = e.what();
+    }
+
     // Print Summary
     std::cout << "\n=== RESULTS ===" << std::endl;
     std::cout << "  Ticks:       " << okTicks << "/" << totalTicks << std::endl;
@@ -279,6 +290,24 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
               << analysis.value("ai_factories_built", 0) << " AI" << std::endl;
     std::cout << "  Events:      " << analysis.value("pending_events", 0) << " pending" << std::endl;
     std::cout << "  Avg tick:    " << results["phases"]["avg_tick_ms"].get<double>() << " ms" << std::endl;
+
+    if (results.contains("economy") && !results["economy"].is_null()) {
+        auto& eco = results["economy"];
+        std::cout << "  Markets:     " << eco["markets"].size()
+                  << " (" << eco.value("totalBuyOrders", 0) << " buy, "
+                  << eco.value("totalSellOrders", 0) << " sell orders)"
+                  << std::endl;
+        std::cout << "  Population:  " << eco.value("totalPopulation", 0) << std::endl;
+        std::cout << "  GDP (est.):  " << eco.value("estimatedGDPperTick", 0.0) << "/tick" << std::endl;
+        std::cout << "  Companies:" << std::endl;
+        for (const auto& c : eco["companies"]) {
+            std::cout << "    " << c.value("name", "?")
+                      << " | Balance: " << c.value("balance", 0.0)
+                      << " | Net Worth: " << c.value("netWorth", 0.0)
+                      << " | Factories: " << c.value("factoryCount", 0)
+                      << std::endl;
+        }
+    }
 
     // Analysis / Recommendations
     std::cout << "\n=== ANALYSIS ===" << std::endl;
