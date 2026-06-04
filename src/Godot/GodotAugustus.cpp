@@ -1,4 +1,5 @@
 #include "GodotAugustus.h"
+#include "Debug/MarketDebug.h"
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 
@@ -24,6 +25,7 @@ void GodotAugustus::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_player_state"), &GodotAugustus::get_player_state);
     ClassDB::bind_method(D_METHOD("get_market_data", "market_id"), &GodotAugustus::get_market_data);
     ClassDB::bind_method(D_METHOD("get_entity_orders", "owner_id"), &GodotAugustus::get_entity_orders);
+    ClassDB::bind_method(D_METHOD("get_market_debug_stats", "scope", "id1", "id2"), &GodotAugustus::get_market_debug_stats);
     ClassDB::bind_method(D_METHOD("get_factory_status", "factory_id"), &GodotAugustus::get_factory_status);
     ClassDB::bind_method(D_METHOD("get_factory_templates"), &GodotAugustus::get_factory_templates);
     ClassDB::bind_method(D_METHOD("get_pending_events"), &GodotAugustus::get_pending_events);
@@ -145,6 +147,34 @@ String GodotAugustus::get_market_data(const String &market_id) {
 
 String GodotAugustus::get_entity_orders(const String &owner_id) {
     return String(augustus_engine::EngineController::instance().getEntityOrders(owner_id.utf8().get_data()).c_str());
+}
+
+static uuids::uuid parseUuidOrNil(const String &s) {
+    std::string str = s.utf8().get_data();
+    if (str.empty()) return uuids::uuid{};
+    auto opt = uuids::uuid::from_string(str);
+    return opt.has_value() ? opt.value() : uuids::uuid{};
+}
+
+String GodotAugustus::get_market_debug_stats(const String &scope, const String &id1, const String &id2) {
+    auto &gs = augustus_engine::EngineController::instance().getGamestate();
+    std::string s = scope.utf8().get_data();
+    uuids::uuid id1u = parseUuidOrNil(id1);
+    uuids::uuid id2u = parseUuidOrNil(id2);
+
+    if (s == "global") {
+        return String(MarketDebug::statsToJson(MarketDebug::getGlobalStats(gs)).dump().c_str());
+    } else if (s == "market" && !id1u.is_nil()) {
+        return String(MarketDebug::statsToJson(MarketDebug::getMarketStats(gs, id1u)).dump().c_str());
+    } else if (s == "entity" && !id1u.is_nil()) {
+        if (id2u.is_nil())
+            return String(MarketDebug::statsToJson(MarketDebug::getEntityStats(gs, id1u)).dump().c_str());
+        else
+            return String(MarketDebug::statsToJson(MarketDebug::getEntityStatsInMarket(gs, id1u, id2u)).dump().c_str());
+    } else if (s == "all") {
+        return String(MarketDebug::getAllStatsAsJson(gs).dump().c_str());
+    }
+    return "{}";
 }
 
 String GodotAugustus::get_factory_status(const String &factory_id) {

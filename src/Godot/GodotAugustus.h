@@ -39,6 +39,7 @@ public:
     String get_player_state();
     String get_market_data(const String &market_id);
     String get_entity_orders(const String &owner_id);
+    String get_market_debug_stats(const String &scope, const String &id1, const String &id2);
     String get_factory_status(const String &factory_id);
     String get_factory_templates();
     String get_pending_events();
