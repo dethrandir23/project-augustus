@@ -27,6 +27,10 @@ OrderStats getGlobalStats(Gamestate& gamestate) {
             accumulate(stats, book.buyOrders);
             accumulate(stats, book.sellOrders);
         }
+        stats.totalBuyOrdersPlaced += mc->totalBuyOrdersPlaced;
+        stats.totalSellOrdersPlaced += mc->totalSellOrdersPlaced;
+        stats.totalTradesExecuted += mc->totalTradesExecuted;
+        stats.totalTradeVolume += static_cast<float>(mc->totalTradeVolume);
     }
     return stats;
 }
@@ -41,6 +45,10 @@ OrderStats getMarketStats(Gamestate& gamestate, const uuids::uuid& marketId) {
         accumulate(stats, book.buyOrders);
         accumulate(stats, book.sellOrders);
     }
+    stats.totalBuyOrdersPlaced = mc->totalBuyOrdersPlaced;
+    stats.totalSellOrdersPlaced = mc->totalSellOrdersPlaced;
+    stats.totalTradesExecuted = mc->totalTradesExecuted;
+    stats.totalTradeVolume = static_cast<float>(mc->totalTradeVolume);
     return stats;
 }
 
@@ -98,7 +106,11 @@ nlohmann::json statsToJson(const OrderStats& s) {
         {"sellCount", s.sellCount},
         {"totalCount", s.totalCount},
         {"buyVolume", s.buyVolume},
-        {"sellVolume", s.sellVolume}
+        {"sellVolume", s.sellVolume},
+        {"totalBuyOrdersPlaced", s.totalBuyOrdersPlaced},
+        {"totalSellOrdersPlaced", s.totalSellOrdersPlaced},
+        {"totalTradesExecuted", s.totalTradesExecuted},
+        {"totalTradeVolume", s.totalTradeVolume}
     };
 }
 

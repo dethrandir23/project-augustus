@@ -10,6 +10,12 @@ struct OrderStats {
     int totalCount = 0;
     float buyVolume = 0.0f;
     float sellVolume = 0.0f;
+
+    // Cumulative (tüm zamanlar)
+    int totalBuyOrdersPlaced = 0;
+    int totalSellOrdersPlaced = 0;
+    int totalTradesExecuted = 0;
+    float totalTradeVolume = 0.0f;
 };
 
 // Tüm marketlerin toplamı

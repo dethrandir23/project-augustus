@@ -151,6 +151,13 @@ void MarketSystem::placeOrder(Gamestate &gamestate, uuids::uuid marketId,
 
   OrderBook *book = marketComp->getBook(order.itemId);
 
+  // Historical stats
+  if (order.type == OrderType::BUY) {
+      marketComp->totalBuyOrdersPlaced++;
+  } else {
+      marketComp->totalSellOrdersPlaced++;
+  }
+
   if (!isSystemOrder) {
 
     auto trader = getTrader(gamestate, order.ownerId);
@@ -204,6 +211,16 @@ void MarketSystem::executeTrade(Gamestate &gamestate, uuids::uuid buyerId,
 
   if (!buyer.invComp || !seller.invComp)
     return;
+
+  // Historical trade stats
+  Entity* mEntity = gamestate.getEntity(marketId);
+  if (mEntity) {
+      auto* mComp = mEntity->GetComponent<MarketComponent>("MarketComponent");
+      if (mComp) {
+          mComp->totalTradesExecuted++;
+          mComp->totalTradeVolume += price * qty;
+      }
+  }
 
   double totalEarnings = price * qty;
 

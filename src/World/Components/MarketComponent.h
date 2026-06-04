@@ -8,10 +8,13 @@
 
 class MarketComponent : public Component {
 public:
-    // Sadece OrderBook'lar. Pressure yok, Price Cache yok, Node Listesi yok.
     std::unordered_map<std::string, OrderBook> books;
-    
-    float tariffRate = 0.10f; // %10 gümrük vergisi (yabancı marketten alımlarda)
+    float tariffRate = 0.10f;
+
+    int totalBuyOrdersPlaced = 0;
+    int totalSellOrdersPlaced = 0;
+    int totalTradesExecuted = 0;
+    double totalTradeVolume = 0.0;
 
     std::string GetComponentType() const override { return "MarketComponent"; }
 
@@ -48,12 +51,20 @@ public:
         }
         return {
             {"tariffRate", tariffRate},
+            {"totalBuyOrdersPlaced", totalBuyOrdersPlaced},
+            {"totalSellOrdersPlaced", totalSellOrdersPlaced},
+            {"totalTradesExecuted", totalTradesExecuted},
+            {"totalTradeVolume", totalTradeVolume},
             {"books", j_books}
         };
     }
 
     void UpdateFromJson(const nlohmann::json& j) override {
         tariffRate = j.value("tariffRate", 0.10f);
+        totalBuyOrdersPlaced = j.value("totalBuyOrdersPlaced", 0);
+        totalSellOrdersPlaced = j.value("totalSellOrdersPlaced", 0);
+        totalTradesExecuted = j.value("totalTradesExecuted", 0);
+        totalTradeVolume = j.value("totalTradeVolume", 0.0);
         if (j.contains("books") && j["books"].is_object()) {
             for (auto it = j["books"].begin(); it != j["books"].end(); ++it) {
                 auto& book = books[it.key()];
