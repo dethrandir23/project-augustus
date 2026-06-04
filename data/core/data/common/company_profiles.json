@@ -1,0 +1,73 @@
+{
+    "registry_type": "COMPANY_PROFILES",
+    "entries": [
+        {
+            "id": "balanced",
+            "name": "Dengeli",
+            "noiseLevel": 0.2
+        },
+        {
+            "id": "trader",
+            "name": "Tüccar",
+            "noiseLevel": 0.3,
+            "investThreshold": 4000,
+            "investDivisor": 2500,
+            "investMinScore": 3.0,
+            "sellThreshold": 5,
+            "sellRatio": 0.7,
+            "factoryBudgetRatio": 0.2,
+            "categoryPreferences": {
+                "consumer": 1.3,
+                "manufacturing": 1.2
+            }
+        },
+        {
+            "id": "industrialist",
+            "name": "Sanayici",
+            "noiseLevel": 0.1,
+            "investThreshold": 1500,
+            "investDivisor": 1500,
+            "investMinScore": 1.5,
+            "sellThreshold": 15,
+            "sellRatio": 0.4,
+            "factoryBudgetRatio": 0.5,
+            "categoryPreferences": {
+                "manufacturing": 1.5,
+                "heavy_industry": 1.4,
+                "extraction": 0.4
+            }
+        },
+        {
+            "id": "mass_producer",
+            "name": "Seri Üretici",
+            "noiseLevel": 0.4,
+            "investThreshold": 1000,
+            "investDivisor": 2000,
+            "investMinScore": 1.0,
+            "sellThreshold": 8,
+            "sellRatio": 0.6,
+            "factoryBudgetRatio": 0.4,
+            "categoryPreferences": {
+                "food": 1.5,
+                "extraction": 1.3,
+                "consumer": 1.2
+            }
+        },
+        {
+            "id": "luxury_goods",
+            "name": "Lüks Üretici",
+            "noiseLevel": 0.15,
+            "investThreshold": 3000,
+            "investDivisor": 1500,
+            "investMinScore": 4.0,
+            "sellThreshold": 20,
+            "sellRatio": 0.3,
+            "factoryBudgetRatio": 0.4,
+            "categoryPreferences": {
+                "luxury": 2.0,
+                "manufacturing": 1.3,
+                "extraction": 0.2
+            }
+        }
+    ]
+}

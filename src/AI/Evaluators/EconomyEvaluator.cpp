@@ -14,7 +14,8 @@
 
 namespace EconomyEvaluator {
 
-    float scoreFactoryProfitability(const std::string& templateId, Gamestate& gamestate) {
+    float scoreFactoryProfitability(const std::string& templateId, Gamestate& gamestate,
+                                    const std::unordered_map<std::string, float>* categoryPrefs) {
         if (FactoryManager::factories.find(templateId) == FactoryManager::factories.end()) {
             return GameConstants::MISSING_TEMPLATE_SCORE;
         }
@@ -65,7 +66,19 @@ namespace EconomyEvaluator {
 
         float netProfit = expectedRevenue * demandMultiplier - expectedCost;
         if (netProfit <= 0.0f) return netProfit;
-        return (netProfit / static_cast<float>(fData.buildCost)) * GameConstants::ROI_SCALE;
+        float score = (netProfit / static_cast<float>(fData.buildCost)) * GameConstants::ROI_SCALE;
+
+        // Category preference multiplier
+        if (categoryPrefs) {
+            for (const auto& cat : fData.categories) {
+                auto it = categoryPrefs->find(cat);
+                if (it != categoryPrefs->end()) {
+                    score *= it->second;
+                }
+            }
+        }
+
+        return score;
     }
 
     float scoreInvestmentDesire(Entity& aiEntity, float investThreshold, float investDivisor) {

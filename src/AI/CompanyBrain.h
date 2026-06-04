@@ -13,9 +13,14 @@ public:
 
     void execute(Entity& entity, Gamestate& gamestate) override;
 
+    void loadProfile(const std::string& profileId);
+
     nlohmann::json toJson() const override;
 
     void fromJson(const nlohmann::json& j) override;
+
+    // --- Profile ---
+    std::string profileId = "balanced";
 
     // --- Configurable Parameters ---
     float sellThreshold = GameConstants::SELL_THRESHOLD;

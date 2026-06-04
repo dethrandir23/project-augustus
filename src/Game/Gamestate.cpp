@@ -4,6 +4,8 @@
 #include "Game/Entity/EntityMarket.h"
 #include "Game/Entity/EntityTradeNode.h"
 #include "Game/Entity/EntityCompany.h"
+#include "AI/Components/AIControllerComponent.h"
+#include "AI/CompanyBrain.h"
 #include "Registry/ScenarioManager.h"
 #include "Registry/MapManager.h"
 #include "Registry/MarketManager.h"
@@ -206,6 +208,14 @@ bool Gamestate::loadScenario(const std::string& scenarioId) {
 
             if (compDef.start_capital > 0) {
                 newComp->GetComponent<WalletComponent>("WalletComponent")->balance = compDef.start_capital;
+            }
+
+            if (!compDef.profile.empty()) {
+                auto* aiComp = newComp->GetComponent<AIControllerComponent>("AIControllerComponent");
+                if (aiComp && aiComp->hasBrain()) {
+                    auto* brain = dynamic_cast<CompanyBrain*>(aiComp->getBrain());
+                    if (brain) brain->loadProfile(compDef.profile);
+                }
             }
 
             addEntity(newComp);

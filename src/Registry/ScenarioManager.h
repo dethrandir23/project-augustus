@@ -10,7 +10,7 @@ struct ScenarioCompanyDef {
     std::string template_id;
     std::string name_override;
     double start_capital;
-    // Hangi şehirde kurulduğu vs.
+    std::string profile;
 };
 
 // Senaryodaki bir şehrin override ayarları
@@ -53,6 +53,7 @@ public:
                     c.template_id = cEntry.at("template_id").get<std::string>();
                     c.name_override = cEntry.value("name", "");
                     c.start_capital = cEntry.value("capital", 0.0);
+                    c.profile = cEntry.value("profile", "balanced");
                     s.companies.push_back(c);
                 }
             }

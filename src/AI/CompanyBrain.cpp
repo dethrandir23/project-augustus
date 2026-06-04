@@ -12,6 +12,7 @@
 #include "Economy/EconomyUtils.h"
 #include "Economy/Orderbook.h"
 #include "Game/Gamestate.h"
+#include "Registry/CompanyProfileManager.h"
 #include "Game/InputHandler.h"
 #include "Registry/FactoryManager.h"
 #include "World/Components/MarketComponent.h"
@@ -25,6 +26,19 @@ CompanyBrain::CompanyBrain()
 
 CompanyBrain::CompanyBrain(unsigned int s)
     : seed(s), rng(s) {}
+
+void CompanyBrain::loadProfile(const std::string& pid) {
+    profileId = pid;
+    if (!CompanyProfileManager::profiles.count(pid)) return;
+    const auto& p = CompanyProfileManager::profiles.at(pid);
+    investThreshold = p.investThreshold;
+    investDivisor = p.investDivisor;
+    investMinScore = p.investMinScore;
+    noiseLevel = p.noiseLevel;
+    sellThreshold = p.sellThreshold;
+    // sellRatio is used in economy evaluator via GameConstants, but we store it
+    // factoryBudgetRatio is used in buildFactories
+}
 
 nlohmann::json CompanyBrain::makeInput(const std::string& type,
                                         const nlohmann::json& payload,
@@ -138,9 +152,11 @@ void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
     if (noisyDesire <= 0.0f) return;
 
     std::vector<AIPicker::Candidate> candidates;
+    const auto* catPrefs = CompanyProfileManager::profiles.count(profileId)
+        ? &CompanyProfileManager::profiles.at(profileId).categoryPreferences : nullptr;
     for (const auto& [templateId, fData] : FactoryManager::factories) {
         (void)fData;
-        float score = EconomyEvaluator::scoreFactoryProfitability(templateId, gamestate);
+        float score = EconomyEvaluator::scoreFactoryProfitability(templateId, gamestate, catPrefs);
         if (score > investMinScore)
             candidates.push_back({templateId, score});
     }
@@ -269,6 +285,7 @@ void CompanyBrain::handleEvents(Entity& company, Gamestate& gamestate) {
 nlohmann::json CompanyBrain::toJson() const {
     return {
         {"type", getType()},
+        {"profileId", profileId},
         {"sellThreshold", sellThreshold},
         {"investThreshold", investThreshold},
         {"investDivisor", investDivisor},
@@ -282,6 +299,7 @@ nlohmann::json CompanyBrain::toJson() const {
 }
 
 void CompanyBrain::fromJson(const nlohmann::json& j) {
+    if (j.contains("profileId")) loadProfile(j["profileId"].get<std::string>());
     if (j.contains("sellThreshold")) sellThreshold = j["sellThreshold"].get<float>();
     if (j.contains("investThreshold")) investThreshold = j["investThreshold"].get<float>();
     if (j.contains("investDivisor")) investDivisor = j["investDivisor"].get<float>();

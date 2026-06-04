@@ -10,19 +10,22 @@
             "instance_id": "debug_company_alpha",
             "template_id": "core_startup_company_001",
             "name": "Alpha Industries",
-            "capital": 12000
+            "capital": 12000,
+            "profile": "industrialist"
         },
         {
             "instance_id": "debug_company_beta",
             "template_id": "core_startup_company_001",
             "name": "Beta Manufacturing",
-            "capital": 8000
+            "capital": 8000,
+            "profile": "mass_producer"
         },
         {
             "instance_id": "debug_company_gamma",
             "template_id": "core_startup_company_001",
             "name": "Gamma Trading Co",
-            "capital": 15000
+            "capital": 15000,
+            "profile": "trader"
         }
     ],
     "nodes": [
