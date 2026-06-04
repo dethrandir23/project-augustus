@@ -48,6 +48,12 @@ public:
       MarketOrder& bestBuy = buyOrders.front();
       MarketOrder& bestSell = sellOrders.front();
 
+      if (bestBuy.ownerId == bestSell.ownerId) {
+        buyOrders.erase(buyOrders.begin());
+        sellOrders.erase(sellOrders.begin());
+        continue;
+      }
+
       if (bestBuy.price >= bestSell.price) {
         double executionPrice = bestBuy.timestamp < bestSell.timestamp
                                     ? bestBuy.price

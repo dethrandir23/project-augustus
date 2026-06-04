@@ -34,8 +34,8 @@ nlohmann::json TradeNodeBrain::makeInput(const std::string& type,
 }
 
 void TradeNodeBrain::execute(Entity& entity, Gamestate& gamestate) {
-    buyConsumptionNeeds(entity, gamestate);
     sellSurplus(entity, gamestate);
+    buyConsumptionNeeds(entity, gamestate);
     handleEvents(entity, gamestate);
 }
 

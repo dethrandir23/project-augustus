@@ -31,6 +31,7 @@ public:
 
     nlohmann::json ToJson() const override {
         return nlohmann::json{
+            {"templateId", templateId},
             {"pipelines", activePipelineIds},
             {"efficiency", efficiency},
             {"paused", isPaused}
@@ -38,6 +39,7 @@ public:
     }
 
     void UpdateFromJson(const nlohmann::json& j) override {
+        templateId = j.value("templateId", "");
         activePipelineIds = j.at("pipelines").get<std::vector<std::string>>();
         efficiency = j.value("efficiency", 1.0f);
         isPaused = j.value("paused", false);
