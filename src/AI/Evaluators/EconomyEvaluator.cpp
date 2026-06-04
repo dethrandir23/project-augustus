@@ -6,21 +6,11 @@
 #include "Economy/Components/WalletComponent.h"
 #include "Economy/Orderbook.h"
 #include "World/Components/MarketComponent.h"
+#include "World/Systems/MarketSystem.h"
 #include "Core/ECS/Entity.h"
 #include <unordered_set>
 
 namespace EconomyEvaluator {
-
-    // Check if any market has sell orders for this item
-    static bool isItemAvailableOnMarket(Gamestate& gamestate, const std::string& itemId) {
-        for (auto* entity : gamestate.getEntitiesByType("market")) {
-            auto* mComp = entity->GetComponent<MarketComponent>("MarketComponent");
-            if (!mComp) continue;
-            OrderBook* book = mComp->getBook(itemId);
-            if (book && book->getBestAsk() > 0.0) return true;
-        }
-        return false;
-    }
 
     float scoreFactoryProfitability(const std::string& templateId, Gamestate& gamestate) {
         if (FactoryManager::factories.find(templateId) == FactoryManager::factories.end()) {
@@ -30,7 +20,7 @@ namespace EconomyEvaluator {
 
         float expectedCost = 0.0f;
         float expectedRevenue = 0.0f;
-        bool hasUnavailableInput = false;
+        float demandBonus = 1.0f;
 
         auto getAveragePrice = [&gamestate](const std::string& itemId) -> float {
             float total = 0.0f;
@@ -52,37 +42,35 @@ namespace EconomyEvaluator {
         for (const auto& pipeId : fData.pipeline_ids) {
             if (PipelineManager::pipelines.count(pipeId)) {
                 const auto& pipe = PipelineManager::pipelines.at(pipeId);
-                
+
                 for (const auto& in : pipe.inputs) {
                     if (in.id == "core_none_000") continue;
                     float price = getAveragePrice(in.id);
-                    // Penalize inputs that have no sell orders on any market
-                    if (!isItemAvailableOnMarket(gamestate, in.id)) {
-                        hasUnavailableInput = true;
-                        expectedCost += price * in.quantity * 5.0f;
-                    } else {
-                        expectedCost += price * in.quantity;
-                    }
+                    expectedCost += price * in.quantity;
                 }
-                
+
                 for (const auto& out : pipe.outputs) {
-                    expectedRevenue += getAveragePrice(out.id) * out.quantity;
+                    float rev = getAveragePrice(out.id) * out.quantity;
+                    expectedRevenue += rev;
+
+                    // Talep bonusu: output'a ne kadar BUY order varsa
+                    float buyVol = MarketSystem::getTotalBuyVolume(gamestate, out.id);
+                    if (buyVol > 0.0f) {
+                        demandBonus += buyVol * 0.1f; // her 10 birim talep +1.0 bonus
+                    }
                 }
             }
         }
-        
-        // Heavy penalty if any input is completely unavailable on market
-        if (hasUnavailableInput) expectedCost *= 2.0f;
-        
-        return expectedRevenue - expectedCost;
+
+        return expectedRevenue * demandBonus - expectedCost;
     }
 
     float scoreInvestmentDesire(Entity& aiEntity) {
         auto* wallet = aiEntity.GetComponent<WalletComponent>("WalletComponent");
         if (!wallet) return -1.0f;
 
-        float desire = (wallet->balance - 5000.0f) / 1000.0f; 
-        
+        float desire = (wallet->balance - 5000.0f) / 1000.0f;
+
         if (wallet->debt > 0) {
             desire -= (wallet->debt / 500.0f);
         }

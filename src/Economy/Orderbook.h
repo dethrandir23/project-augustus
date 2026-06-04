@@ -84,4 +84,23 @@ public:
   double getBestAsk() const {
     return sellOrders.empty() ? 0.0 : sellOrders.front().price;
   }
+
+  // Emir iptal: orderId'ye göre bul, vektörden sil, iade edilecek order'ı döndür
+  bool cancelOrder(const uuids::uuid& orderId, MarketOrder& outRemoved) {
+    for (auto it = buyOrders.begin(); it != buyOrders.end(); ++it) {
+      if (it->id == orderId) {
+        outRemoved = *it;
+        buyOrders.erase(it);
+        return true;
+      }
+    }
+    for (auto it = sellOrders.begin(); it != sellOrders.end(); ++it) {
+      if (it->id == orderId) {
+        outRemoved = *it;
+        sellOrders.erase(it);
+        return true;
+      }
+    }
+    return false;
+  }
 };

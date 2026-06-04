@@ -296,6 +296,23 @@
         { "item_id": "core_copper_ore_016", "amount": 8 }
       ],
       "outputs": [{ "item_id": "core_telefon_044", "amount": 1 }]
+    },
+    {
+      "id": "core_subsistence_handicrafts_032",
+      "name": "Subsistence Handicrafts",
+      "categories": ["subsistence"],
+      "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
+      "outputs": [
+        { "item_id": "core_tools_031", "amount": 0.05 },
+        { "item_id": "core_clothes_028", "amount": 0.10 },
+        { "item_id": "core_furniture_029", "amount": 0.02 },
+        { "item_id": "core_food_rations_027", "amount": 0.25 },
+        { "item_id": "core_lumber_020", "amount": 0.15 },
+        { "item_id": "core_brick_021", "amount": 0.10 },
+        { "item_id": "core_glass_022", "amount": 0.05 },
+        { "item_id": "core_paper_025", "amount": 0.10 },
+        { "item_id": "core_cloth_024", "amount": 0.15 }
+      ]
     }
   ]
 }

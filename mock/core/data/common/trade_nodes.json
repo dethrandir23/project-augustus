@@ -11,7 +11,7 @@
                 "core_wood_001": 1000,
                 "core_stone_002": 500
             },
-            "local_pipelines": ["core_basic_agriculture_022", "core_lumber_001", "core_brick_002", "core_paper_007"],
+            "local_pipelines": ["core_basic_agriculture_022", "core_lumber_001", "core_brick_002", "core_paper_007", "core_subsistence_handicrafts_032"],
             "consumption_profile": ["core_basic_consumption_023", "core_population_demand_024"]
         },
         {
@@ -24,7 +24,7 @@
                 "core_wood_001": 100,
                 "core_stone_002": 100
             },
-            "local_pipelines": ["core_basic_agriculture_022"],
+            "local_pipelines": ["core_basic_agriculture_022", "core_subsistence_handicrafts_032"],
             "consumption_profile": ["core_basic_consumption_023", "core_population_demand_024"]
         }
     ]

@@ -3,8 +3,9 @@
 
 #include "Registry/NameManager.h"
 #include "Core/ECS/Entity.h"
+#include "Economy/Components/WalletComponent.h"
 #include "World/Components/MarketComponent.h"
-#include "Game/IdUtils.h" // ID üretmek için şart
+#include "Game/IdUtils.h"
 
 inline Entity* createMarket(const std::string& name = "", const std::string& templateId = "") {
     Entity* market = new Entity();
@@ -16,6 +17,7 @@ inline Entity* createMarket(const std::string& name = "", const std::string& tem
     market->SetType("market");
 
     market->AddComponent(new MarketComponent());
+    market->AddComponent(new WalletComponent(0.0));
     
     return market;
 }

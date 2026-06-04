@@ -38,6 +38,7 @@ public:
     String get_delta_state();
     String get_player_state();
     String get_market_data(const String &market_id);
+    String get_entity_orders(const String &owner_id);
     String get_factory_status(const String &factory_id);
     String get_factory_templates();
     String get_pending_events();

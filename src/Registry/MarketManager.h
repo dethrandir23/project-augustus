@@ -8,6 +8,7 @@
 struct MarketTemplate {
   std::string name;
   std::string id;
+  float tariff_rate = 0.10f;
 };
 
 class MarketManager {
@@ -20,6 +21,7 @@ public:
         MarketTemplate m;
         m.name = entry.at("name").get<std::string>();
         m.id = entry.at("id").get<std::string>();
+        m.tariff_rate = entry.value("tariff_rate", 0.10f);
         markets[m.id] = m;
       }
     } catch (const std::exception &e) {

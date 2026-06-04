@@ -1,4 +1,5 @@
 #include "Api/EngineController.h"
+#include "World/Systems/MarketSystem.h"
 #include "AI/AIManager.h"
 #include "AI/CompanyBrain.h"
 #include "AI/Components/AIControllerComponent.h"
@@ -224,6 +225,17 @@ std::string EngineController::getMarketData(const std::string &marketId) {
         arr.push_back(e->ToJson());
     }
     return arr.dump();
+}
+
+std::string EngineController::getEntityOrders(const std::string &ownerId) {
+    auto opt = uuids::uuid::from_string(ownerId);
+    if (!opt.has_value()) return "[]";
+    uuids::uuid id = opt.value();
+
+    nlohmann::json j;
+    j["buyOrders"] = MarketSystem::getBuyOrdersForOwner(gamestate, id);
+    j["sellOrders"] = MarketSystem::getSellOrdersForOwner(gamestate, id);
+    return j.dump();
 }
 
 std::string EngineController::getFactoryStatus(const std::string &factoryId) {

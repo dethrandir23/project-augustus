@@ -37,6 +37,7 @@ public:
     std::string getDeltaState();
     std::string getPlayerState();
     std::string getMarketData(const std::string &marketId);
+    std::string getEntityOrders(const std::string &ownerId);
     std::string getFactoryStatus(const std::string &factoryId);
     std::string getFactoryTemplates();
     std::string getPendingEvents();

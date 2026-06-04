@@ -3,19 +3,23 @@
     "entries": [
         {
             "id": "core_east_market_001",
-            "name": "East Market"
+            "name": "East Market",
+            "tariff_rate": 0.05
         },
         {
             "id": "core_west_market_002",
-            "name": "West Market"
+            "name": "West Market",
+            "tariff_rate": 0.10
         },
         {
             "id": "core_north_market_003",
-            "name": "North Market"
+            "name": "North Market",
+            "tariff_rate": 0.10
         },
         {
             "id": "core_south_market_004",
-            "name": "South Market"
+            "name": "South Market",
+            "tariff_rate": 0.10
         }
     ]
 }

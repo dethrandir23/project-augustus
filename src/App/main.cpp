@@ -51,6 +51,7 @@ var _cb=null,_module={
     getPlayerState:async function(){return _s(await window.api_getPlayerState())},
     getMarketData:async function(id){return _s(await window.api_getMarketData(String(id)))},
     getFactoryStatus:async function(id){return _s(await window.api_getFactoryStatus(String(id)))},
+    getEntityOrders:async function(id){return _s(await window.api_getEntityOrders(String(id)))},
     getPendingEvents:async function(){return _s(await window.api_getPendingEvents())},
     readConsole:async function(){var r=await window.api_readConsole();try{return typeof r==='string'?JSON.parse(r):r||[]}catch(e){}return[]},
     saveGame:async function(n){return await window.api_saveGame(String(n))},
@@ -232,6 +233,14 @@ int main(int argc, char **argv) {
             auto args = nlohmann::json::parse(req);
             std::string id = args[0].get<std::string>();
             return engine.getMarketData(id);
+        } catch (...) { return "[]"; }
+    });
+
+    w.bind("api_getEntityOrders", [&engine](std::string req) -> std::string {
+        try {
+            auto args = nlohmann::json::parse(req);
+            std::string id = args[0].get<std::string>();
+            return engine.getEntityOrders(id);
         } catch (...) { return "[]"; }
     });
 

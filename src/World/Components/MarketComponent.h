@@ -11,8 +11,7 @@ public:
     // Sadece OrderBook'lar. Pressure yok, Price Cache yok, Node Listesi yok.
     std::unordered_map<std::string, OrderBook> books;
     
-    // Belki Marketin "Vergi Oranı" olabilir?
-    float taxRate = 0.05f; // %5 Market vergisi
+    float tariffRate = 0.10f; // %10 gümrük vergisi (yabancı marketten alımlarda)
 
     std::string GetComponentType() const override { return "MarketComponent"; }
 
@@ -48,13 +47,13 @@ public:
             };
         }
         return {
-            {"taxRate", taxRate},
+            {"tariffRate", tariffRate},
             {"books", j_books}
         };
     }
 
     void UpdateFromJson(const nlohmann::json& j) override {
-        taxRate = j.value("taxRate", 0.05f);
+        tariffRate = j.value("tariffRate", 0.10f);
         if (j.contains("books") && j["books"].is_object()) {
             for (auto it = j["books"].begin(); it != j["books"].end(); ++it) {
                 auto& book = books[it.key()];

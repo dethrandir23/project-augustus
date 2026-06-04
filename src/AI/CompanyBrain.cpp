@@ -13,6 +13,8 @@
 #include "Game/InputHandler.h"
 #include "Registry/FactoryManager.h"
 #include "World/Components/MarketComponent.h"
+#include "World/Components/MarketMemberComponent.h"
+#include "World/Systems/MarketSystem.h"
 #include <iostream>
 #include <unordered_set>
 
@@ -52,17 +54,8 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
 
     if (assets->ownedAssets.empty()) return;
 
-    uuids::uuid marketId;
-    for (auto* me : gamestate.getEntitiesByType("market")) {
-        marketId = me->GetId();
-        break;
-    }
-    if (marketId.is_nil()) return;
-
-    auto* marketEntity = gamestate.getEntity(marketId);
-    if (!marketEntity) return;
-    auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
-    if (!marketComp) return;
+    // Şirketlerin bir "local market"i yok, tüm marketlere eşit uzaktalar
+    uuids::uuid noMarket;
 
     for (const auto& fId : assets->ownedAssets) {
         Entity* factory = gamestate.getEntity(fId);
@@ -73,7 +66,7 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
         if (!facInput) continue;
 
         auto missing = EconomyUtils::getMissingItems(prod->templateId,
-                                                      facInput->GetInternalInventory());
+                                                       facInput->GetInternalInventory());
         if (missing.empty()) continue;
 
         for (const auto& req : missing) {
@@ -81,25 +74,24 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
             float stillNeeded = req.quantity - inStorage;
             if (stillNeeded <= 0.0f) continue;
 
-            OrderBook* orderBook = marketComp->getBook(req.id);
-            if (!orderBook) continue;
-            double bestAsk = orderBook->getBestAsk();
-            // Skip if nobody is selling this item (no sell orders)
-            if (bestAsk <= 0.0) continue;
-            double cost = bestAsk * stillNeeded;
+            // Cross-market: en iyi fiyatı bul
+            auto best = MarketSystem::findBestBuyMarket(gamestate, req.id, noMarket);
+            if (best.marketId.is_nil()) continue; // hiç arz yok
+
+            double cost = best.effectivePrice * stillNeeded;
             if (cost > wallet->balance * 0.3f) {
-                stillNeeded = static_cast<float>((wallet->balance * 0.3) / bestAsk);
+                stillNeeded = static_cast<float>((wallet->balance * 0.3) / best.effectivePrice);
             }
             if (stillNeeded < 0.1f) continue;
 
-            std::cout << "[BUY] " << company.GetName() << " buying " << req.id << " x" << stillNeeded << " @ " << bestAsk << " (bal=" << wallet->balance << ")" << std::endl;
+            std::cout << "[BUY] " << company.GetName() << " buying " << req.id << " x" << stillNeeded << " @ " << best.bestAsk << " (eff=" << best.effectivePrice << ") (bal=" << wallet->balance << ")" << std::endl;
 
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_BUY_ITEM", {
-                    {"marketId", uuids::to_string(marketId)},
+                    {"marketId", uuids::to_string(best.marketId)},
                     {"itemId",   req.id},
                     {"amount",   stillNeeded},
-                    {"price",    bestAsk}
+                    {"price",    best.bestAsk}
                 }, company));
         }
     }
@@ -149,6 +141,24 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
         }
     }
     if (marketId.is_nil()) return;
+
+    // Önce bu şirketin marketteki eski satış emirlerini temizle
+    Entity* targetMarket = gamestate.getEntity(marketId);
+    if (targetMarket) {
+        auto* mc = targetMarket->GetComponent<MarketComponent>("MarketComponent");
+        if (mc) {
+            for (auto& [itemId, book] : mc->books) {
+                for (auto it = book.sellOrders.begin(); it != book.sellOrders.end(); ) {
+                    if (it->ownerId == company.GetId()) {
+                        storage->Add(it->itemId, it->remaining());
+                        it = book.sellOrders.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+        }
+    }
 
     // Collect all item IDs that are inputs to any owned factory
     std::unordered_set<std::string> factoryInputs;

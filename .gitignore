@@ -1,3 +1,9 @@
 html/
 build/
+build_*/
 .cache/
+test_saves/
+headless_test_report.json
+*.so
+*.dll
+*.dylib

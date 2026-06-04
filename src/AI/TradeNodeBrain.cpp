@@ -5,12 +5,14 @@
 #include "Economy/Components/ProductionComponent.h"
 #include "Economy/Components/WalletComponent.h"
 #include "Economy/EconomyUtils.h"
+#include "Economy/Orderbook.h"
 #include "Game/Gamestate.h"
 #include "Game/InputHandler.h"
 #include "Registry/PipelineManager.h"
 #include "World/Components/DemographicsComponent.h"
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
+#include "World/Systems/MarketSystem.h"
 
 TradeNodeBrain::TradeNodeBrain()
     : rng(seed) {}
@@ -41,9 +43,9 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
     auto* storage = node.GetComponent<InventoryComponent>("Storage");
     auto* prod    = node.GetComponent<ProductionComponent>("LocalProduction");
     if (!storage || !prod) return;
-    uuids::uuid marketId = getMarketId(node);
-    if (marketId.is_nil()) return;
-    Entity* marketEntity = gamestate.getEntity(marketId);
+    uuids::uuid localMarketId = getMarketId(node);
+    if (localMarketId.is_nil()) return;
+    Entity* marketEntity = gamestate.getEntity(localMarketId);
     if (!marketEntity) return;
     auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
     if (!marketComp) return;
@@ -57,9 +59,23 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
             if (toSell < 1.0f) continue;
             double price = marketComp->getPrice(output.id);
             if (price <= 0.0) price = 1.0;
+
+            // Önce bu item için eski satış emirlerini temizle (güncel fiyattan)
+            OrderBook* book = marketComp->getBook(output.id);
+            if (book) {
+                for (auto it = book->sellOrders.begin(); it != book->sellOrders.end(); ) {
+                    if (it->ownerId == node.GetId()) {
+                        storage->Add(it->itemId, it->remaining());
+                        it = book->sellOrders.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_SELL_ITEM", {
-                    {"marketId", uuids::to_string(marketId)},
+                    {"marketId", uuids::to_string(localMarketId)},
                     {"itemId",   output.id},
                     {"amount",   toSell},
                     {"price",    price}
@@ -74,18 +90,13 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
     auto* demo    = node.GetComponent<DemographicsComponent>("DemographicsComponent");
     auto* cons    = node.GetComponent<ProductionComponent>("consumption");
     if (!storage || !wallet || !demo || !cons) return;
-    uuids::uuid marketId = getMarketId(node);
-    if (marketId.is_nil()) return;
-    Entity* marketEntity = gamestate.getEntity(marketId);
-    if (!marketEntity) return;
-    auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
-    if (!marketComp) return;
+    uuids::uuid localMarketId = getMarketId(node);
+    if (localMarketId.is_nil()) return;
 
     float budgetRatio = budgetBaseRatio + (1.0f - demo->happiness) * budgetHappinessWeight;
     double budget     = wallet->balance * budgetRatio;
     if (budget < 1.0) return;
 
-    // Walk all consumption pipelines to find missing inputs
     for (const auto& pipeId : cons->activePipelineIds) {
         if (!PipelineManager::pipelines.count(pipeId)) continue;
         const auto& pipe = PipelineManager::pipelines.at(pipeId);
@@ -96,20 +107,27 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
             float needed = target - inStorage;
             if (needed <= 0.0f) continue;
 
-            double unitPrice = marketComp->getPrice(input.id);
-            if (unitPrice <= 0.0) unitPrice = 1.0;
-            float affordable = static_cast<float>(budget / unitPrice);
+            // Mevcut açık emirleri kontrol et (tüm marketlerde)
+            float alreadyOrdered = MarketSystem::getBuyOrderForOwner(gamestate, node.GetId(), input.id);
+            needed -= alreadyOrdered;
+            if (needed <= 0.0f) continue;
+
+            // En iyi marketi bul (vergi dahil efektif fiyat)
+            auto best = MarketSystem::findBestBuyMarket(gamestate, input.id, localMarketId);
+            if (best.marketId.is_nil()) continue; // hiç arz yok
+
+            float affordable = static_cast<float>(budget / best.effectivePrice);
             float toBuy = std::min(needed, affordable);
             if (toBuy < 0.01f) continue;
 
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_BUY_ITEM", {
-                    {"marketId", uuids::to_string(marketId)},
+                    {"marketId", uuids::to_string(best.marketId)},
                     {"itemId",   input.id},
                     {"amount",   toBuy},
-                    {"price",    unitPrice}
+                    {"price",    best.bestAsk}
                 }, node));
-            budget -= toBuy * unitPrice;
+            budget -= toBuy * best.effectivePrice;
         }
     }
 }

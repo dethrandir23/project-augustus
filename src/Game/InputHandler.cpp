@@ -256,6 +256,18 @@ void InputHandler::init() {
     return true;
   });
 
+  // 7b. MARKET_CANCEL_ORDER (Emir iptal)
+  registerAction("MARKET_CANCEL_ORDER", [](Gamestate &gamestate,
+                                           const nlohmann::json &payload) {
+    uuids::uuid mId =
+        uuids::uuid::from_string(payload.at("marketId").get<std::string>())
+            .value();
+    uuids::uuid orderId =
+        uuids::uuid::from_string(payload.at("orderId").get<std::string>())
+            .value();
+    return MarketSystem::cancelOrder(gamestate, mId, orderId);
+  });
+
   // 8. REDUCE_MANPOWER (Event'ten gelir)
   registerAction("REDUCE_MANPOWER", [](Gamestate &gamestate,
                                        const nlohmann::json &payload) {

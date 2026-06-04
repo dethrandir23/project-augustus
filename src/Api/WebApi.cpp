@@ -68,6 +68,10 @@ std::string getMarketData(const std::string &marketId) {
     return controller().getMarketData(marketId);
 }
 
+std::string getEntityOrders(const std::string &ownerId) {
+    return controller().getEntityOrders(ownerId);
+}
+
 std::string getFactoryStatus(const std::string &factoryId) {
     return controller().getFactoryStatus(factoryId);
 }
@@ -106,6 +110,7 @@ EMSCRIPTEN_BINDINGS(game_module) {
     emscripten::function("getSerializedState", &getSerializedState);
     emscripten::function("getPlayerState", &getPlayerState);
     emscripten::function("getMarketData", &getMarketData);
+    emscripten::function("getEntityOrders", &getEntityOrders);
     emscripten::function("getFactoryStatus", &getFactoryStatus);
     emscripten::function("getPendingEvents", &getPendingEvents);
 

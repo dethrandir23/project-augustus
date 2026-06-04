@@ -155,8 +155,12 @@ bool Gamestate::loadScenario(const std::string& scenarioId) {
         if (instanceIdToUUID.find(mStrId) == instanceIdToUUID.end()) {
             std::string mName = MarketManager::markets.count(mStrId) ? MarketManager::markets.at(mStrId).name : mStrId;
             
-            // YENİ SİSTEM: createMarket kullanıyoruz
-            Entity* newMarket = createMarket(mName, mStrId); 
+            Entity* newMarket = createMarket(mName, mStrId);
+            // Template'den tariff_rate'i uygula
+            if (MarketManager::markets.count(mStrId)) {
+                auto* marketComp = newMarket->GetComponent<MarketComponent>("MarketComponent");
+                if (marketComp) marketComp->tariffRate = MarketManager::markets.at(mStrId).tariff_rate;
+            }
             addEntity(newMarket);
             instanceIdToUUID[mStrId] = newMarket->GetId();
         }

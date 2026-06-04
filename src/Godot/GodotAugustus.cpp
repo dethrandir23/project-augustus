@@ -23,6 +23,7 @@ void GodotAugustus::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_delta_state"), &GodotAugustus::get_delta_state);
     ClassDB::bind_method(D_METHOD("get_player_state"), &GodotAugustus::get_player_state);
     ClassDB::bind_method(D_METHOD("get_market_data", "market_id"), &GodotAugustus::get_market_data);
+    ClassDB::bind_method(D_METHOD("get_entity_orders", "owner_id"), &GodotAugustus::get_entity_orders);
     ClassDB::bind_method(D_METHOD("get_factory_status", "factory_id"), &GodotAugustus::get_factory_status);
     ClassDB::bind_method(D_METHOD("get_factory_templates"), &GodotAugustus::get_factory_templates);
     ClassDB::bind_method(D_METHOD("get_pending_events"), &GodotAugustus::get_pending_events);
@@ -140,6 +141,10 @@ String GodotAugustus::get_player_state() {
 
 String GodotAugustus::get_market_data(const String &market_id) {
     return String(augustus_engine::EngineController::instance().getMarketData(market_id.utf8().get_data()).c_str());
+}
+
+String GodotAugustus::get_entity_orders(const String &owner_id) {
+    return String(augustus_engine::EngineController::instance().getEntityOrders(owner_id.utf8().get_data()).c_str());
 }
 
 String GodotAugustus::get_factory_status(const String &factory_id) {
