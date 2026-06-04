@@ -7,15 +7,27 @@
     "start_date": "1836-01-01",
     "companies": [
         {
-            "instance_id": "debug_small_company",
+            "instance_id": "debug_company_alpha",
             "template_id": "core_startup_company_001",
-            "name": "Small Company",
-            "capital": 10000
+            "name": "Alpha Industries",
+            "capital": 12000
+        },
+        {
+            "instance_id": "debug_company_beta",
+            "template_id": "core_startup_company_001",
+            "name": "Beta Manufacturing",
+            "capital": 8000
+        },
+        {
+            "instance_id": "debug_company_gamma",
+            "template_id": "core_startup_company_001",
+            "name": "Gamma Trading Co",
+            "capital": 15000
         }
     ],
     "nodes": [
         {
-            "instance_id": "debug_london",
+            "instance_id": "core_debug_london",
             "market_id": "core_east_market_001",
             "population": 200000,
             "additional_pipelines": ["core_population_demand_024"],

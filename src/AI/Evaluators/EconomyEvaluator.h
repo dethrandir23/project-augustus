@@ -7,6 +7,6 @@ namespace EconomyEvaluator {
     
     float scoreFactoryProfitability(const std::string& templateId, Gamestate& gamestate);
 
-    float scoreInvestmentDesire(Entity& aiEntity);
+    float scoreInvestmentDesire(Entity& aiEntity, float investThreshold, float investDivisor);
 
 }

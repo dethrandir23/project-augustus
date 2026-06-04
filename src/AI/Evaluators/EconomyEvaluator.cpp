@@ -3,6 +3,7 @@
 #include "Registry/FactoryManager.h"
 #include "Registry/ItemManager.h"
 #include "Registry/PipelineManager.h"
+#include "Economy/Components/AssetOwnerComponent.h"
 #include "Economy/Components/WalletComponent.h"
 #include "Economy/Orderbook.h"
 #include "World/Components/MarketComponent.h"
@@ -20,7 +21,7 @@ namespace EconomyEvaluator {
 
         float expectedCost = 0.0f;
         float expectedRevenue = 0.0f;
-        float demandBonus = 1.0f;
+        float demandMultiplier = 1.0f;
 
         auto getAveragePrice = [&gamestate](const std::string& itemId) -> float {
             float total = 0.0f;
@@ -53,26 +54,35 @@ namespace EconomyEvaluator {
                     float rev = getAveragePrice(out.id) * out.quantity;
                     expectedRevenue += rev;
 
-                    // Talep bonusu: output'a ne kadar BUY order varsa
+                    // Talep bonusu: logaritmik, cap 100% (2.0x)
                     float buyVol = MarketSystem::getTotalBuyVolume(gamestate, out.id);
                     if (buyVol > 0.0f) {
-                        demandBonus += buyVol * 0.1f; // her 10 birim talep +1.0 bonus
+                        demandMultiplier += std::min(buyVol * 0.01f, 1.0f);
                     }
                 }
             }
         }
 
-        return expectedRevenue * demandBonus - expectedCost;
+        // ROI bazli skor: (netKar / insaMaliyeti) * 100
+        float netProfit = expectedRevenue * demandMultiplier - expectedCost;
+        if (netProfit <= 0.0f) return netProfit; // negatifse direkt skor
+        return (netProfit / static_cast<float>(fData.buildCost)) * 100.0f;
     }
 
-    float scoreInvestmentDesire(Entity& aiEntity) {
+    float scoreInvestmentDesire(Entity& aiEntity, float investThreshold, float investDivisor) {
         auto* wallet = aiEntity.GetComponent<WalletComponent>("WalletComponent");
         if (!wallet) return -1.0f;
 
-        float desire = (wallet->balance - 5000.0f) / 1000.0f;
+        float desire = (wallet->balance - investThreshold) / investDivisor;
 
         if (wallet->debt > 0) {
             desire -= (wallet->debt / 500.0f);
+        }
+
+        // Ilk fabrikasini kursun diye bonus
+        auto* assets = aiEntity.GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+        if (assets && assets->ownedAssets.empty()) {
+            desire += 1.0f;
         }
 
         return desire;

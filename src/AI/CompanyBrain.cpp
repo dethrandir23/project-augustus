@@ -5,8 +5,10 @@
 #include "Core/ECS/Entity.h"
 #include "DevTools/Console.h"
 #include "Economy/Components/AssetOwnerComponent.h"
+#include "Economy/Components/ManpowerPoolComponent.h"
 #include "Economy/Components/ProductionComponent.h"
 #include "Economy/Components/WalletComponent.h"
+#include "Economy/Components/WorkforceComponent.h"
 #include "Economy/EconomyUtils.h"
 #include "Economy/Orderbook.h"
 #include "Game/Gamestate.h"
@@ -34,8 +36,9 @@ nlohmann::json CompanyBrain::makeInput(const std::string& type,
 
 void CompanyBrain::execute(Entity& entity, Gamestate& gamestate) {
     manageDebt(entity, gamestate);
-    buyInputs(entity, gamestate);
     buildFactories(entity, gamestate);
+    hireWorkers(entity, gamestate);
+    buyInputs(entity, gamestate);
     sellSurplus(entity, gamestate);
     handleEvents(entity, gamestate);
 }
@@ -44,6 +47,39 @@ void CompanyBrain::manageDebt(Entity& company, Gamestate& gamestate) {
     auto* wallet = company.GetComponent<WalletComponent>("WalletComponent");
     if (!wallet || wallet->debt <= 0 || wallet->balance < wallet->debt) return;
     InputHandler::handleInput(gamestate, makeInput("PAY_DEBT", {}, company));
+}
+
+void CompanyBrain::hireWorkers(Entity& company, Gamestate& gamestate) {
+    auto* wallet = company.GetComponent<WalletComponent>("WalletComponent");
+    auto* manpower = company.GetComponent<ManpowerPoolComponent>("ManpowerPoolComponent");
+    auto* assets = company.GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+    if (!wallet || !manpower || !assets) return;
+    if (assets->ownedAssets.empty()) return;
+
+    for (const auto& fId : assets->ownedAssets) {
+        Entity* factory = gamestate.getEntity(fId);
+        if (!factory) continue;
+        auto* workforce = factory->GetComponent<WorkforceComponent>("WorkforceComponent");
+        if (!workforce) continue;
+
+        size_t openSlots = workforce->maxWorkers - workforce->currentWorkers;
+        if (openSlots == 0) continue;
+
+        // Bütçenin en fazla %50'sini işçi alımına harca (kalanı input almaya gitsin)
+        double hiringBudget = wallet->balance * 0.5;
+        double maxHire = hiringBudget / static_cast<double>(hiringCostPerWorker);
+        size_t canHire = static_cast<size_t>(std::min<double>(static_cast<double>(openSlots), maxHire));
+        if (canHire == 0) continue;
+
+        // Manpower havuzundan kontrol
+        size_t fromPool = std::min(canHire, manpower->availableWorkers);
+        if (fromPool == 0) continue;
+
+        manpower->allocate(fromPool);
+        workforce->recruit(fromPool);
+        double cost = static_cast<double>(fromPool) * hiringCostPerWorker;
+        wallet->balance -= cost;
+    }
 }
 
 void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
@@ -98,7 +134,7 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
 }
 
 void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
-    float investDesire = EconomyEvaluator::scoreInvestmentDesire(company);
+    float investDesire = EconomyEvaluator::scoreInvestmentDesire(company, investThreshold, investDivisor);
     if (investDesire <= 0.0f) return;
 
     std::vector<AIPicker::Candidate> candidates;
@@ -160,7 +196,7 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
         }
     }
 
-    // Collect all item IDs that are inputs to any owned factory
+    // Sahip olunan fabrikalarin inputlarini satma
     std::unordered_set<std::string> factoryInputs;
     for (const auto& fId : assets->ownedAssets) {
         Entity* factory = gamestate.getEntity(fId);
@@ -181,7 +217,6 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
     }
 
     for (const auto& item : storage->GetAllItems()) {
-        // Don't sell items needed as factory inputs
         if (factoryInputs.count(item.id)) continue;
         float surplus = item.quantity - sellThreshold;
         if (surplus <= 0.0f) continue;
@@ -232,7 +267,9 @@ nlohmann::json CompanyBrain::toJson() const {
         {"type", getType()},
         {"sellThreshold", sellThreshold},
         {"investThreshold", investThreshold},
+        {"investDivisor", investDivisor},
         {"investMinScore", investMinScore},
+        {"hiringCostPerWorker", hiringCostPerWorker},
         {"pickerTopK", pickerTopK},
         {"pickerTemperature", pickerTemperature},
         {"seed", seed}
@@ -242,7 +279,9 @@ nlohmann::json CompanyBrain::toJson() const {
 void CompanyBrain::fromJson(const nlohmann::json& j) {
     if (j.contains("sellThreshold")) sellThreshold = j["sellThreshold"].get<float>();
     if (j.contains("investThreshold")) investThreshold = j["investThreshold"].get<float>();
+    if (j.contains("investDivisor")) investDivisor = j["investDivisor"].get<float>();
     if (j.contains("investMinScore")) investMinScore = j["investMinScore"].get<float>();
+    if (j.contains("hiringCostPerWorker")) hiringCostPerWorker = j["hiringCostPerWorker"].get<float>();
     if (j.contains("pickerTopK")) pickerTopK = j["pickerTopK"].get<int>();
     if (j.contains("pickerTemperature")) pickerTemperature = j["pickerTemperature"].get<double>();
     if (j.contains("seed")) { seed = j["seed"].get<unsigned int>(); rng = std::mt19937(seed); }
