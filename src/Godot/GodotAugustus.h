@@ -49,6 +49,7 @@ public:
     String get_market_stats(const String &market_id);
     String get_node_stats(const String &node_id);
     String get_factory_stats(const String &factory_id);
+    String get_economy_summary();
     String get_economy_report();
 
     // Console

@@ -63,6 +63,7 @@ var _cb=null,_module={
     getMarketStats:async function(id){return _s(await window.api_getMarketStats(String(id)))},
     getNodeStats:async function(id){return _s(await window.api_getNodeStats(String(id)))},
     getFactoryStats:async function(id){return _s(await window.api_getFactoryStats(String(id)))},
+    getEconomySummary:async function(){return _s(await window.api_getEconomySummary())},
     getEconomyReport:async function(){return _s(await window.api_getEconomyReport())},
     startScenario:async function(id){return await window.api_startScenario(String(id))},
     setPlayer:async function(n,t,a){await window.api_setPlayer(String(n),String(t),!!a)},
@@ -277,6 +278,10 @@ int main(int argc, char **argv) {
 
     w.bind("api_getEconomyReport", [&engine](std::string) -> std::string {
         return engine.getEconomyReport();
+    });
+
+    w.bind("api_getEconomySummary", [&engine](std::string) -> std::string {
+        return engine.getEconomySummary();
     });
 
     w.bind("api_getMarketStats", [&engine](std::string req) -> std::string {

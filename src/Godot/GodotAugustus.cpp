@@ -33,6 +33,7 @@ void GodotAugustus::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_market_stats", "market_id"), &GodotAugustus::get_market_stats);
     ClassDB::bind_method(D_METHOD("get_node_stats", "node_id"), &GodotAugustus::get_node_stats);
     ClassDB::bind_method(D_METHOD("get_factory_stats", "factory_id"), &GodotAugustus::get_factory_stats);
+    ClassDB::bind_method(D_METHOD("get_economy_summary"), &GodotAugustus::get_economy_summary);
     ClassDB::bind_method(D_METHOD("get_economy_report"), &GodotAugustus::get_economy_report);
 
     ClassDB::bind_method(D_METHOD("read_console"), &GodotAugustus::read_console);
@@ -212,6 +213,10 @@ String GodotAugustus::get_factory_stats(const String &factory_id) {
 
 String GodotAugustus::get_economy_report() {
     return String(augustus_engine::EngineController::instance().getEconomyReport().c_str());
+}
+
+String GodotAugustus::get_economy_summary() {
+    return String(augustus_engine::EngineController::instance().getEconomySummary().c_str());
 }
 
 PackedStringArray GodotAugustus::read_console() {

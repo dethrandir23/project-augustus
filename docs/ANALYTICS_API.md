@@ -232,7 +232,70 @@ print("Total trades: ", j.cumulativeTradesExecuted)
 
 ---
 
-## 6. API Fonksiyonları Tablosu
+## 6. Ekonomi Özeti — `getEconomySummary()`
+
+Oyunun sağlığını tek bakışta görmek için. Entity ID'si istemez, global toplamları döndürür.
+
+### Webview
+```js
+const s = JSON.parse(await GameModule.getEconomySummary())
+console.log("Trades:", s.cumulativeTradesExecuted, "Active:", s.isEconomyActive)
+```
+
+### Godot
+```gdscript
+var s = JSON.parse_string($Augustus.get_economy_summary())
+print("Buy/Sell ratio: ", s.buySellRatio)
+print("Trade execution rate: ", s.tradeExecutionRate)
+```
+
+### Dönen JSON
+```json
+{
+  "marketCount": 4,
+  "companyCount": 7,
+  "factoryCount": 3,
+  "tradeNodeCount": 4,
+  "totalPopulation": 34256,
+
+  "cumulativeBuyOrdersPlaced": 400,
+  "cumulativeSellOrdersPlaced": 15886,
+  "cumulativeOrdersPlaced": 16286,
+  "cumulativeTradesExecuted": 72,
+  "cumulativeTradeVolume": 7.2,
+
+  "currentBuyOrders": 0,
+  "currentSellOrders": 147,
+  "currentTotalOrders": 147,
+  "currentBuyVolume": 0.0,
+  "currentSellVolume": 7350.0,
+  "currentTotalVolume": 7350.0,
+
+  "totalMarketWallet": 200000.0,
+
+  "buySellRatio": 0.025,
+  "tradeExecutionRate": 0.0044,
+  "pendingOrderRatio": 0.009,
+  "isEconomyActive": true
+}
+```
+
+| Alan | Anlamı |
+|------|--------|
+| `cumulativeBuyOrdersPlaced` | Tüm zamanlarda girilen toplam BUY emri |
+| `cumulativeSellOrdersPlaced` | Tüm zamanlarda girilen toplam SELL emri |
+| `cumulativeOrdersPlaced` | Buy + Sell toplamı |
+| `cumulativeTradesExecuted` | Gerçekleşen trade sayısı |
+| `cumulativeTradeVolume` | Toplam işlem hacmi |
+| `currentBuyOrders / currentSellOrders` | O anda açık olan emirler |
+| `buySellRatio` | Kümülatif buy / sell oranı (1.0 = dengeli) |
+| `tradeExecutionRate` | Trades / totalOrders (0.0–1.0 arası, ne kadar çok order trade'e dönüşmüş) |
+| `pendingOrderRatio` | Açık emirler / toplam emirler (0.0–1.0, ne kadarı hala bekliyor) |
+| `isEconomyActive` | `true` = trade var, ekonomi çalışıyor |
+
+---
+
+## 7. API Fonksiyonları Tablosu
 
 | Fonksiyon | Parametre | Dönüş | Webview Adı | Godot Adı |
 |-----------|-----------|-------|------------|-----------|
@@ -240,6 +303,7 @@ print("Total trades: ", j.cumulativeTradesExecuted)
 | getMarketStats | marketId | JSON string | `getMarketStats(id)` | `get_market_stats` |
 | getNodeStats | nodeId | JSON string | `getNodeStats(id)` | `get_node_stats` |
 | getFactoryStats | factoryId | JSON string | `getFactoryStats(id)` | `get_factory_stats` |
+| getEconomySummary | — | JSON string | `getEconomySummary()` | `get_economy_summary` |
 | getEconomyReport | — | JSON string | `getEconomyReport()` | `get_economy_report` |
 
 ---

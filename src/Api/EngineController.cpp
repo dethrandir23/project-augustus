@@ -1,6 +1,9 @@
 #include "Analytics/EconomyStats.h"
 #include "Api/EngineController.h"
 #include "World/Systems/MarketSystem.h"
+#include "World/Components/MarketComponent.h"
+#include "World/Components/DemographicsComponent.h"
+#include "Economy/Components/WalletComponent.h"
 #include "AI/AIManager.h"
 #include "AI/CompanyBrain.h"
 #include "AI/Components/AIControllerComponent.h"
@@ -305,6 +308,81 @@ std::string EngineController::getFactoryStats(const std::string &factoryId) {
 std::string EngineController::getEconomyReport() {
     auto result = Analytics::calculateTotalEconomyStats(gamestate);
     return result.dump();
+}
+
+std::string EngineController::getEconomySummary() {
+    nlohmann::json s;
+
+    int cumulativeBuy = 0, cumulativeSell = 0, cumulativeTrades = 0;
+    double cumulativeVolume = 0.0;
+    int currentBuy = 0, currentSell = 0;
+    double currentBuyVol = 0.0, currentSellVol = 0.0;
+    double totalWallet = 0.0;
+
+    int marketCount = 0, companyCount = 0, factoryCount = 0, nodeCount = 0;
+    size_t totalPop = 0;
+
+    for (const auto& [_, e] : gamestate.getEntities()) {
+        auto* mc = e->GetComponent<MarketComponent>("MarketComponent");
+        if (mc) {
+            marketCount++;
+            cumulativeBuy += mc->totalBuyOrdersPlaced;
+            cumulativeSell += mc->totalSellOrdersPlaced;
+            cumulativeTrades += mc->totalTradesExecuted;
+            cumulativeVolume += mc->totalTradeVolume;
+            for (auto& [_, book] : mc->books) {
+                for (auto& o : book.buyOrders) { currentBuy++; currentBuyVol += o.remaining() * o.price; }
+                for (auto& o : book.sellOrders) { currentSell++; currentSellVol += o.remaining() * o.price; }
+            }
+        }
+        auto* wallet = e->GetComponent<WalletComponent>("WalletComponent");
+        if (wallet && e->GetType() == "market") totalWallet += wallet->balance;
+
+        if (e->GetType() == "company") companyCount++;
+        if (e->GetType() == "factory") factoryCount++;
+        if (e->GetType() == "trade_node") nodeCount++;
+
+        auto* demo = e->GetComponent<DemographicsComponent>("DemographicsComponent");
+        if (demo) totalPop += demo->population;
+    }
+
+    int totalOrdersPlaced = cumulativeBuy + cumulativeSell;
+    int currentTotal = currentBuy + currentSell;
+
+    s["marketCount"] = marketCount;
+    s["companyCount"] = companyCount;
+    s["factoryCount"] = factoryCount;
+    s["tradeNodeCount"] = nodeCount;
+    s["totalPopulation"] = totalPop;
+
+    s["cumulativeBuyOrdersPlaced"] = cumulativeBuy;
+    s["cumulativeSellOrdersPlaced"] = cumulativeSell;
+    s["cumulativeOrdersPlaced"] = totalOrdersPlaced;
+    s["cumulativeTradesExecuted"] = cumulativeTrades;
+    s["cumulativeTradeVolume"] = cumulativeVolume;
+
+    s["currentBuyOrders"] = currentBuy;
+    s["currentSellOrders"] = currentSell;
+    s["currentTotalOrders"] = currentTotal;
+
+    s["currentBuyVolume"] = currentBuyVol;
+    s["currentSellVolume"] = currentSellVol;
+    s["currentTotalVolume"] = currentBuyVol + currentSellVol;
+
+    s["totalMarketWallet"] = totalWallet;
+
+    // Oranlar
+    s["buySellRatio"] = cumulativeSell > 0
+        ? static_cast<double>(cumulativeBuy) / static_cast<double>(cumulativeSell) : 0.0;
+    s["tradeExecutionRate"] = totalOrdersPlaced > 0
+        ? static_cast<double>(cumulativeTrades) / static_cast<double>(totalOrdersPlaced) : 0.0;
+    s["pendingOrderRatio"] = totalOrdersPlaced > 0
+        ? static_cast<double>(currentTotal) / static_cast<double>(totalOrdersPlaced) : 0.0;
+
+    // Bot mu canlı mı anlamak için: hiç trade yoksa oyun çalışmıyordur
+    s["isEconomyActive"] = cumulativeTrades > 0 && cumulativeSell > 0;
+
+    return s.dump();
 }
 
 std::vector<std::string> EngineController::readConsole() {

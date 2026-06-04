@@ -48,6 +48,7 @@ public:
     std::string getNodeStats(const std::string &nodeId);
     std::string getFactoryStats(const std::string &factoryId);
     std::string getEconomyReport();
+    std::string getEconomySummary();
 
     // --- Console ---
     std::vector<std::string> readConsole();
