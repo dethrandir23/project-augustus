@@ -1,5 +1,6 @@
 #pragma once
 #include "AI/AIBrain.h"
+#include "Core/GameConstants.h"
 #include "Game/IdUtils.h"
 #include <random>
 
@@ -18,10 +19,10 @@ public:
     void fromJson(const nlohmann::json& j) override;
 
     // --- Configurable Parameters ---
-    float sellRatio = 0.5f;
-    float budgetBaseRatio = 0.3f;
-    float budgetHappinessWeight = 0.4f;
-    float richThreshold = 5000.0f;
+    float sellRatio = GameConstants::SELL_RATIO;
+    float budgetBaseRatio = GameConstants::BUDGET_BASE_RATIO;
+    float budgetHappinessWeight = GameConstants::BUDGET_HAPPINESS_WEIGHT;
+    float richThreshold = GameConstants::TRADE_RICH_THRESHOLD;
     unsigned int seed = 42;
 
 private:

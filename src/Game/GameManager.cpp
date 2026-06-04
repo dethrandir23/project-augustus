@@ -1,5 +1,6 @@
 // GameManager.cpp
 #include "GameManager.h"
+#include "Core/GameConstants.h"
 #include "Core/Components/InventoryComponent.h"
 #include "Economy/Components/AssetOwnerComponent.h"
 #include "Economy/Components/PerkComponent.h"
@@ -75,17 +76,15 @@ void GameManager::processDemographics(Gamestate& gamestate) {
         auto* demo = entity->GetComponent<DemographicsComponent>("DemographicsComponent");
         if (!demo) continue;
 
-        float growthFactor = (demo->happiness - 0.5f) * 0.1f;
-        int change = static_cast<int>(demo->population * growthFactor);
-        
-        if (change > 0) {
+        float growthFactor = (demo->happiness - 0.5f) * GameConstants::POP_GROWTH_COEFF;
+        if (growthFactor > 0) {
+            int change = static_cast<int>(demo->population * growthFactor);
             demo->population += change;
-            demo->recruitablePop += static_cast<size_t>(change * 0.4);
+            demo->recruitablePop += static_cast<size_t>(change * GameConstants::RECRUITABLE_POP_RATIO);
         } else {
-            size_t loss = static_cast<size_t>(-change);
-            demo->population = (demo->population > loss) ? (demo->population - loss) : 0;
-            size_t workerLoss = static_cast<size_t>(loss * 0.4);
-            demo->recruitablePop = (demo->recruitablePop > workerLoss) ? (demo->recruitablePop - workerLoss) : 0;
+            int loss = static_cast<int>(demo->population * (-growthFactor));
+            demo->population = (demo->population > static_cast<size_t>(loss)) ? demo->population - loss : 1;
+            demo->recruitablePop -= static_cast<size_t>(loss * GameConstants::RECRUITABLE_POP_RATIO);
         }
     }
 }
@@ -115,7 +114,7 @@ void GameManager::processCompanyLogistics(Gamestate& gamestate) {
             if (manpower->availableWorkers > 0) {
                 size_t space = (facWorkforce->maxWorkers > facWorkforce->currentWorkers) 
                                ? (facWorkforce->maxWorkers - facWorkforce->currentWorkers) : 0;
-                size_t toAdd = std::min(static_cast<size_t>(100), space);
+                size_t toAdd = std::min(GameConstants::WORKERS_PER_TICK, space);
                 toAdd = std::min(toAdd, manpower->availableWorkers);
                 facWorkforce->currentWorkers += toAdd;
                 manpower->availableWorkers -= toAdd;
@@ -146,7 +145,7 @@ void GameManager::processFactories(Gamestate& gamestate) {
         if (entity->GetType() != "factory") continue;
         // Demin Utility'e yazdığımız genel üretimi çağırıyoruz
         // NOT: EconomyUtils içindeki o produce kodunu buraya entegre ettiğini varsayıyorum
-        EconomyUtils::produce(*entity, 1.0); // 1.0 global modifier
+        EconomyUtils::produce(*entity, GameConstants::GLOBAL_PRODUCTION_MODIFIER);
     }
 }
 
@@ -187,10 +186,10 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
         EconomyUtils::executeProduction(*entity, "consumption", "Storage");
 
         float currentHappinessItems = storage->GetInternalInventory().getAmount("core_happiness_043");
-        float requiredHappiness = demo->population * 0.01f;
-        if (requiredHappiness > 0.001f) {
-            demo->happiness = std::clamp(currentHappinessItems / requiredHappiness, 0.0f, 1.0f);
-        }
+            float requiredHappiness = demo->population * GameConstants::HAPPINESS_REQUIRED_RATIO;
+            if (requiredHappiness > GameConstants::MIN_WORKER_EFFICIENCY) {
+                demo->happiness = std::clamp(currentHappinessItems / requiredHappiness, 0.0f, 1.0f);
+            }
         storage->GetInternalInventory().remove("core_happiness_043", currentHappinessItems);
 
         // 3. BÜTÇE YÖNETİMİ (Fazlalıkları Satış Emri Olarak Gir)

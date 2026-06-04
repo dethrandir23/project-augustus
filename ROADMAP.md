@@ -29,6 +29,21 @@ This roadmap defines the staged evolution of PROJECT AUGUSTUS from core simulati
 * [ ] Add Doxygen documentation
 * [ ] Clean AI-generated comments
 
+### Ekonomik Dengeleme
+
+* [x] `GameConstants.h` oluşturuldu (`src/Core/GameConstants.h`)
+* [ ] Tüm sayısal sabitler tek yerde toplandı (CompanyBrain, TradeNodeBrain, EconomyEvaluator, GameManager, EconomyUtils)
+* [x] AI noise sistemi: şirketler %100 optimal değil, `noiseLevel` (0.0-1.0) ile sapma
+* [x] `investThreshold`/`investDivisor` artık konfigüre edilebilir (hardcoded 5000/1000 değil)
+* [x] `scoreFactoryProfitability` ROI bazlı: `(netProfit / buildCost) * 100`
+* [x] `hireWorkers()`: işçi alma maliyeti + budget kontrolü
+* [x] Zorluk seviyesi hazırlığı: `noiseLevel` farklılaştırılabilir
+
+### Developer Experience
+
+* [ ] Zorluk seviyesi → noiseLevel + AI bonus mappingi
+* [ ] Difficulty enum: Easy / Normal / Hard / VeryHard
+
 ### Result of Phase 1
 
 Engine can:
@@ -37,6 +52,37 @@ Engine can:
 * Simulate economy
 * Run turns deterministically
 * Handle multiple companies correctly
+
+---
+
+# Phase 1.5 – Economic Depth & AI Personality
+
+**Goal:** Make the simulation feel alive and imperfect.
+
+### Prosperity (Refah → Prosperity) Sistemi
+
+* [ ] `DemographicsComponent`'e `prosperity` field'ı ekle (0.0-1.0)
+* [ ] Data-driven: `luxury` kategorisindeki itemler prosperity'yi etkiler
+* [ ] Hayati değil: prosperity düşükse nüfus azalmaz, sadece refah düşer
+* [ ] UI'da prosperity göstergesi, happiness'tan ayrı bir metrik
+
+### AI Kişilik & Noise Sistemi
+
+* [ ] Her şirketin farklı `noiseLevel`, `aggression`, `riskTolerance` değerleri
+* [ ] Zorluk seviyesi bu değerleri etkiler (Easy=kaotik, Hard=optimal)
+* [ ] Advisor sistemi (oyuncuya özel AI yardımı)
+* [ ] Şirketlerin zamanla değişen stratejileri
+
+### Enflasyon Sistemi
+
+* [ ] Data-driven zamanla değişen fiyat çarpanı
+* [ ] Tüm fiyatlara uygulanan global enflasyon faktörü
+* [ ] JSON'dan yüklenebilir senaryo bazlı enflasyon
+
+### Şehir Ekonomisi
+
+* [ ] İşgücü maliyeti şehre göre değişsin (fabrikayı ucuz işgücü olan yere kurma)
+* [ ] Şehirlere özel üretim profilleri (farklı yerler farklı şeyler üretir)
 
 ---
 

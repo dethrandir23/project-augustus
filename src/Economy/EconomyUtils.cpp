@@ -1,5 +1,6 @@
 #include "EconomyUtils.h"
 #include <algorithm>
+#include "Core/GameConstants.h"
 #include "Core/Components/InventoryComponent.h"
 #include "Core/ECS/Entity.h"
 #include "Core/Inventory.h"
@@ -78,7 +79,7 @@ void produce(Entity &f, double globalModifiers) {
         workerEfficiency = static_cast<double>(workComp->currentWorkers) / fData.max_workers; 
     }
 
-    if (workerEfficiency <= 0.001) return;
+    if (workerEfficiency <= GameConstants::MIN_WORKER_EFFICIENCY) return;
 
     double totalEfficiency = workerEfficiency * globalModifiers;
 
@@ -137,7 +138,7 @@ void produce(Entity &f, double globalModifiers) {
 
             for (const auto& input : pipe.inputs) {
                 float currentQty = storage.getAmount(input.id);
-                float needed = input.quantity * 5; // Örn: 5 turluk stok tutmaya çalışsın (Buffer)
+                float needed = input.quantity * GameConstants::INPUT_BUFFER_MULTIPLIER;
                 if (currentQty < needed) {
                     bool found = false;
                     for (auto& m : missing) {

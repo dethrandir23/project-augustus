@@ -65,13 +65,11 @@ void CompanyBrain::hireWorkers(Entity& company, Gamestate& gamestate) {
         size_t openSlots = workforce->maxWorkers - workforce->currentWorkers;
         if (openSlots == 0) continue;
 
-        // Bütçenin en fazla %50'sini işçi alımına harca (kalanı input almaya gitsin)
-        double hiringBudget = wallet->balance * 0.5;
+        double hiringBudget = wallet->balance * GameConstants::HIRE_BUDGET_RATIO;
         double maxHire = hiringBudget / static_cast<double>(hiringCostPerWorker);
         size_t canHire = static_cast<size_t>(std::min<double>(static_cast<double>(openSlots), maxHire));
         if (canHire == 0) continue;
 
-        // Manpower havuzundan kontrol
         size_t fromPool = std::min(canHire, manpower->availableWorkers);
         if (fromPool == 0) continue;
 
@@ -115,10 +113,10 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
             if (best.marketId.is_nil()) continue; // hiç arz yok
 
             double cost = best.effectivePrice * stillNeeded;
-            if (cost > wallet->balance * 0.3f) {
-                stillNeeded = static_cast<float>((wallet->balance * 0.3) / best.effectivePrice);
+            if (cost > wallet->balance * GameConstants::BUY_BUDGET_RATIO) {
+                stillNeeded = static_cast<float>((wallet->balance * GameConstants::BUY_BUDGET_RATIO) / best.effectivePrice);
             }
-            if (stillNeeded < 0.1f) continue;
+            if (stillNeeded < GameConstants::MIN_BUY_THRESHOLD) continue;
 
             std::cout << "[BUY] " << company.GetName() << " buying " << req.id << " x" << stillNeeded << " @ " << best.bestAsk << " (eff=" << best.effectivePrice << ") (bal=" << wallet->balance << ")" << std::endl;
 
@@ -134,8 +132,10 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
 }
 
 void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
-    float investDesire = EconomyEvaluator::scoreInvestmentDesire(company, investThreshold, investDivisor);
-    if (investDesire <= 0.0f) return;
+    float noiseRoll = std::uniform_real_distribution<float>(0.0f, 1.0f)(rng);
+    float noisyDesire = EconomyEvaluator::scoreInvestmentDesire(company, investThreshold, investDivisor)
+                        * (1.0f - noiseLevel * noiseRoll);
+    if (noisyDesire <= 0.0f) return;
 
     std::vector<AIPicker::Candidate> candidates;
     for (const auto& [templateId, fData] : FactoryManager::factories) {
@@ -146,7 +146,8 @@ void CompanyBrain::buildFactories(Entity& company, Gamestate& gamestate) {
     }
     if (candidates.empty()) return;
 
-    std::string chosen = AIPicker::selectWithNoise(candidates, pickerTopK, pickerTemperature);
+    double noisyTemp = pickerTemperature * (1.0 + noiseLevel * noiseRoll);
+    std::string chosen = AIPicker::selectWithNoise(candidates, pickerTopK, noisyTemp);
     if (chosen.empty()) return;
 
     InputHandler::handleInput(gamestate,
@@ -216,16 +217,19 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
         }
     }
 
+    float noiseRoll = std::uniform_real_distribution<float>(0.0f, 1.0f)(rng);
+    float noisyThreshold = sellThreshold * (1.0f + noiseLevel * (noiseRoll - 0.5f) * 2.0f);
+
     for (const auto& item : storage->GetAllItems()) {
         if (factoryInputs.count(item.id)) continue;
-        float surplus = item.quantity - sellThreshold;
+        float surplus = item.quantity - noisyThreshold;
         if (surplus <= 0.0f) continue;
 
         auto* marketEntity = gamestate.getEntity(marketId);
         if (!marketEntity) continue;
         auto* mc = marketEntity->GetComponent<MarketComponent>("MarketComponent");
-        double price = mc ? mc->getPrice(item.id) : 1.0;
-        if (price <= 0.0) price = 1.0;
+        double price = mc ? mc->getPrice(item.id) : GameConstants::FALLBACK_PRICE;
+        if (price <= 0.0) price = GameConstants::FALLBACK_PRICE;
 
         InputHandler::handleInput(gamestate,
             makeInput("MARKET_SELL_ITEM", {
@@ -270,6 +274,7 @@ nlohmann::json CompanyBrain::toJson() const {
         {"investDivisor", investDivisor},
         {"investMinScore", investMinScore},
         {"hiringCostPerWorker", hiringCostPerWorker},
+        {"noiseLevel", noiseLevel},
         {"pickerTopK", pickerTopK},
         {"pickerTemperature", pickerTemperature},
         {"seed", seed}
@@ -282,6 +287,7 @@ void CompanyBrain::fromJson(const nlohmann::json& j) {
     if (j.contains("investDivisor")) investDivisor = j["investDivisor"].get<float>();
     if (j.contains("investMinScore")) investMinScore = j["investMinScore"].get<float>();
     if (j.contains("hiringCostPerWorker")) hiringCostPerWorker = j["hiringCostPerWorker"].get<float>();
+    if (j.contains("noiseLevel")) noiseLevel = j["noiseLevel"].get<float>();
     if (j.contains("pickerTopK")) pickerTopK = j["pickerTopK"].get<int>();
     if (j.contains("pickerTemperature")) pickerTemperature = j["pickerTemperature"].get<double>();
     if (j.contains("seed")) { seed = j["seed"].get<unsigned int>(); rng = std::mt19937(seed); }

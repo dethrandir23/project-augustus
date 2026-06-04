@@ -1,5 +1,6 @@
 #pragma once
 #include "AI/AIBrain.h"
+#include "Core/GameConstants.h"
 #include <random>
 
 class CompanyBrain : public AIBrain {
@@ -17,13 +18,14 @@ public:
     void fromJson(const nlohmann::json& j) override;
 
     // --- Configurable Parameters ---
-    float sellThreshold = 10.0f;
-    float investThreshold = 2000.0f;       // minimum rezerv
-    float investDivisor = 2000.0f;         // her 2k fazla para = +1 desire
-    float investMinScore = 2.0f;           // ROI bazli skorda esik
-    float hiringCostPerWorker = 1.0f;      // isci basi ucret (dusuk tut, GameManager da bedava isci gonderiyor)
-    int pickerTopK = 3;
-    double pickerTemperature = 0.7;
+    float sellThreshold = GameConstants::SELL_THRESHOLD;
+    float investThreshold = GameConstants::INVEST_THRESHOLD;
+    float investDivisor = GameConstants::INVEST_DIVISOR;
+    float investMinScore = GameConstants::INVEST_MIN_SCORE;
+    float hiringCostPerWorker = GameConstants::HIRING_COST_PER_WORKER;
+    float noiseLevel = GameConstants::AI_NOISE;    // 0.0 = perfect, 1.0 = chaotic
+    int pickerTopK = GameConstants::PICKER_TOP_K;
+    double pickerTemperature = GameConstants::PICKER_TEMPERATURE;
     unsigned int seed = 42;
 
 private:

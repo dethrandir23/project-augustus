@@ -56,7 +56,7 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
         for (const auto& output : pipe.outputs) {
             float inStorage = storage->GetInternalInventory().getAmount(output.id);
             float toSell    = inStorage * sellRatio;
-            if (toSell < 1.0f) continue;
+            if (toSell < GameConstants::MIN_SELL_UNIT) continue;
             double price = marketComp->getPrice(output.id);
             if (price <= 0.0) price = 1.0;
 
@@ -95,7 +95,7 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
 
     float budgetRatio = budgetBaseRatio + (1.0f - demo->happiness) * budgetHappinessWeight;
     double budget     = wallet->balance * budgetRatio;
-    if (budget < 1.0) return;
+    if (budget < GameConstants::MIN_BUDGET) return;
 
     for (const auto& pipeId : cons->activePipelineIds) {
         if (!PipelineManager::pipelines.count(pipeId)) continue;
@@ -103,7 +103,7 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
         for (const auto& input : pipe.inputs) {
             if (input.id == "core_none_000") continue;
             float inStorage = storage->GetInternalInventory().getAmount(input.id);
-            float target = input.quantity * 5.0f;
+            float target = input.quantity * GameConstants::TRADE_INPUT_BUFFER;
             float needed = target - inStorage;
             if (needed <= 0.0f) continue;
 
@@ -118,7 +118,7 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
 
             float affordable = static_cast<float>(budget / best.effectivePrice);
             float toBuy = std::min(needed, affordable);
-            if (toBuy < 0.01f) continue;
+            if (toBuy < GameConstants::MIN_BUY_UNIT) continue;
 
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_BUY_ITEM", {
