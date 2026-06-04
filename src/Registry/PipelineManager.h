@@ -16,6 +16,8 @@ struct PipelineData {
 
     std::vector<ItemStack> inputs; 
     std::vector<ItemStack> outputs;
+
+    float laborCost = 1.0f; // emek birimi / cycle
 };
 
 class PipelineManager {
@@ -30,6 +32,7 @@ public:
                 p.id = entry.at("id").get<std::string>();
                 p.name = entry.at("name").get<std::string>();
                 p.categories = entry.value("categories", std::vector<std::string>{});
+                p.laborCost = entry.value("laborCost", 1.0f);
 
                 // INPUTS Parsing (Array -> Vector)
                 if (entry.contains("inputs")) {

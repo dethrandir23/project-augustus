@@ -31,7 +31,16 @@ std::unique_ptr<AIBrain> AIManager::createBrain(const std::string& entityType) {
 }
 
 void AIManager::processAll(Gamestate& gamestate) {
+    // First pass: trade nodes — place sell orders so companies see supply
     for (auto& [id, entity] : gamestate.getEntities()) {
+        if (entity->GetType() != "trade_node") continue;
+        auto* aiComp = entity->GetComponent<AIControllerComponent>("AIControllerComponent");
+        if (!aiComp || !aiComp->hasBrain()) continue;
+        aiComp->getBrain()->execute(*entity, gamestate);
+    }
+    // Second pass: companies — execute after trade nodes have listed supply
+    for (auto& [id, entity] : gamestate.getEntities()) {
+        if (entity->GetType() != "company") continue;
         auto* aiComp = entity->GetComponent<AIControllerComponent>("AIControllerComponent");
         if (!aiComp || !aiComp->hasBrain()) continue;
         aiComp->getBrain()->execute(*entity, gamestate);

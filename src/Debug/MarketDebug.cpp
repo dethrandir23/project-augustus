@@ -4,7 +4,8 @@
 
 namespace MarketDebug {
 
-static void accumulate(OrderStats& stats, const std::vector<MarketOrder>& orders) {
+template<typename Container>
+static void accumulate(OrderStats& stats, const Container& orders) {
     for (const auto& o : orders) {
         float rem = o.remaining();
         if (o.type == OrderType::BUY) {

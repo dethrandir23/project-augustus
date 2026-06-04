@@ -17,41 +17,118 @@
 
 namespace EconomyUtils {
 
+static const std::string NONE_ITEM = "core_none_000";
+
 ProductionResult processProduction(
-        Inventory &inventory, // Tüketim buradan yapılacak
-        const std::vector<PipelineData> &pipelines, 
-        double globalEfficiency
+        Inventory &inventory,
+        const std::vector<PipelineData> &pipelines,
+        double globalEfficiency,
+        double availableLabor
     ) {
         ProductionResult result;
+        if (pipelines.empty()) return result;
 
+        // ------------------------------------------------------------------
+        // ADIM 1: Her item için toplam talebi hesapla
+        // ------------------------------------------------------------------
+        std::unordered_map<std::string, double> totalDemand;
         for (const auto& pipe : pipelines) {
-            
-            // ADIM 1: Girdiler Yeterli mi Kontrolü (Transaction Safety)
-            bool canProduce = true;
-            
             for (const auto& input : pipe.inputs) {
-                // Eskiden: getItemAmount(vec, id)
-                // Şimdi: inventory.has(id, amount)
-                if (!inventory.has(input.id, input.quantity)) {
-                    canProduce = false;
-                    break; 
+                if (input.id == NONE_ITEM) continue;
+                totalDemand[input.id] += static_cast<double>(input.quantity);
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // ADIM 2: Her pipeline için kaynak bottleneck'ini hesapla
+        //         "laborOnly" = hiç gerçek input'u olmayan (extraction, agriculture)
+        // ------------------------------------------------------------------
+        struct PipeScale {
+            double resourceScale;
+            double laborCost;
+            bool laborOnly; // sadece işgücü ile sınırlı (no real inputs)
+        };
+        std::vector<PipeScale> scales(pipelines.size());
+
+        for (size_t i = 0; i < pipelines.size(); ++i) {
+            const auto& pipe = pipelines[i];
+            double minScale = std::numeric_limits<double>::infinity();
+            bool hasRealInput = false;
+
+            for (const auto& input : pipe.inputs) {
+                if (input.id == NONE_ITEM) continue;
+                hasRealInput = true;
+                if (totalDemand[input.id] <= 0.0) {
+                    minScale = 0.0;
+                    break;
                 }
+                double share = static_cast<double>(input.quantity) / totalDemand[input.id];
+                double alloc = inventory.getAmount(input.id) * share;
+                double inputScale = alloc / static_cast<double>(input.quantity);
+                minScale = std::min(minScale, inputScale);
             }
 
-            // ADIM 2: Tüketim ve Üretim
-            if (canProduce) {
-                // A) Tüket (Inventory sınıfı kendi halleder)
-                for (const auto& input : pipe.inputs) {
-                    inventory.remove(input.id, input.quantity);
-                }
+            scales[i].laborOnly = !hasRealInput;
+            scales[i].resourceScale = hasRealInput ? minScale : std::numeric_limits<double>::infinity();
+            scales[i].laborCost = static_cast<double>(pipe.laborCost);
+        }
 
-                // B) Üret
-                for (const auto& output : pipe.outputs) {
-                    float producedQty = output.quantity * globalEfficiency;
-                    
-                    // Sonuç listesine ekle
-                    result.producedItems.push_back({output.id, producedQty});
+        // ------------------------------------------------------------------
+        // ADIM 3: Labor cap
+        //         Önce resource-constrained pipeline'ların işgücünü hesapla,
+        //         kalan işgücünü laborOnly pipeline'lara dağıt
+        // ------------------------------------------------------------------
+        double resourceLaborDemand = 0.0;
+        double totalLaborOnlyCost = 0.0;
+        for (size_t i = 0; i < pipelines.size(); ++i) {
+            if (scales[i].laborOnly) {
+                totalLaborOnlyCost += scales[i].laborCost;
+            } else {
+                resourceLaborDemand += scales[i].laborCost * scales[i].resourceScale;
+            }
+        }
+
+        double laborRatio = 1.0;
+        double laborOnlyScale = 0.0;
+        if (availableLabor >= 0.0) {
+            if (resourceLaborDemand > availableLabor && resourceLaborDemand > 0.0) {
+                // Resource-constrained pipelines zaten tüm işgücünü yiyor
+                laborRatio = availableLabor / resourceLaborDemand;
+                laborOnlyScale = 0.0;
+            } else {
+                double remainingLabor = availableLabor - resourceLaborDemand;
+                if (totalLaborOnlyCost > 0.0 && remainingLabor > 0.0) {
+                    laborOnlyScale = remainingLabor / totalLaborOnlyCost;
+                } else {
+                    laborOnlyScale = 0.0;
                 }
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // ADIM 4: Üretimi gerçekleştir
+        // ------------------------------------------------------------------
+        for (size_t i = 0; i < pipelines.size(); ++i) {
+            const auto& pipe = pipelines[i];
+            double finalScale;
+            if (scales[i].laborOnly) {
+                finalScale = laborOnlyScale * globalEfficiency;
+            } else {
+                finalScale = scales[i].resourceScale * laborRatio * globalEfficiency;
+            }
+            if (finalScale <= 0.0) continue;
+
+            // Tüket
+            for (const auto& input : pipe.inputs) {
+                if (input.id == NONE_ITEM) continue;
+                double amount = static_cast<double>(input.quantity) * finalScale;
+                inventory.remove(input.id, static_cast<float>(amount));
+            }
+
+            // Üret
+            for (const auto& output : pipe.outputs) {
+                double producedQty = static_cast<double>(output.quantity) * finalScale;
+                result.producedItems.push_back({output.id, static_cast<float>(producedQty)});
             }
         }
 
@@ -94,10 +171,12 @@ void produce(Entity &f, double globalModifiers) {
     // 5. Üretimi Gerçekleştir
     // NOT: processProduction inventory'i değiştireceği için referans yollamalıyız.
     // InventoryComponent içinde `Inventory& GetInventoryRef()` gibi bir fonksiyonun olmalı!
+    double factoryLabor = static_cast<double>(workComp->currentWorkers) * GameConstants::LABOR_POINTS_PER_WORKER;
     auto result = processProduction(
         inputInv->GetInternalInventory(), // Mutlaka referans olmalı
         activePipelines, 
-        totalEfficiency
+        totalEfficiency,
+        factoryLabor
     );
 
     // 6. Çıktıları Ekle
@@ -159,7 +238,7 @@ void produce(Entity &f, double globalModifiers) {
     }
 
 
-void executeProduction(Entity& entity, const std::string& prodKey, const std::string& invKey) {
+void executeProduction(Entity& entity, const std::string& prodKey, const std::string& invKey, double availableLabor) {
     auto* prod = entity.GetComponent<ProductionComponent>(prodKey);
     auto* inv = entity.GetComponent<InventoryComponent>(invKey);
     
@@ -174,7 +253,7 @@ void executeProduction(Entity& entity, const std::string& prodKey, const std::st
     }
 
     // Üret (Girdi de çıktı da aynı depo: invKey)
-    auto result = processProduction(inv->GetInternalInventory(), activePipelines, prod->efficiency);
+    auto result = processProduction(inv->GetInternalInventory(), activePipelines, prod->efficiency, availableLabor);
 
     // Çıktıları aynı depoya geri koy
     for (const auto& item : result.producedItems) {

@@ -5,6 +5,7 @@
       "id": "core_lumber_001",
       "name": "Lumber Processing",
       "categories": ["processing", "industrial"],
+      "laborCost": 2,
       "inputs": [{ "item_id": "core_wood_001", "amount": 10 }],
       "outputs": [{ "item_id": "core_lumber_020", "amount": 8 }]
     },
@@ -12,6 +13,7 @@
       "id": "core_brick_002",
       "name": "Brick Making",
       "categories": ["processing", "industrial"],
+      "laborCost": 2,
       "inputs": [
         { "item_id": "core_clay_003", "amount": 10 },
         { "item_id": "core_coal_015", "amount": 2 }
@@ -22,6 +24,7 @@
       "id": "core_glass_003",
       "name": "Glass Production",
       "categories": ["processing", "industrial"],
+      "laborCost": 2,
       "inputs": [
         { "item_id": "core_sand_004", "amount": 10 },
         { "item_id": "core_coal_015", "amount": 3 }
@@ -32,6 +35,7 @@
       "id": "core_steel_004",
       "name": "Steel Smelting",
       "categories": ["metallurgy", "industrial"],
+      "laborCost": 4,
       "inputs": [
         { "item_id": "core_iron_ore_014", "amount": 5 },
         { "item_id": "core_coal_015", "amount": 5 }
@@ -42,6 +46,7 @@
       "id": "core_tools_005",
       "name": "Tool Manufacturing",
       "categories": ["manufacturing", "industrial"],
+      "laborCost": 4,
       "inputs": [
         { "item_id": "core_steel_023", "amount": 2 },
         { "item_id": "core_wood_001", "amount": 2 }
@@ -52,6 +57,7 @@
       "id": "core_furniture_006",
       "name": "Furniture Crafting",
       "categories": ["manufacturing", "consumer"],
+      "laborCost": 3,
       "inputs": [{ "item_id": "core_lumber_020", "amount": 5 }],
       "outputs": [{ "item_id": "core_furniture_029", "amount": 2 }]
     },
@@ -59,6 +65,7 @@
       "id": "core_paper_007",
       "name": "Paper Making",
       "categories": ["processing", "industrial"],
+      "laborCost": 2,
       "inputs": [{ "item_id": "core_wood_001", "amount": 5 }],
       "outputs": [{ "item_id": "core_paper_025", "amount": 10 }]
     },
@@ -66,6 +73,7 @@
       "id": "core_books_008",
       "name": "Book Binding",
       "categories": ["manufacturing", "consumer"],
+      "laborCost": 2,
       "inputs": [
         { "item_id": "core_paper_025", "amount": 5 },
         { "item_id": "core_hides_013", "amount": 1 }
@@ -76,6 +84,7 @@
       "id": "core_cloth_cotton_009",
       "name": "Cotton Cloth Weaving",
       "categories": ["textile", "industrial"],
+      "laborCost": 3,
       "inputs": [{ "item_id": "core_cotton_010", "amount": 10 }],
       "outputs": [{ "item_id": "core_cloth_024", "amount": 8 }]
     },
@@ -83,6 +92,7 @@
       "id": "core_cloth_wool_010",
       "name": "Wool Cloth Weaving",
       "categories": ["textile", "industrial"],
+      "laborCost": 3,
       "inputs": [{ "item_id": "core_wool_009", "amount": 10 }],
       "outputs": [{ "item_id": "core_cloth_024", "amount": 6 }]
     },
@@ -90,6 +100,7 @@
       "id": "core_clothes_011",
       "name": "Clothing Production",
       "categories": ["manufacturing", "consumer"],
+      "laborCost": 4,
       "inputs": [{ "item_id": "core_cloth_024", "amount": 5 }],
       "outputs": [{ "item_id": "core_clothes_028", "amount": 5 }]
     },
@@ -97,6 +108,7 @@
       "id": "core_fine_clothes_012",
       "name": "Fine Clothing",
       "categories": ["manufacturing", "luxury"],
+      "laborCost": 6,
       "inputs": [
         { "item_id": "core_silk_011", "amount": 5 },
         { "item_id": "core_dye_012", "amount": 2 }
@@ -107,6 +119,7 @@
       "id": "core_food_rations_013",
       "name": "Food Rations",
       "categories": ["food", "consumer"],
+      "laborCost": 2,
       "inputs": [
         { "item_id": "core_grain_005", "amount": 5 },
         { "item_id": "core_meat_006", "amount": 5 }
@@ -117,6 +130,7 @@
       "id": "core_alcohol_grain_014",
       "name": "Alcohol Brewing (Grain)",
       "categories": ["food", "consumer"],
+      "laborCost": 2,
       "inputs": [{ "item_id": "core_grain_005", "amount": 10 }],
       "outputs": [{ "item_id": "core_alcohol_030", "amount": 4 }]
     },
@@ -124,6 +138,7 @@
       "id": "core_alcohol_fruit_015",
       "name": "Alcohol Brewing (Fruit)",
       "categories": ["food", "consumer"],
+      "laborCost": 2,
       "inputs": [{ "item_id": "core_fruit_008", "amount": 10 }],
       "outputs": [{ "item_id": "core_alcohol_030", "amount": 5 }]
     },
@@ -131,6 +146,7 @@
       "id": "core_gunpowder_016",
       "name": "Gunpowder Mixing",
       "categories": ["military", "processing"],
+      "laborCost": 3,
       "inputs": [
         { "item_id": "core_sulphur_018", "amount": 5 },
         { "item_id": "core_saltpeter_019", "amount": 5 }
@@ -141,6 +157,7 @@
       "id": "core_firearm_017",
       "name": "Firearm Manufacturing",
       "categories": ["military", "manufacturing"],
+      "laborCost": 8,
       "inputs": [
         { "item_id": "core_steel_023", "amount": 3 },
         { "item_id": "core_wood_001", "amount": 2 }
@@ -151,6 +168,7 @@
       "id": "core_artillery_018",
       "name": "Artillery Production",
       "categories": ["military", "heavy_industry"],
+      "laborCost": 15,
       "inputs": [
         { "item_id": "core_steel_023", "amount": 15 },
         { "item_id": "core_gunpowder_026", "amount": 5 }
@@ -161,6 +179,7 @@
       "id": "core_ammunition_019",
       "name": "Ammunition Production",
       "categories": ["military", "manufacturing"],
+      "laborCost": 3,
       "inputs": [
         { "item_id": "core_gunpowder_026", "amount": 2 },
         { "item_id": "core_iron_ore_014", "amount": 2 }
@@ -171,6 +190,7 @@
       "id": "core_ship_hull_020",
       "name": "Ship Hull Construction",
       "categories": ["heavy_industry", "transport"],
+      "laborCost": 20,
       "inputs": [
         { "item_id": "core_lumber_020", "amount": 50 },
         { "item_id": "core_cloth_024", "amount": 20 },
@@ -182,6 +202,7 @@
       "id": "core_machinery_021",
       "name": "Machinery Assembly",
       "categories": ["heavy_industry", "industrial"],
+      "laborCost": 10,
       "inputs": [
         { "item_id": "core_steel_023", "amount": 10 },
         { "item_id": "core_tools_031", "amount": 5 }
@@ -192,6 +213,7 @@
       "id": "core_basic_agriculture_022",
       "name": "Basic Agriculture",
       "categories": ["agriculture"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [
         { "item_id": "core_grain_005", "amount": 20 },
@@ -204,6 +226,7 @@
       "id": "core_basic_consumption_023",
       "name": "Basic Needs",
       "categories": ["consumption"],
+      "laborCost": 0.5,
       "inputs": [{ "item_id": "core_grain_005", "amount": 1 }],
       "outputs": [
         { "item_id": "core_happiness_043", "amount": 5 },
@@ -214,6 +237,7 @@
       "id": "core_wood_extraction_024",
       "name": "Wood Logging",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_wood_001", "amount": 10 }]
     },
@@ -221,6 +245,7 @@
       "id": "core_stone_extraction_025",
       "name": "Stone Quarrying",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_stone_002", "amount": 8 }]
     },
@@ -228,6 +253,7 @@
       "id": "core_clay_extraction_026",
       "name": "Clay Digging",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_clay_003", "amount": 10 }]
     },
@@ -235,6 +261,7 @@
       "id": "core_sand_extraction_027",
       "name": "Sand Gathering",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_sand_004", "amount": 10 }]
     },
@@ -242,6 +269,7 @@
       "id": "core_coal_mining_028",
       "name": "Coal Mining",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_coal_015", "amount": 5 }]
     },
@@ -249,6 +277,7 @@
       "id": "core_iron_mining_029",
       "name": "Iron Mining",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_iron_ore_014", "amount": 4 }]
     },
@@ -256,6 +285,7 @@
       "id": "core_sulphur_mining_030",
       "name": "Sulphur Mining",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_sulphur_018", "amount": 4 }]
     },
@@ -263,6 +293,7 @@
       "id": "core_saltpeter_mining_031",
       "name": "Saltpeter Mining",
       "categories": ["extraction"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [{ "item_id": "core_saltpeter_019", "amount": 4 }]
     },
@@ -270,6 +301,7 @@
       "id": "core_population_demand_024",
       "name": "Population Demand",
       "categories": ["consumption"],
+      "laborCost": 1,
       "inputs": [
         { "item_id": "core_tools_031", "amount": 0.1 },
         { "item_id": "core_clothes_028", "amount": 0.2 },
@@ -290,6 +322,7 @@
       "id": "core_telefon_uretimi_024",
       "name": "Telefon uretimi",
       "categories": ["industrial"],
+      "laborCost": 5,
       "inputs": [
         { "item_id": "core_iron_ore_014", "amount": 5 },
         { "item_id": "core_glass_022", "amount": 10 },
@@ -301,6 +334,7 @@
       "id": "core_subsistence_handicrafts_032",
       "name": "Subsistence Handicrafts",
       "categories": ["subsistence"],
+      "laborCost": 1,
       "inputs": [{ "item_id": "core_none_000", "amount": 0 }],
       "outputs": [
         { "item_id": "core_tools_031", "amount": 0.05 },

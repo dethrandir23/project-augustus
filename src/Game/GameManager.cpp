@@ -161,8 +161,11 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
 
         if (!wallet || !storage || !consumption || !marketMember || !demo) continue;
 
+        // Nüfusa göre işgücü bütçesi
+        double laborBudget = static_cast<double>(demo->population) * GameConstants::LABOR_POINTS_PER_POP;
+
         // 0. YEREL ÜRETİM (Örn: tarım, kumaş vb.)
-        EconomyUtils::executeProduction(*entity, "LocalProduction", "Storage");
+        EconomyUtils::executeProduction(*entity, "LocalProduction", "Storage", laborBudget);
 
         // 1. OTOMATİK TEDARİK (Pazara Alış Emri Gir)
         // auto missing = EconomyUtils::getMissingItems(consumption->templateId, storage->GetInternalInventory());
@@ -183,7 +186,7 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
         // NO MORE REQUIRED AFTER AI COMPONENT.
 
         // 2. TÜKETİM VE MUTLULUK
-        EconomyUtils::executeProduction(*entity, "consumption", "Storage");
+        EconomyUtils::executeProduction(*entity, "consumption", "Storage", laborBudget);
 
         float currentHappinessItems = storage->GetInternalInventory().getAmount("core_happiness_043");
             float requiredHappiness = demo->population * GameConstants::HAPPINESS_REQUIRED_RATIO;

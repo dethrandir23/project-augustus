@@ -211,11 +211,10 @@ bool Gamestate::loadScenario(const std::string& scenarioId) {
             }
 
             if (!compDef.profile.empty()) {
-                auto* aiComp = newComp->GetComponent<AIControllerComponent>("AIControllerComponent");
-                if (aiComp && aiComp->hasBrain()) {
-                    auto* brain = dynamic_cast<CompanyBrain*>(aiComp->getBrain());
-                    if (brain) brain->loadProfile(compDef.profile);
-                }
+                auto* aiComp = new AIControllerComponent(std::make_unique<CompanyBrain>());
+                newComp->AddComponent(aiComp, "AIControllerComponent");
+                auto* brain = dynamic_cast<CompanyBrain*>(aiComp->getBrain());
+                if (brain) brain->loadProfile(compDef.profile);
             }
 
             addEntity(newComp);

@@ -1,6 +1,9 @@
 #include "Analytics/EconomyStats.h"
 #include "Api/EngineController.h"
+#include "Core/Components/InventoryComponent.h"
 #include "DevTools/Console.h"
+#include "Economy/Components/AssetOwnerComponent.h"
+#include "Economy/Components/WalletComponent.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -57,30 +60,29 @@ static void captureSnapshot(json& history, int tick) {
     snap["tick"] = tick;
 
     try {
-        auto state = json::parse(augustus_engine::EngineController::instance().getSerializedState());
-        auto player = json::parse(augustus_engine::EngineController::instance().getPlayerState());
+        auto& gs = augustus_engine::EngineController::instance().getGamestate();
+        snap["turn"] = gs.getCurrentTurn();
+        snap["entities"] = gs.getEntities().size();
 
-        snap["turn"] = state.value("turn", 0);
-        snap["entities"] = state["entities"].size();
+        Entity* player = gs.getPlayerCompany();
+        if (player) {
+            auto* wallet = player->GetComponent<WalletComponent>("WalletComponent");
+            snap["balance"] = wallet ? wallet->balance : 0.0;
+            snap["debt"] = wallet ? wallet->debt : 0.0;
 
-        const auto& components = player.value("components", json::object());
-        const auto& walletComp = components.value("WalletComponent", json::object());
-        snap["balance"] = walletComp.value("balance", 0.0);
-        snap["debt"] = walletComp.value("debt", 0.0);
-
-        const auto& assetsComp = components.value("AssetOwnerComponent", json::object());
-        const auto& ownedAssets = assetsComp.value("ownedAssets", json::array());
-        int ownedFactories = 0;
-        for (const auto& a : ownedAssets) {
-            if (a.is_string()) ownedFactories++;
+            auto* assets = player->GetComponent<AssetOwnerComponent>("AssetOwnerComponent");
+            snap["factories_owned"] = assets ? static_cast<int>(assets->ownedAssets.size()) : 0;
+        } else {
+            snap["balance"] = 0.0;
+            snap["debt"] = 0.0;
+            snap["factories_owned"] = 0;
         }
-        snap["factories_owned"] = ownedFactories;
 
-        int aiFactories = 0;
-        for (const auto& e : state["entities"]) {
-            if (e.value("type", "") == "factory") aiFactories++;
+        int totalFactories = 0;
+        for (const auto& [id, entity] : gs.getEntities()) {
+            if (entity->GetType() == "factory") totalFactories++;
         }
-        snap["factories_total"] = aiFactories;
+        snap["factories_total"] = totalFactories;
 
         history.push_back(snap);
 
@@ -179,6 +181,7 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
     // Phase 5: Game Loop
     std::cout << "[Phase 5] Running " << totalTicks << " ticks..." << std::endl;
     t1 = std::chrono::high_resolution_clock::now();
+    auto lastProfile = t1;
     int okTicks = 0, failTicks = 0;
     for (int tick = 1; tick <= totalTicks; tick++) {
         try {
@@ -188,6 +191,12 @@ int runHeadless(int totalTicks, int numAICompanies, const std::string& dataRoot)
         } catch (const std::exception& e) {
             Console::log("Tick " + std::to_string(tick) + " error: " + e.what(), LogType::ERROR);
             failTicks++;
+        }
+        if (tick % 25 == 0) {
+            auto now = std::chrono::high_resolution_clock::now();
+            double elapsed = std::chrono::duration<double, std::milli>(now - lastProfile).count();
+            std::cout << "  [Profile " << tick << "] " << elapsed / 25.0 << " ms/tick" << std::endl;
+            lastProfile = now;
         }
     }
     t2 = std::chrono::high_resolution_clock::now();

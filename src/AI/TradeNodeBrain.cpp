@@ -8,11 +8,13 @@
 #include "Economy/Orderbook.h"
 #include "Game/Gamestate.h"
 #include "Game/InputHandler.h"
+#include "Registry/ItemManager.h"
 #include "Registry/PipelineManager.h"
 #include "World/Components/DemographicsComponent.h"
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
 #include "World/Systems/MarketSystem.h"
+#include <unordered_map>
 
 TradeNodeBrain::TradeNodeBrain()
     : rng(seed) {}
@@ -50,6 +52,16 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
     auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
     if (!marketComp) return;
 
+    // Tek geçişte bu node'un tüm açık sell orderlarını topla
+    std::unordered_map<std::string, float> alreadyListed;
+    for (auto& [itemId, book] : marketComp->books) {
+        for (const auto& o : book.sellOrders) {
+            if (o.ownerId == node.GetId()) {
+                alreadyListed[itemId] += o.remaining();
+            }
+        }
+    }
+
     for (const auto& pipeId : prod->activePipelineIds) {
         if (!PipelineManager::pipelines.count(pipeId)) continue;
         const auto& pipe = PipelineManager::pipelines.at(pipeId);
@@ -57,27 +69,22 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
             float inStorage = storage->GetInternalInventory().getAmount(output.id);
             float toSell    = inStorage * sellRatio;
             if (toSell < GameConstants::MIN_SELL_UNIT) continue;
-            double price = marketComp->getPrice(output.id);
-            if (price <= 0.0) price = 1.0;
 
-            // Önce bu item için eski satış emirlerini temizle (güncel fiyattan)
-            OrderBook* book = marketComp->getBook(output.id);
-            if (book) {
-                for (auto it = book->sellOrders.begin(); it != book->sellOrders.end(); ) {
-                    if (it->ownerId == node.GetId()) {
-                        storage->Add(it->itemId, it->remaining());
-                        it = book->sellOrders.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
+            float newSell = toSell - alreadyListed[output.id];
+            if (newSell < GameConstants::MIN_SELL_UNIT) continue;
+
+            double price = marketComp->getPrice(output.id);
+            if (price <= 0.0) {
+                price = ItemManager::items.count(output.id)
+                    ? static_cast<double>(ItemManager::items.at(output.id).base_price)
+                    : GameConstants::FALLBACK_PRICE;
             }
 
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_SELL_ITEM", {
                     {"marketId", uuids::to_string(localMarketId)},
                     {"itemId",   output.id},
-                    {"amount",   toSell},
+                    {"amount",   newSell},
                     {"price",    price}
                 }, node));
         }
@@ -97,6 +104,9 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
     double budget     = wallet->balance * budgetRatio;
     if (budget < GameConstants::MIN_BUDGET) return;
 
+    // Kendi satış emirlerini atla (self-trade cancellation'ı önle)
+    uuids::uuid selfId = node.GetId();
+
     for (const auto& pipeId : cons->activePipelineIds) {
         if (!PipelineManager::pipelines.count(pipeId)) continue;
         const auto& pipe = PipelineManager::pipelines.at(pipeId);
@@ -112,8 +122,8 @@ void TradeNodeBrain::buyConsumptionNeeds(Entity& node, Gamestate& gamestate) {
             needed -= alreadyOrdered;
             if (needed <= 0.0f) continue;
 
-            // En iyi marketi bul (vergi dahil efektif fiyat)
-            auto best = MarketSystem::findBestBuyMarket(gamestate, input.id, localMarketId);
+            // En iyi marketi bul (vergi dahil efektif fiyat, kendi satışlarımızı atla)
+            auto best = MarketSystem::findBestBuyMarket(gamestate, input.id, localMarketId, selfId);
             if (best.marketId.is_nil()) continue; // hiç arz yok
 
             float affordable = static_cast<float>(budget / best.effectivePrice);

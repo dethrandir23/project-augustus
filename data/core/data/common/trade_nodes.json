@@ -2,6 +2,19 @@
     "registry_type": "TRADENODE_DEFINITIONS",
     "entries": [
         {
+            "id": "core_metropolis_001",
+            "name_pool": "core_metropolis_names",
+            "initial_population": { "min": 50000, "max": 200000 },
+            "initial_capital": 500000,
+            "starting_inventory": {
+                "core_grain_005": 2000,
+                "core_wood_001": 1000,
+                "core_stone_002": 500
+            },
+            "local_pipelines": ["core_basic_agriculture_022", "core_lumber_001", "core_brick_002", "core_paper_007", "core_subsistence_handicrafts_032"],
+            "consumption_profile": ["core_basic_consumption_023", "core_population_demand_024"]
+        },
+        {
             "id": "core_village",
             "name_pool": "core_village_names",
             "initial_population": { "min": 500, "max": 1200 },

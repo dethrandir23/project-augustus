@@ -24,6 +24,8 @@ namespace EconomyEvaluator {
         float expectedCost = 0.0f;
         float expectedRevenue = 0.0f;
         float demandMultiplier = 1.0f;
+        float supplyMultiplier = 1.0f;
+        bool hasUnsuppliedInput = false;
 
         auto getAveragePrice = [&gamestate](const std::string& itemId) -> float {
             float total = 0.0f;
@@ -50,6 +52,15 @@ namespace EconomyEvaluator {
                     if (in.id == "core_none_000") continue;
                     float price = getAveragePrice(in.id);
                     expectedCost += price * in.quantity;
+
+                    // Tedarik zinciri kontrolü: girdi için satış emri yoksa
+                    // fabrika çalışamaz. Bootstrap için basit fabrikalar öncelikli.
+                    float sellVol = MarketSystem::getTotalSellVolume(gamestate, in.id);
+                    if (sellVol > 0.0f) {
+                        supplyMultiplier += std::min(sellVol * GameConstants::DEMAND_BONUS_SCALE, GameConstants::DEMAND_BONUS_CAP);
+                    } else {
+                        hasUnsuppliedInput = true;
+                    }
                 }
 
                 for (const auto& out : pipe.outputs) {
@@ -64,9 +75,15 @@ namespace EconomyEvaluator {
             }
         }
 
-        float netProfit = expectedRevenue * demandMultiplier - expectedCost;
+        float netProfit = expectedRevenue * demandMultiplier - expectedCost / std::max(0.1f, supplyMultiplier);
         if (netProfit <= 0.0f) return netProfit;
         float score = (netProfit / static_cast<float>(fData.buildCost)) * GameConstants::ROI_SCALE;
+
+        // Tedarik zinciri kurulmamış girdileri olan fabrikaları cezalandır
+        // Bu sayede ekonomi doğal sırayla büyür: extraction → processing → advanced
+        if (hasUnsuppliedInput) {
+            score = std::min(score, 1.5f);
+        }
 
         // Category preference multiplier
         if (categoryPrefs) {

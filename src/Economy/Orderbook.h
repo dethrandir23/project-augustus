@@ -2,17 +2,31 @@
 #include "Core/Types.h"
 #include <algorithm>
 #include <functional>
+#include <set>
 #include <vector>
+
+struct BuyOrderCompare {
+    bool operator()(const MarketOrder& a, const MarketOrder& b) const {
+        if (std::abs(a.price - b.price) > 0.0001)
+            return a.price > b.price;
+        return a.timestamp < b.timestamp;
+    }
+};
+
+struct SellOrderCompare {
+    bool operator()(const MarketOrder& a, const MarketOrder& b) const {
+        if (std::abs(a.price - b.price) > 0.0001)
+            return a.price < b.price;
+        return a.timestamp < b.timestamp;
+    }
+};
 
 class OrderBook {
 public:
   std::string itemId;
 
-  // Sorted: buyOrders highest price first, then earliest timestamp first
-  // sellOrders lowest price first, then earliest timestamp first
-  // Sorted order is maintained via binary-search insertion (O(n) per insert)
-  std::vector<MarketOrder> buyOrders;
-  std::vector<MarketOrder> sellOrders;
+  std::multiset<MarketOrder, BuyOrderCompare> buyOrders;
+  std::multiset<MarketOrder, SellOrderCompare> sellOrders;
 
   double lastTradedPrice = 0.0;
 
@@ -24,33 +38,23 @@ public:
 
   void addOrder(MarketOrder order) {
     if (order.type == OrderType::BUY) {
-      auto it = std::lower_bound(buyOrders.begin(), buyOrders.end(), order,
-        [](const MarketOrder& a, const MarketOrder& b) {
-          if (std::abs(a.price - b.price) > 0.0001)
-            return a.price > b.price;
-          return a.timestamp < b.timestamp;
-        });
-      buyOrders.insert(it, order);
+      buyOrders.insert(std::move(order));
     } else {
-      auto it = std::lower_bound(sellOrders.begin(), sellOrders.end(), order,
-        [](const MarketOrder& a, const MarketOrder& b) {
-          if (std::abs(a.price - b.price) > 0.0001)
-            return a.price < b.price;
-          return a.timestamp < b.timestamp;
-        });
-      sellOrders.insert(it, order);
+      sellOrders.insert(std::move(order));
     }
     matchOrders();
   }
 
   void matchOrders() {
     while (!buyOrders.empty() && !sellOrders.empty()) {
-      MarketOrder& bestBuy = buyOrders.front();
-      MarketOrder& bestSell = sellOrders.front();
+      auto bestBuyIt = buyOrders.begin();
+      auto bestSellIt = sellOrders.begin();
+      const MarketOrder& bestBuy = *bestBuyIt;
+      const MarketOrder& bestSell = *bestSellIt;
 
       if (bestBuy.ownerId == bestSell.ownerId) {
-        buyOrders.erase(buyOrders.begin());
-        sellOrders.erase(sellOrders.begin());
+        buyOrders.erase(bestBuyIt);
+        sellOrders.erase(bestSellIt);
         continue;
       }
 
@@ -69,14 +73,20 @@ public:
                   quantity, totalRefund);
         }
 
-        bestBuy.filledQuantity += quantity;
-        bestSell.filledQuantity += quantity;
+        MarketOrder buyCopy = bestBuy;
+        MarketOrder sellCopy = bestSell;
+        buyOrders.erase(bestBuyIt);
+        sellOrders.erase(bestSellIt);
+
+        buyCopy.filledQuantity += quantity;
+        sellCopy.filledQuantity += quantity;
+
         lastTradedPrice = executionPrice;
 
-        if (bestBuy.isComplete())
-          buyOrders.erase(buyOrders.begin());
-        if (bestSell.isComplete())
-          sellOrders.erase(sellOrders.begin());
+        if (!buyCopy.isComplete())
+          buyOrders.insert(std::move(buyCopy));
+        if (!sellCopy.isComplete())
+          sellOrders.insert(std::move(sellCopy));
       } else {
         break;
       }
@@ -84,14 +94,13 @@ public:
   }
 
   double getBestBid() const {
-    return buyOrders.empty() ? 0.0 : buyOrders.front().price;
+    return buyOrders.empty() ? 0.0 : buyOrders.begin()->price;
   }
 
   double getBestAsk() const {
-    return sellOrders.empty() ? 0.0 : sellOrders.front().price;
+    return sellOrders.empty() ? 0.0 : sellOrders.begin()->price;
   }
 
-  // Emir iptal: orderId'ye göre bul, vektörden sil, iade edilecek order'ı döndür
   bool cancelOrder(const uuids::uuid& orderId, MarketOrder& outRemoved) {
     for (auto it = buyOrders.begin(); it != buyOrders.end(); ++it) {
       if (it->id == orderId) {

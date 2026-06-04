@@ -38,7 +38,7 @@ inline constexpr float FIRST_FACTORY_BONUS = 1.0f;
 
 // === GameManager ===
 inline constexpr size_t WORKERS_PER_TICK = 100;
-inline constexpr float POP_GROWTH_COEFF = 0.1f;
+inline constexpr float POP_GROWTH_COEFF = 0.0001f;
 inline constexpr float RECRUITABLE_POP_RATIO = 0.4f;
 inline constexpr float HAPPINESS_REQUIRED_RATIO = 0.01f;
 inline constexpr float GLOBAL_PRODUCTION_MODIFIER = 1.0f;
@@ -46,6 +46,8 @@ inline constexpr float GLOBAL_PRODUCTION_MODIFIER = 1.0f;
 // === EconomyUtils ===
 inline constexpr float INPUT_BUFFER_MULTIPLIER = 5.0f;
 inline constexpr float MIN_WORKER_EFFICIENCY = 0.001f;
+inline constexpr double LABOR_POINTS_PER_WORKER = 10.0;
+inline constexpr double LABOR_POINTS_PER_POP = 0.3;
 
 // === MarketSystem ===
 inline constexpr double REFUND_EPSILON = 0.0001;

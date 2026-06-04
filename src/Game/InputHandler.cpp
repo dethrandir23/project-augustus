@@ -396,30 +396,31 @@ void InputHandler::init() {
 
     // Orderbook'tan emri bul ve sil
     OrderBook *book = mc->getBook(itemId);
-    auto &orders =
-        (type == OrderType::BUY) ? book->buyOrders : book->sellOrders;
-    auto it =
-        std::find_if(orders.begin(), orders.end(), [&](const MarketOrder &o) {
-          return o.ownerId == ownerId && std::abs(o.price - price) < 0.001;
+    bool erased = false;
+    auto findAndErase = [&](auto& orders) {
+        auto it = std::find_if(orders.begin(), orders.end(), [&](const MarketOrder &o) {
+            return o.ownerId == ownerId && std::abs(o.price - price) < 0.001;
         });
-    if (it == orders.end())
-      return false;
+        if (it == orders.end()) return;
+        float rem = it->remaining();
+        orders.erase(it);
+        erased = true;
 
-    float remaining = it->remaining();
-
-    // Escrow iadesi
+        // Escrow iadesi
+        if (type == OrderType::BUY) {
+            auto *w = owner->GetComponent<WalletComponent>("WalletComponent");
+            if (w) w->balance += price * rem;
+        } else {
+            auto *inv = owner->GetComponent<InventoryComponent>("MainStorage");
+            if (inv) inv->Add(itemId, rem);
+        }
+    };
     if (type == OrderType::BUY) {
-      auto *w = owner->GetComponent<WalletComponent>("WalletComponent");
-      if (w)
-        w->balance += price * remaining;
+        findAndErase(book->buyOrders);
     } else {
-      auto *inv = owner->GetComponent<InventoryComponent>("MainStorage");
-      if (inv)
-        inv->Add(itemId, remaining);
+        findAndErase(book->sellOrders);
     }
-
-    orders.erase(it);
-    return true;
+    return erased;
   });
 
   registerAction("HANDLE_EVENT", [](Gamestate& gs, const nlohmann::json& payload) {

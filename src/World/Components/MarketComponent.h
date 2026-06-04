@@ -38,6 +38,8 @@ public:
             double buyVolume = 0, sellVolume = 0;
             for (const auto& o : book.buyOrders) buyVolume += o.remaining();
             for (const auto& o : book.sellOrders) sellVolume += o.remaining();
+            std::vector<MarketOrder> buyVec(book.buyOrders.begin(), book.buyOrders.end());
+            std::vector<MarketOrder> sellVec(book.sellOrders.begin(), book.sellOrders.end());
             j_books[itemId] = {
                 {"itemId", book.itemId},
                 {"lastTradedPrice", book.lastTradedPrice},
@@ -45,8 +47,8 @@ public:
                 {"bestAsk", book.getBestAsk()},
                 {"buyVolume", buyVolume},
                 {"sellVolume", sellVolume},
-                {"buyOrders", book.buyOrders},
-                {"sellOrders", book.sellOrders}
+                {"buyOrders", buyVec},
+                {"sellOrders", sellVec}
             };
         }
         return {
@@ -70,10 +72,16 @@ public:
                 auto& book = books[it.key()];
                 book.itemId = it.value().value("itemId", it.key());
                 book.lastTradedPrice = it.value().value("lastTradedPrice", 0.0);
-                if (it.value().contains("buyOrders"))
-                    book.buyOrders = it.value()["buyOrders"].get<std::vector<MarketOrder>>();
-                if (it.value().contains("sellOrders"))
-                    book.sellOrders = it.value()["sellOrders"].get<std::vector<MarketOrder>>();
+                if (it.value().contains("buyOrders")) {
+                    auto vec = it.value()["buyOrders"].get<std::vector<MarketOrder>>();
+                    book.buyOrders.clear();
+                    for (auto& o : vec) book.buyOrders.insert(std::move(o));
+                }
+                if (it.value().contains("sellOrders")) {
+                    auto vec = it.value()["sellOrders"].get<std::vector<MarketOrder>>();
+                    book.sellOrders.clear();
+                    for (auto& o : vec) book.sellOrders.insert(std::move(o));
+                }
             }
         }
     }

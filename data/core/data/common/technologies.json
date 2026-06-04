@@ -1,39 +1,65 @@
 {
-    "registry_type": "TECHNOLOGY_DEFINITIONS",
-    "entries": [
+  "registry_type": "TECHNOLOGY_DEFINITIONS",
+  "entries": [
+    {
+      "id": "core_basic_agriculture_001",
+      "name": "Basic Agriculture",
+      "categories": [
+        "production"
+      ],
+      "tier": 1,
+      "research_points": 1000,
+      "unlocked_at_start": true,
+      "requires": [],
+      "unlocks": [
+        "can_do_agriculture"
+      ],
+      "effects": [
         {
-            "id": "core_basic_agriculture_001",
-            "name": "Basic Agriculture",
-            "categories": ["production"],
-            "tier": 1,
-            "research_points": 1000,
-            "unlocked_at_start": true,
-            "requires": [],
-            "unlocks": ["can_do_agriculture"],
-            "effects": [
-                {
-                    "type": "category_efficiency",
-                    "category": "agriculture",
-                    "value": 0.10
-                }
-            ]
-        },
-        {
-            "id": "core_advanced_agriculture_002",
-            "name": "Advanced Agriculture",
-            "categories": ["production"],
-            "tier": 2,
-            "research_points": 3000,
-            "unlocked_at_start": false,
-            "requires": ["core_basic_agriculture_001"],
-            "unlocks": ["can_do_agriculture", "mechanical_agriculture"],
-            "effects": [
-                {
-                    "type": "category_efficiency",
-                    "category": "agriculture",
-                    "value": 0.4
-                }
-            ]
+          "type": "category_efficiency",
+          "category": "agriculture",
+          "value": 0.1
         }
-    ]
+      ]
+    },
+    {
+      "id": "core_advanced_agriculture_002",
+      "name": "Advanced Agriculture",
+      "categories": [
+        "production"
+      ],
+      "tier": 2,
+      "research_points": 3000,
+      "unlocked_at_start": false,
+      "requires": [
+        "core_basic_agriculture_001"
+      ],
+      "unlocks": [
+        "can_do_agriculture",
+        "mechanical_agriculture"
+      ],
+      "effects": [
+        {
+          "type": "category_efficiency",
+          "category": "agriculture",
+          "value": 0.4
+        }
+      ]
+    },
+    {
+      "id": "core_telefon_teknolojisi_003",
+      "name": "Telefon teknolojisi",
+      "categories": [
+        "research"
+      ],
+      "tier": 5,
+      "research_points": 10000,
+      "unlocked_at_start": false,
+      "requires": [],
+      "unlocks": [
+        "can_use_phones"
+      ],
+      "effects": []
+    }
+  ]
 }

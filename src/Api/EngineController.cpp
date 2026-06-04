@@ -152,8 +152,6 @@ void EngineController::setPlayer(const std::string &name,
 
 void EngineController::step() {
     GameManager::tick(gamestate);
-    nlohmann::json payload = serializeGamestate(gamestate);
-    pushToCallbacks("tick_complete", payload);
 }
 
 void EngineController::stepN(size_t n) {

@@ -15,6 +15,7 @@
 #include "Registry/CompanyProfileManager.h"
 #include "Game/InputHandler.h"
 #include "Registry/FactoryManager.h"
+#include "Registry/ItemManager.h"
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
 #include "World/Systems/MarketSystem.h"
@@ -122,8 +123,8 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
             float stillNeeded = req.quantity - inStorage;
             if (stillNeeded <= 0.0f) continue;
 
-            // Cross-market: en iyi fiyatı bul
-            auto best = MarketSystem::findBestBuyMarket(gamestate, req.id, noMarket);
+            // Cross-market: en iyi fiyatı bul (kendi satışlarımızı atla)
+            auto best = MarketSystem::findBestBuyMarket(gamestate, req.id, noMarket, company.GetId());
             if (best.marketId.is_nil()) continue; // hiç arz yok
 
             double cost = best.effectivePrice * stillNeeded;
@@ -176,6 +177,7 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
     auto* wallet  = company.GetComponent<WalletComponent>("WalletComponent");
     if (!storage || !assets || !wallet) return;
 
+    // En iyi marketi seç
     uuids::uuid marketId;
     double bestPrice = -1.0;
     for (auto* entity : gamestate.getEntitiesByType("market")) {
@@ -195,25 +197,22 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
     }
     if (marketId.is_nil()) return;
 
-    // Önce bu şirketin marketteki eski satış emirlerini temizle
     Entity* targetMarket = gamestate.getEntity(marketId);
-    if (targetMarket) {
-        auto* mc = targetMarket->GetComponent<MarketComponent>("MarketComponent");
-        if (mc) {
-            for (auto& [itemId, book] : mc->books) {
-                for (auto it = book.sellOrders.begin(); it != book.sellOrders.end(); ) {
-                    if (it->ownerId == company.GetId()) {
-                        storage->Add(it->itemId, it->remaining());
-                        it = book.sellOrders.erase(it);
-                    } else {
-                        ++it;
-                    }
-                }
+    if (!targetMarket) return;
+    auto* mc = targetMarket->GetComponent<MarketComponent>("MarketComponent");
+    if (!mc) return;
+
+    // Şirketin bu marketteki mevcut satış emirlerini topla (tek geçiş)
+    std::unordered_map<std::string, float> alreadyListed;
+    for (auto& [itemId, book] : mc->books) {
+        for (const auto& o : book.sellOrders) {
+            if (o.ownerId == company.GetId()) {
+                alreadyListed[itemId] += o.remaining();
             }
         }
     }
 
-    // Sahip olunan fabrikalarin inputlarini satma
+    // Sahip olunan fabrikaların inputlarını satma
     std::unordered_set<std::string> factoryInputs;
     for (const auto& fId : assets->ownedAssets) {
         Entity* factory = gamestate.getEntity(fId);
@@ -236,22 +235,28 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
     float noiseRoll = std::uniform_real_distribution<float>(0.0f, 1.0f)(rng);
     float noisyThreshold = sellThreshold * (1.0f + noiseLevel * (noiseRoll - 0.5f) * 2.0f);
 
+    uuids::uuid selfId = company.GetId();
     for (const auto& item : storage->GetAllItems()) {
         if (factoryInputs.count(item.id)) continue;
         float surplus = item.quantity - noisyThreshold;
         if (surplus <= 0.0f) continue;
 
-        auto* marketEntity = gamestate.getEntity(marketId);
-        if (!marketEntity) continue;
-        auto* mc = marketEntity->GetComponent<MarketComponent>("MarketComponent");
-        double price = mc ? mc->getPrice(item.id) : GameConstants::FALLBACK_PRICE;
-        if (price <= 0.0) price = GameConstants::FALLBACK_PRICE;
+        // Sadece delta kadar satışa koy (mevcut emirleri iptal etmeden)
+        float toSell = surplus - alreadyListed[item.id];
+        if (toSell < GameConstants::MIN_SELL_UNIT) continue;
+
+        double price = mc->getPrice(item.id);
+        if (price <= 0.0) {
+            price = ItemManager::items.count(item.id)
+                ? static_cast<double>(ItemManager::items.at(item.id).base_price)
+                : GameConstants::FALLBACK_PRICE;
+        }
 
         InputHandler::handleInput(gamestate,
             makeInput("MARKET_SELL_ITEM", {
                 {"marketId", uuids::to_string(marketId)},
                 {"itemId",   item.id},
-                {"amount",   surplus},
+                {"amount",   toSell},
                 {"price",    price}
             }, company));
     }

@@ -8,6 +8,7 @@ struct BestMarket {
     uuids::uuid marketId;
     double effectivePrice;
     double bestAsk;
+    uuids::uuid bestSellOwnerId;
 };
 
 class MarketSystem {
@@ -15,10 +16,13 @@ public:
     static void placeOrder(Gamestate& gamestate, uuids::uuid marketId, MarketOrder order, bool isSystemOrder = false);
 
     // Cross-market yardımcı: en iyi alış marketini bul (vergi dahil)
-    static BestMarket findBestBuyMarket(Gamestate& gamestate, const std::string& itemId, uuids::uuid localMarketId);
+    // excludeOwner: eğer verilmişse, bu sahibin satış emirlerini atla (self-trade önleme)
+    // Hiçbir satış emri bulunamazsa base_price ile geri döner (talep sinyali)
+    static BestMarket findBestBuyMarket(Gamestate& gamestate, const std::string& itemId, uuids::uuid localMarketId, uuids::uuid excludeOwner = uuids::uuid{});
 
     // Tüm marketlerdeki açık BUY emirlerini topla (bir owner için)
     static float getTotalBuyVolume(Gamestate& gamestate, const std::string& itemId);
+    static float getTotalSellVolume(Gamestate& gamestate, const std::string& itemId);
     static float getBuyOrderForOwner(Gamestate& gamestate, uuids::uuid ownerId, const std::string& itemId);
 
     // Bir entity'nin tüm marketlerdeki açık emirlerini getir

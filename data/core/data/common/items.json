@@ -15,7 +15,9 @@
       "type": "physical",
       "description": "desc_core_wood_001",
       "base_price": 10,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_stone_002",
@@ -23,7 +25,9 @@
       "type": "physical",
       "description": "desc_core_stone_002",
       "base_price": 8,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_clay_003",
@@ -31,7 +35,9 @@
       "type": "physical",
       "description": "desc_core_clay_003",
       "base_price": 6,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_sand_004",
@@ -39,7 +45,9 @@
       "type": "physical",
       "description": "desc_core_sand_004",
       "base_price": 5,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_grain_005",
@@ -47,7 +55,10 @@
       "type": "physical",
       "description": "desc_core_grain_005",
       "base_price": 12,
-      "categories": ["agriculture", "raw"]
+      "categories": [
+        "agriculture",
+        "raw"
+      ]
     },
     {
       "id": "core_meat_006",
@@ -55,7 +66,10 @@
       "type": "physical",
       "description": "desc_core_meat_006",
       "base_price": 18,
-      "categories": ["agriculture", "consumer"]
+      "categories": [
+        "agriculture",
+        "consumer"
+      ]
     },
     {
       "id": "core_fish_007",
@@ -63,7 +77,10 @@
       "type": "physical",
       "description": "desc_core_fish_007",
       "base_price": 16,
-      "categories": ["agriculture", "consumer"]
+      "categories": [
+        "agriculture",
+        "consumer"
+      ]
     },
     {
       "id": "core_fruit_008",
@@ -71,7 +88,10 @@
       "type": "physical",
       "description": "desc_core_fruit_008",
       "base_price": 14,
-      "categories": ["agriculture", "consumer"]
+      "categories": [
+        "agriculture",
+        "consumer"
+      ]
     },
     {
       "id": "core_wool_009",
@@ -79,7 +99,10 @@
       "type": "physical",
       "description": "desc_core_wool_009",
       "base_price": 15,
-      "categories": ["raw", "agriculture"]
+      "categories": [
+        "raw",
+        "agriculture"
+      ]
     },
     {
       "id": "core_cotton_010",
@@ -87,7 +110,10 @@
       "type": "physical",
       "description": "desc_core_cotton_010",
       "base_price": 14,
-      "categories": ["raw", "agriculture"]
+      "categories": [
+        "raw",
+        "agriculture"
+      ]
     },
     {
       "id": "core_silk_011",
@@ -95,7 +121,10 @@
       "type": "physical",
       "description": "desc_core_silk_011",
       "base_price": 40,
-      "categories": ["raw", "luxury"]
+      "categories": [
+        "raw",
+        "luxury"
+      ]
     },
     {
       "id": "core_dye_012",
@@ -103,7 +132,9 @@
       "type": "physical",
       "description": "desc_core_dye_012",
       "base_price": 20,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_hides_013",
@@ -111,7 +142,10 @@
       "type": "physical",
       "description": "desc_core_hides_013",
       "base_price": 22,
-      "categories": ["raw", "agriculture"]
+      "categories": [
+        "raw",
+        "agriculture"
+      ]
     },
     {
       "id": "core_iron_ore_014",
@@ -119,7 +153,9 @@
       "type": "physical",
       "description": "desc_core_iron_ore_014",
       "base_price": 20,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_coal_015",
@@ -127,7 +163,9 @@
       "type": "physical",
       "description": "desc_core_coal_015",
       "base_price": 18,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_copper_ore_016",
@@ -135,7 +173,9 @@
       "type": "physical",
       "description": "desc_core_copper_ore_016",
       "base_price": 22,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_gold_ore_017",
@@ -143,7 +183,10 @@
       "type": "physical",
       "description": "desc_core_gold_ore_017",
       "base_price": 80,
-      "categories": ["raw", "luxury"]
+      "categories": [
+        "raw",
+        "luxury"
+      ]
     },
     {
       "id": "core_sulphur_018",
@@ -151,7 +194,9 @@
       "type": "physical",
       "description": "desc_core_sulphur_018",
       "base_price": 25,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_saltpeter_019",
@@ -159,7 +204,9 @@
       "type": "physical",
       "description": "desc_core_saltpeter_019",
       "base_price": 28,
-      "categories": ["raw"]
+      "categories": [
+        "raw"
+      ]
     },
     {
       "id": "core_lumber_020",
@@ -167,7 +214,9 @@
       "type": "physical",
       "description": "desc_core_lumber_020",
       "base_price": 35,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_brick_021",
@@ -175,7 +224,9 @@
       "type": "physical",
       "description": "desc_core_brick_021",
       "base_price": 30,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_glass_022",
@@ -183,7 +234,9 @@
       "type": "physical",
       "description": "desc_core_glass_022",
       "base_price": 45,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_steel_023",
@@ -191,7 +244,9 @@
       "type": "physical",
       "description": "desc_core_steel_023",
       "base_price": 90,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_cloth_024",
@@ -199,7 +254,9 @@
       "type": "physical",
       "description": "desc_core_cloth_024",
       "base_price": 40,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_paper_025",
@@ -207,7 +264,9 @@
       "type": "physical",
       "description": "desc_core_paper_025",
       "base_price": 38,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_gunpowder_026",
@@ -215,7 +274,10 @@
       "type": "physical",
       "description": "desc_core_gunpowder_026",
       "base_price": 120,
-      "categories": ["military", "industrial"]
+      "categories": [
+        "military",
+        "industrial"
+      ]
     },
     {
       "id": "core_food_rations_027",
@@ -223,7 +285,10 @@
       "type": "physical",
       "description": "desc_core_food_rations_027",
       "base_price": 35,
-      "categories": ["consumer", "agriculture"]
+      "categories": [
+        "consumer",
+        "agriculture"
+      ]
     },
     {
       "id": "core_clothes_028",
@@ -231,7 +296,9 @@
       "type": "physical",
       "description": "desc_core_clothes_028",
       "base_price": 80,
-      "categories": ["consumer"]
+      "categories": [
+        "consumer"
+      ]
     },
     {
       "id": "core_furniture_029",
@@ -239,7 +306,9 @@
       "type": "physical",
       "description": "desc_core_furniture_029",
       "base_price": 110,
-      "categories": ["consumer"]
+      "categories": [
+        "consumer"
+      ]
     },
     {
       "id": "core_alcohol_030",
@@ -247,7 +316,9 @@
       "type": "physical",
       "description": "desc_core_alcohol_030",
       "base_price": 95,
-      "categories": ["consumer"]
+      "categories": [
+        "consumer"
+      ]
     },
     {
       "id": "core_tools_031",
@@ -255,7 +326,9 @@
       "type": "physical",
       "description": "desc_core_tools_031",
       "base_price": 150,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_fine_clothes_032",
@@ -263,7 +336,10 @@
       "type": "physical",
       "description": "desc_core_fine_clothes_032",
       "base_price": 400,
-      "categories": ["luxury", "consumer"]
+      "categories": [
+        "luxury",
+        "consumer"
+      ]
     },
     {
       "id": "core_jewelry_033",
@@ -271,7 +347,9 @@
       "type": "physical",
       "description": "desc_core_jewelry_033",
       "base_price": 600,
-      "categories": ["luxury"]
+      "categories": [
+        "luxury"
+      ]
     },
     {
       "id": "core_books_034",
@@ -279,7 +357,9 @@
       "type": "physical",
       "description": "desc_core_books_034",
       "base_price": 220,
-      "categories": ["consumer"]
+      "categories": [
+        "consumer"
+      ]
     },
     {
       "id": "core_simple_weapon_035",
@@ -287,7 +367,9 @@
       "type": "physical",
       "description": "desc_core_simple_weapon_035",
       "base_price": 180,
-      "categories": ["military"]
+      "categories": [
+        "military"
+      ]
     },
     {
       "id": "core_firearm_036",
@@ -295,7 +377,9 @@
       "type": "physical",
       "description": "desc_core_firearm_036",
       "base_price": 450,
-      "categories": ["military"]
+      "categories": [
+        "military"
+      ]
     },
     {
       "id": "core_ammunition_037",
@@ -303,7 +387,9 @@
       "type": "physical",
       "description": "desc_core_ammunition_037",
       "base_price": 140,
-      "categories": ["military"]
+      "categories": [
+        "military"
+      ]
     },
     {
       "id": "core_artillery_038",
@@ -311,7 +397,9 @@
       "type": "physical",
       "description": "desc_core_artillery_038",
       "base_price": 1200,
-      "categories": ["military"]
+      "categories": [
+        "military"
+      ]
     },
     {
       "id": "core_armor_039",
@@ -319,7 +407,9 @@
       "type": "physical",
       "description": "desc_core_armor_039",
       "base_price": 350,
-      "categories": ["military"]
+      "categories": [
+        "military"
+      ]
     },
     {
       "id": "core_wagon_040",
@@ -327,7 +417,10 @@
       "type": "physical",
       "description": "desc_core_wagon_040",
       "base_price": 500,
-      "categories": ["transport", "industrial"]
+      "categories": [
+        "transport",
+        "industrial"
+      ]
     },
     {
       "id": "core_ship_hull_041",
@@ -335,7 +428,10 @@
       "type": "physical",
       "description": "desc_core_ship_hull_041",
       "base_price": 900,
-      "categories": ["transport", "industrial"]
+      "categories": [
+        "transport",
+        "industrial"
+      ]
     },
     {
       "id": "core_machinery_042",
@@ -343,7 +439,9 @@
       "type": "physical",
       "description": "desc_core_machinery_042",
       "base_price": 1500,
-      "categories": ["industrial"]
+      "categories": [
+        "industrial"
+      ]
     },
     {
       "id": "core_happiness_043",
@@ -351,7 +449,9 @@
       "type": "abstract",
       "description": "desc_core_happiness_043",
       "base_price": 0,
-      "categories": ["social"]
+      "categories": [
+        "social"
+      ]
     },
     {
       "id": "core_public_order",
@@ -359,7 +459,19 @@
       "type": "abstract",
       "description": "desc_core_public_order",
       "base_price": 0,
-      "categories": ["social"]
+      "categories": [
+        "social"
+      ]
+    },
+    {
+      "id": "core_telefon_044",
+      "name": "telefon",
+      "type": "physical",
+      "description": "desc_core_telefon_044",
+      "base_price": 100,
+      "categories": [
+        "luxury"
+      ]
     }
   ]
 }

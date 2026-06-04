@@ -1,8 +1,10 @@
 // src/Systems/MarketSystem.cpp
 #include "MarketSystem.h"
 #include "Core/Components/InventoryComponent.h"
+#include "Core/GameConstants.h"
 #include "Economy/Components/WalletComponent.h"
 #include "Economy/Orderbook.h"
+#include "Registry/ItemManager.h"
 #include "World/Components/MarketComponent.h"
 #include "World/Components/MarketMemberComponent.h"
 #include <iostream>
@@ -26,15 +28,28 @@ TraderAccess getTrader(Gamestate &gamestate, const uuids::uuid &traderId) {
   return {inv, wallet};
 }
 
-BestMarket MarketSystem::findBestBuyMarket(Gamestate& gamestate, const std::string& itemId, uuids::uuid localMarketId) {
-    BestMarket result{uuids::uuid{}, 0.0, 0.0};
+BestMarket MarketSystem::findBestBuyMarket(Gamestate& gamestate, const std::string& itemId, uuids::uuid localMarketId, uuids::uuid excludeOwner) {
+    BestMarket result{uuids::uuid{}, 0.0, 0.0, uuids::uuid{}};
 
     for (auto* entity : gamestate.getEntitiesByType("market")) {
         auto* marketComp = entity->GetComponent<MarketComponent>("MarketComponent");
         if (!marketComp) continue;
 
         OrderBook* book = marketComp->getBook(itemId);
-        double bestAsk = book->getBestAsk();
+        if (book->sellOrders.empty()) continue;
+
+        // ExcludeOwner'a ait satış emirlerini atla
+        auto bestSellIt = book->sellOrders.begin();
+        while (bestSellIt != book->sellOrders.end()) {
+            if (!excludeOwner.is_nil() && bestSellIt->ownerId == excludeOwner) {
+                ++bestSellIt;
+            } else {
+                break;
+            }
+        }
+        if (bestSellIt == book->sellOrders.end()) continue;
+
+        double bestAsk = bestSellIt->price;
         if (bestAsk <= 0.0) continue;
 
         uuids::uuid mId = entity->GetId();
@@ -42,7 +57,26 @@ BestMarket MarketSystem::findBestBuyMarket(Gamestate& gamestate, const std::stri
         double effectivePrice = bestAsk * (1.0 + tariff);
 
         if (result.marketId.is_nil() || effectivePrice < result.effectivePrice) {
-            result = {mId, effectivePrice, bestAsk};
+            result = {mId, effectivePrice, bestAsk, bestSellIt->ownerId};
+        }
+    }
+
+    // Hiçbir markette uygun satış emri yok — base_price ile fallback yap
+    // Bu sayede alıcılar talep sinyali gönderebilir
+    if (result.marketId.is_nil()) {
+        double basePrice = GameConstants::FALLBACK_PRICE;
+        if (ItemManager::items.count(itemId)) {
+            basePrice = static_cast<double>(ItemManager::items.at(itemId).base_price);
+        }
+        uuids::uuid fallbackMarketId = localMarketId;
+        if (fallbackMarketId.is_nil()) {
+            for (auto* entity : gamestate.getEntitiesByType("market")) {
+                fallbackMarketId = entity->GetId();
+                break;
+            }
+        }
+        if (!fallbackMarketId.is_nil()) {
+            result = {fallbackMarketId, basePrice, basePrice, uuids::uuid{}};
         }
     }
 
@@ -56,6 +90,19 @@ float MarketSystem::getTotalBuyVolume(Gamestate& gamestate, const std::string& i
         if (!marketComp) continue;
         OrderBook* book = marketComp->getBook(itemId);
         for (const auto& order : book->buyOrders) {
+            total += order.remaining();
+        }
+    }
+    return total;
+}
+
+float MarketSystem::getTotalSellVolume(Gamestate& gamestate, const std::string& itemId) {
+    float total = 0.0f;
+    for (auto* entity : gamestate.getEntitiesByType("market")) {
+        auto* marketComp = entity->GetComponent<MarketComponent>("MarketComponent");
+        if (!marketComp) continue;
+        OrderBook* book = marketComp->getBook(itemId);
+        for (const auto& order : book->sellOrders) {
             total += order.remaining();
         }
     }
