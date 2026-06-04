@@ -1,3 +1,4 @@
+#include "Analytics/EconomyStats.h"
 #include "Api/EngineController.h"
 #include "World/Systems/MarketSystem.h"
 #include "AI/AIManager.h"
@@ -19,6 +20,7 @@
 #include "Registry/NameManager.h"
 #include "Registry/PerkManager.h"
 #include "Registry/PipelineManager.h"
+#include "Registry/CompanyProfileManager.h"
 #include "Registry/ScenarioManager.h"
 #include "Registry/TechnologyManager.h"
 #include "Registry/TradeNodeManager.h"
@@ -69,6 +71,10 @@ void EngineController::registerHandlers() {
     loader.RegisterHandler("TRADENODE_DEFINITIONS",
         [](const nlohmann::json &j, const std::string &src) {
             TradeNodeManager::load_from_json(j, src);
+        });
+    loader.RegisterHandler("COMPANY_PROFILES",
+        [](const nlohmann::json &j, const std::string &src) {
+            CompanyProfileManager::load_from_json(j, src);
         });
     loader.RegisterHandler("COMPANY_DEFINITIONS",
         [](const nlohmann::json &j, const std::string &src) {
@@ -266,6 +272,39 @@ std::string EngineController::getPendingEvents() {
     nlohmann::json j = nlohmann::json::array();
     for (const auto &ev : queue) j.push_back(ev.toJson());
     return j.dump();
+}
+
+std::string EngineController::getCompanyNetWorth(const std::string &companyId) {
+    auto opt = uuids::uuid::from_string(companyId);
+    if (!opt.has_value()) return "{}";
+    auto result = Analytics::calculateCompanyNetWorth(gamestate, opt.value());
+    return result.dump();
+}
+
+std::string EngineController::getMarketStats(const std::string &marketId) {
+    auto opt = uuids::uuid::from_string(marketId);
+    if (!opt.has_value()) return "{}";
+    auto result = Analytics::calculateMarketActivity(gamestate, opt.value());
+    return result.dump();
+}
+
+std::string EngineController::getNodeStats(const std::string &nodeId) {
+    auto opt = uuids::uuid::from_string(nodeId);
+    if (!opt.has_value()) return "{}";
+    auto result = Analytics::calculateTradeNodeStats(gamestate, opt.value());
+    return result.dump();
+}
+
+std::string EngineController::getFactoryStats(const std::string &factoryId) {
+    auto opt = uuids::uuid::from_string(factoryId);
+    if (!opt.has_value()) return "{}";
+    auto result = Analytics::calculateFactoryOutput(gamestate, opt.value());
+    return result.dump();
+}
+
+std::string EngineController::getEconomyReport() {
+    auto result = Analytics::calculateTotalEconomyStats(gamestate);
+    return result.dump();
 }
 
 std::vector<std::string> EngineController::readConsole() {

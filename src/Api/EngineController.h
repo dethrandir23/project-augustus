@@ -42,6 +42,13 @@ public:
     std::string getFactoryTemplates();
     std::string getPendingEvents();
 
+    // --- Analytics ---
+    std::string getCompanyNetWorth(const std::string &companyId);
+    std::string getMarketStats(const std::string &marketId);
+    std::string getNodeStats(const std::string &nodeId);
+    std::string getFactoryStats(const std::string &factoryId);
+    std::string getEconomyReport();
+
     // --- Console ---
     std::vector<std::string> readConsole();
     void logToConsole(const std::string &msg);

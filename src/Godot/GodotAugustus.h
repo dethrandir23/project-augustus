@@ -44,6 +44,13 @@ public:
     String get_factory_templates();
     String get_pending_events();
 
+    // Analytics
+    String get_company_net_worth(const String &company_id);
+    String get_market_stats(const String &market_id);
+    String get_node_stats(const String &node_id);
+    String get_factory_stats(const String &factory_id);
+    String get_economy_report();
+
     // Console
     PackedStringArray read_console();
     void log_to_console(const String &msg);

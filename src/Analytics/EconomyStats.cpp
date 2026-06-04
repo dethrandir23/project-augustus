@@ -179,6 +179,13 @@ nlohmann::json calculateMarketActivity(Gamestate& gs, const uuids::uuid& marketI
     result["totalVolume"] = buyVolume + sellVolume;
     result["walletBalance"] = wallet ? wallet->balance : 0.0;
 
+    if (marketComp) {
+        result["totalBuyOrdersPlaced"] = marketComp->totalBuyOrdersPlaced;
+        result["totalSellOrdersPlaced"] = marketComp->totalSellOrdersPlaced;
+        result["totalTradesExecuted"] = marketComp->totalTradesExecuted;
+        result["totalTradeVolume"] = marketComp->totalTradeVolume;
+    }
+
     return result;
 }
 
@@ -294,6 +301,23 @@ nlohmann::json calculateTotalEconomyStats(Gamestate& gs) {
     report["totalMarketWallet"] = totalMarketWallet;
     report["totalBuyOrders"] = totalBuyOrders;
     report["totalSellOrders"] = totalSellOrders;
+
+    // Cumulative trade stats across all markets
+    int cumulativeBuyPlaced = 0, cumulativeSellPlaced = 0, cumulativeTrades = 0;
+    double cumulativeVolume = 0.0;
+    for (auto* entity : gs.getEntitiesByType("market")) {
+        auto* mc = entity->GetComponent<MarketComponent>("MarketComponent");
+        if (mc) {
+            cumulativeBuyPlaced += mc->totalBuyOrdersPlaced;
+            cumulativeSellPlaced += mc->totalSellOrdersPlaced;
+            cumulativeTrades += mc->totalTradesExecuted;
+            cumulativeVolume += mc->totalTradeVolume;
+        }
+    }
+    report["cumulativeBuyOrdersPlaced"] = cumulativeBuyPlaced;
+    report["cumulativeSellOrdersPlaced"] = cumulativeSellPlaced;
+    report["cumulativeTradesExecuted"] = cumulativeTrades;
+    report["cumulativeTradeVolume"] = cumulativeVolume;
 
     // Trade Nodes
     nlohmann::json nodes = nlohmann::json::array();

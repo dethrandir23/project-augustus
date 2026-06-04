@@ -59,6 +59,11 @@ var _cb=null,_module={
     listSaves:async function(){var r=await window.api_listSaves();try{return typeof r==='string'?JSON.parse(r):r||[]}catch(e){}return[]},
     loadGameFiles:function(){return true},
     getFactoryTemplates:async function(){return _s(await window.api_getFactoryTemplates())},
+    getCompanyNetWorth:async function(id){return _s(await window.api_getCompanyNetWorth(String(id)))},
+    getMarketStats:async function(id){return _s(await window.api_getMarketStats(String(id)))},
+    getNodeStats:async function(id){return _s(await window.api_getNodeStats(String(id)))},
+    getFactoryStats:async function(id){return _s(await window.api_getFactoryStats(String(id)))},
+    getEconomyReport:async function(){return _s(await window.api_getEconomyReport())},
     startScenario:async function(id){return await window.api_startScenario(String(id))},
     setPlayer:async function(n,t,a){await window.api_setPlayer(String(n),String(t),!!a)},
     setJsCallback:function(cb){_cb=cb}
@@ -260,6 +265,39 @@ int main(int argc, char **argv) {
         auto saves = engine.listSaves();
         nlohmann::json j = saves;
         return j.dump();
+    });
+
+    w.bind("api_getCompanyNetWorth", [&engine](std::string req) -> std::string {
+        try {
+            auto args = nlohmann::json::parse(req);
+            std::string id = args[0].get<std::string>();
+            return engine.getCompanyNetWorth(id);
+        } catch (...) { return "{}"; }
+    });
+
+    w.bind("api_getEconomyReport", [&engine](std::string) -> std::string {
+        return engine.getEconomyReport();
+    });
+
+    w.bind("api_getMarketStats", [&engine](std::string req) -> std::string {
+        try {
+            auto args = nlohmann::json::parse(req);
+            return engine.getMarketStats(args[0].get<std::string>());
+        } catch (...) { return "{}"; }
+    });
+
+    w.bind("api_getNodeStats", [&engine](std::string req) -> std::string {
+        try {
+            auto args = nlohmann::json::parse(req);
+            return engine.getNodeStats(args[0].get<std::string>());
+        } catch (...) { return "{}"; }
+    });
+
+    w.bind("api_getFactoryStats", [&engine](std::string req) -> std::string {
+        try {
+            auto args = nlohmann::json::parse(req);
+            return engine.getFactoryStats(args[0].get<std::string>());
+        } catch (...) { return "{}"; }
     });
 
     std::string htmlContent = inlineFrontend("/home/efe/Documents/projects/project-augustus/src/frontend/dist");

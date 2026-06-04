@@ -29,6 +29,11 @@ void GodotAugustus::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_factory_status", "factory_id"), &GodotAugustus::get_factory_status);
     ClassDB::bind_method(D_METHOD("get_factory_templates"), &GodotAugustus::get_factory_templates);
     ClassDB::bind_method(D_METHOD("get_pending_events"), &GodotAugustus::get_pending_events);
+    ClassDB::bind_method(D_METHOD("get_company_net_worth", "company_id"), &GodotAugustus::get_company_net_worth);
+    ClassDB::bind_method(D_METHOD("get_market_stats", "market_id"), &GodotAugustus::get_market_stats);
+    ClassDB::bind_method(D_METHOD("get_node_stats", "node_id"), &GodotAugustus::get_node_stats);
+    ClassDB::bind_method(D_METHOD("get_factory_stats", "factory_id"), &GodotAugustus::get_factory_stats);
+    ClassDB::bind_method(D_METHOD("get_economy_report"), &GodotAugustus::get_economy_report);
 
     ClassDB::bind_method(D_METHOD("read_console"), &GodotAugustus::read_console);
     ClassDB::bind_method(D_METHOD("log_to_console", "msg"), &GodotAugustus::log_to_console);
@@ -187,6 +192,26 @@ String GodotAugustus::get_factory_templates() {
 
 String GodotAugustus::get_pending_events() {
     return String(augustus_engine::EngineController::instance().getPendingEvents().c_str());
+}
+
+String GodotAugustus::get_company_net_worth(const String &company_id) {
+    return String(augustus_engine::EngineController::instance().getCompanyNetWorth(company_id.utf8().get_data()).c_str());
+}
+
+String GodotAugustus::get_market_stats(const String &market_id) {
+    return String(augustus_engine::EngineController::instance().getMarketStats(market_id.utf8().get_data()).c_str());
+}
+
+String GodotAugustus::get_node_stats(const String &node_id) {
+    return String(augustus_engine::EngineController::instance().getNodeStats(node_id.utf8().get_data()).c_str());
+}
+
+String GodotAugustus::get_factory_stats(const String &factory_id) {
+    return String(augustus_engine::EngineController::instance().getFactoryStats(factory_id.utf8().get_data()).c_str());
+}
+
+String GodotAugustus::get_economy_report() {
+    return String(augustus_engine::EngineController::instance().getEconomyReport().c_str());
 }
 
 PackedStringArray GodotAugustus::read_console() {
