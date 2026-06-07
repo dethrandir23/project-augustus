@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://cpx13klwl53lw"]
+
+[ext_resource type="Script" uid="uid://dc75hj7q1dypr" path="res://trade_node.gd" id="1_p5nwi"]
+
+[node name="TradeNode" type="Node2D" unique_id=1047785336]
+script = ExtResource("1_p5nwi")
+
+[node name="Button" type="Button" parent="." unique_id=1591409908]
+offset_right = 40.0
+offset_bottom = 40.0

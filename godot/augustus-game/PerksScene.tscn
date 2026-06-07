@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://nv33jodrqdit"]
+
+[ext_resource type="Script" uid="uid://cwgbo5paqygmn" path="res://perks_scene.gd" id="1_ou8kf"]
+
+[node name="PerksPanel" type="Control" unique_id=1808150980]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ou8kf")
+
+[node name="Panel" type="Panel" parent="." unique_id=1631049426]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=1672142089]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ItemList" type="VBoxContainer" parent="Panel/ScrollContainer" unique_id=1004656192]
+layout_mode = 2

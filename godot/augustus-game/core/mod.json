@@ -1,0 +1,10 @@
+{
+    "id": "com.producer.core",
+    "name": "Core",
+    "author": "Producer Dev Team",
+    "version": "0.1.0",
+    "description": "Core module for the Producer game",
+    "gameVersion": ">=0.1.0",
+    "dependencies": [],
+    "optionalDependencies": []
+}

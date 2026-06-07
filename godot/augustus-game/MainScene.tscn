@@ -1,0 +1,110 @@
+[gd_scene format=3 uid="uid://dgt4xmdn6s6lv"]
+
+[ext_resource type="PackedScene" uid="uid://dylkvlnpk7562" path="res://TopBar.tscn" id="1_3mqji"]
+[ext_resource type="Script" uid="uid://cscik3d4jf1rr" path="res://main_scene.gd" id="1_rpqi1"]
+[ext_resource type="PackedScene" uid="uid://bsvgygxyjnp7f" path="res://TimeControls.tscn" id="2_x4av3"]
+[ext_resource type="PackedScene" uid="uid://cd2sjaa1lfxbp" path="res://InventoryPanel.tscn" id="4_rf2cd"]
+[ext_resource type="PackedScene" uid="uid://cf4ex7pyhwnuj" path="res://BudgetPanel.tscn" id="5_a814b"]
+[ext_resource type="PackedScene" uid="uid://ddriixnkoclai" path="res://MarketScene.tscn" id="6_torvr"]
+[ext_resource type="PackedScene" uid="uid://df4c7bx6f3fhv" path="res://ManpowerScene.tscn" id="7_8xkvn"]
+[ext_resource type="PackedScene" uid="uid://nv33jodrqdit" path="res://PerksScene.tscn" id="8_p5x2j"]
+[ext_resource type="PackedScene" uid="uid://b3svvto51w5g4" path="res://TechScene.tscn" id="9_yvb8b"]
+[ext_resource type="PackedScene" uid="uid://dnqi321noo3nn" path="res://Console.tscn" id="10_8xkvn"]
+[ext_resource type="PackedScene" uid="uid://doceeaf7fxt2v" path="res://NodeDetailsPanel.tscn" id="10_yvb8b"]
+[ext_resource type="PackedScene" uid="uid://bab8axf0aqf2h" path="res://Map.tscn" id="11_p5x2j"]
+
+[node name="Main" type="Control" unique_id=407527959]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_rpqi1")
+
+[node name="TopBar" parent="." unique_id=1161787745 instance=ExtResource("1_3mqji")]
+layout_mode = 1
+
+[node name="TimeControls" parent="." unique_id=2003860094 instance=ExtResource("2_x4av3")]
+layout_mode = 1
+offset_left = 0.0
+offset_top = -1.0
+offset_right = 0.0
+offset_bottom = -1.0
+
+[node name="GameTickTimer" type="Timer" parent="." unique_id=2112374758]
+autostart = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=2029002961]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 47.0
+offset_right = 751.0
+offset_bottom = 648.0
+
+[node name="LeftMenuButtons" type="VBoxContainer" parent="HBoxContainer" unique_id=1057841875]
+layout_mode = 2
+
+[node name="BudgetButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=491282698]
+layout_mode = 2
+toggle_mode = true
+text = "Budget"
+
+[node name="InventoryButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=1802424868]
+layout_mode = 2
+toggle_mode = true
+text = "Inventory"
+
+[node name="MarketButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=1530315632]
+layout_mode = 2
+toggle_mode = true
+text = "Markets
+"
+
+[node name="ManpowerButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=1358713410]
+layout_mode = 2
+toggle_mode = true
+text = "Manpower"
+
+[node name="PerksButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=405325175]
+layout_mode = 2
+toggle_mode = true
+text = "Perks"
+
+[node name="TechTreeButton" type="Button" parent="HBoxContainer/LeftMenuButtons" unique_id=855911059]
+layout_mode = 2
+toggle_mode = true
+text = "Technologies"
+
+[node name="ContentArea" type="MarginContainer" parent="HBoxContainer" unique_id=1963267809]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BudgetPanel" parent="HBoxContainer/ContentArea" unique_id=1332581685 instance=ExtResource("5_a814b")]
+layout_mode = 2
+
+[node name="InventoryPanel" parent="HBoxContainer/ContentArea" unique_id=1353262533 instance=ExtResource("4_rf2cd")]
+layout_mode = 2
+
+[node name="MarketPanel" parent="HBoxContainer/ContentArea" unique_id=855161735 instance=ExtResource("6_torvr")]
+layout_mode = 2
+
+[node name="ManpowerPanel" parent="HBoxContainer/ContentArea" unique_id=209102798 instance=ExtResource("7_8xkvn")]
+layout_mode = 2
+
+[node name="PerksPanel" parent="HBoxContainer/ContentArea" unique_id=1808150980 instance=ExtResource("8_p5x2j")]
+layout_mode = 2
+
+[node name="TechPanel" parent="HBoxContainer/ContentArea" unique_id=1486754710 instance=ExtResource("9_yvb8b")]
+layout_mode = 2
+
+[node name="NodeDetailsPanel" parent="HBoxContainer/ContentArea" unique_id=1762897877 instance=ExtResource("10_yvb8b")]
+layout_mode = 2
+
+[node name="Console" parent="." unique_id=688114998 instance=ExtResource("10_8xkvn")]
+layout_mode = 1
+
+[node name="Map" parent="." unique_id=1553805637 instance=ExtResource("11_p5x2j")]
+z_index = -1
+z_as_relative = false
+position = Vector2(576, 324)

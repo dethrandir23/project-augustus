@@ -1,0 +1,125 @@
+{
+	"registry_type": "EVENT_DEFINITIONS",
+	"entries": [
+		{
+			"id": "core_event_000",
+			"name": "Hard Times",
+			"event_type": "notification",
+			"description": "desc_core_event_000",
+			"scope": [
+                "ALL"
+			],
+			"auto_handle": true,
+			"auto_handle_option_index": 0,
+			"max_steps_until_handle": 14,
+			"unique": false,
+			"cooldown": 200,
+			"triggers": [
+				[
+					{
+						"type": "CHANCE",
+						"value": 0.05
+					}
+				]
+			],
+			"options": [
+				{
+					"text": "Bad days await us",
+					"inputs": [
+						{
+							"type": "ADD_DEMAND",
+							"payload": {
+								"items": [
+									{
+										"id": "core_grain_005",
+										"amount": 1000,
+										"market": "ALL",
+										"type": "TIMED",
+										"for_steps": 50
+									}
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "core_event_001",
+			"name": "Fire in Warehouse",
+			"event_type": "decision",
+			"description": "desc_core_event_001",
+			"scope": [
+                "COMPANY"
+			],
+			"auto_handle": true,
+			"auto_handle_option_index": 0,
+			"max_steps_until_handle": 3,
+			"unique": false,
+			"cooldown": 50,
+			"triggers": [
+				[
+					{
+						"type": "CHANCE",
+						"value": 0.05
+					}
+				],
+				[
+					{
+						"type": "SABOTAGE"
+					}
+				]
+			],
+			"options": [
+				{
+					"text": "Save the workers!",
+					"inputs": [
+						{
+							"type": "REDUCE_MANPOWER",
+							"payload": {
+								"amount": 25,
+								"type": "INSTANT"
+							}
+						},
+						{
+							"type": "REMOVE_ITEMS",
+							"payload": {
+								"items": [
+									{
+										"id": "ALL",
+										"amount": 50,
+										"type": "INSTANT"
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"text": "Save the goods!",
+					"inputs": [
+						{
+							"type": "REDUCE_MANPOWER",
+							"payload": {
+								"amount": 75,
+								"type": "INSTANT"
+							}
+						},
+						{
+							"type": "REMOVE_ITEMS",
+							"payload": {
+								"items": [
+									{
+										"id": "ALL",
+										"amount": 10,
+										"type": "INSTANT"
+									}
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

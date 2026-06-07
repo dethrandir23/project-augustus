@@ -1,0 +1,200 @@
+{
+  "registry_type": "MAP_DEFINITION",
+  "id": "core_debug_map",
+  "name": "Debug Map",
+  "description": "desc_debug_map",
+  "width": 4000,
+  "height": 4000,
+  "background_texture": "debug_map_background.png",
+  "nodes": [
+	{
+	  "instance_id": "core_debug_london",
+	  "template_id": "core_metropolis_001",
+	  "name": "London",
+	  "x": 40,
+	  "y": 80,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	},
+	{
+	  "instance_id": "core_new_city_000",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 93,
+	  "y": 66,
+	  "terrain": "plains",
+	  "default_market_id": "core_west_market_002"
+	},
+	{
+	  "instance_id": "core_new_city_001",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 100,
+	  "y": 62,
+	  "terrain": "plains",
+	  "default_market_id": "core_north_market_003"
+	},
+	{
+	  "instance_id": "core_new_city_002",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 95,
+	  "y": 56,
+	  "terrain": "plains",
+	  "default_market_id": "core_south_market_004"
+	},
+	{
+	  "instance_id": "core_new_city_003",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 98,
+	  "y": 89,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	},
+	{
+	  "instance_id": "core_new_city_004",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 101,
+	  "y": 42,
+	  "terrain": "plains",
+	  "default_market_id": "core_west_market_002"
+	},
+	{
+	  "instance_id": "core_new_city_005",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 98,
+	  "y": 39,
+	  "terrain": "plains",
+	  "default_market_id": "core_north_market_003"
+	},
+	{
+	  "instance_id": "core_new_city_006",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 96,
+	  "y": 40,
+	  "terrain": "plains",
+	  "default_market_id": "core_south_market_004"
+	},
+	{
+	  "instance_id": "core_new_city_007",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 101,
+	  "y": 35,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	},
+	{
+	  "instance_id": "core_new_city_008",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 104,
+	  "y": 36,
+	  "terrain": "plains",
+	  "default_market_id": "core_west_market_002"
+	},
+	{
+	  "instance_id": "core_new_city_009",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 112,
+	  "y": 31,
+	  "terrain": "plains",
+	  "default_market_id": "core_north_market_003"
+	},
+	{
+	  "instance_id": "core_new_city_010",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 113,
+	  "y": 62,
+	  "terrain": "plains",
+	  "default_market_id": "core_south_market_004"
+	},
+	{
+	  "instance_id": "core_new_city_011",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 114,
+	  "y": 55,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	},
+	{
+	  "instance_id": "core_new_city_012",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 109,
+	  "y": 47,
+	  "terrain": "plains",
+	  "default_market_id": "core_west_market_002"
+	},
+	{
+	  "instance_id": "core_new_city_013",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 108,
+	  "y": 49,
+	  "terrain": "plains",
+	  "default_market_id": "core_north_market_003"
+	},
+	{
+	  "instance_id": "core_new_city_014",
+	  "template_id": "core_village",
+	  "name": "New City",
+	  "x": 107,
+	  "y": 53,
+	  "terrain": "plains",
+	  "default_market_id": "core_south_market_004"
+	},
+	{
+	  "instance_id": "core_london_015",
+	  "template_id": "core_village",
+	  "name": "London",
+	  "x": 125,
+	  "y": 31,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	},
+	{
+	  "instance_id": "core_duzenle_016",
+	  "template_id": "core_village",
+	  "name": "Duzenle",
+	  "x": 138,
+	  "y": 44,
+	  "terrain": "plains",
+	  "default_market_id": "core_west_market_002"
+	},
+	{
+	  "instance_id": "core_hakkari_017",
+	  "template_id": "core_village",
+	  "name": "Hakkari",
+	  "x": 157,
+	  "y": 59,
+	  "terrain": "plains",
+	  "default_market_id": "core_north_market_003"
+	},
+	{
+	  "instance_id": "core_hakkari_018",
+	  "template_id": "core_village",
+	  "name": "Hakkari",
+	  "x": 117,
+	  "y": 53,
+	  "terrain": "plains",
+	  "default_market_id": "core_south_market_004"
+	},
+	{
+	  "instance_id": "core_kurdistanin_baskenti_ankaradir_019",
+	  "template_id": "core_village",
+	  "name": "Kurdistanin baskenti ankaradir",
+	  "x": 111,
+	  "y": 51,
+	  "terrain": "plains",
+	  "default_market_id": "core_east_market_001"
+	}
+  ]
+}

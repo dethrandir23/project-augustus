@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://bsvgygxyjnp7f"]
+
+[ext_resource type="Theme" uid="uid://e1h0t6qi61l4" path="res://MainTheme.tres" id="1_05013"]
+[ext_resource type="Script" uid="uid://b82tnwhjau8m4" path="res://time_controls.gd" id="1_htx1b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_htx1b"]
+bg_color = Color(0.14509805, 0.15294118, 0.16078432, 1)
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="TimeControls" type="Control" unique_id=2003860094]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -178.0
+offset_top = 6.0
+offset_right = -178.0
+offset_bottom = 6.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_htx1b")
+
+[node name="Panel" type="Panel" parent="." unique_id=564266357]
+layout_mode = 0
+offset_left = 948.0
+offset_top = 2.0
+offset_right = 1146.0
+offset_bottom = 65.0
+theme = ExtResource("1_05013")
+theme_override_styles/panel = SubResource("StyleBoxFlat_htx1b")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=1869698308]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer" unique_id=1228099778]
+layout_mode = 2
+
+[node name="PlayPauseButton" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=1884586832]
+layout_mode = 2
+text = "PLAY"
+
+[node name="Speed1" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=457530595]
+layout_mode = 2
+toggle_mode = true
+text = "1x"
+
+[node name="Speed2" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=1271687114]
+layout_mode = 2
+toggle_mode = true
+text = "2x"
+
+[node name="Speed3" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=1351502587]
+layout_mode = 2
+toggle_mode = true
+text = "3x"
+
+[node name="Speed4" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=1440712212]
+layout_mode = 2
+toggle_mode = true
+text = "4x"
+
+[node name="Speed5" type="Button" parent="Panel/VBoxContainer/HBoxContainer" unique_id=1520038296]
+layout_mode = 2
+toggle_mode = true
+text = "5x"
+
+[node name="DateLabel" type="Label" parent="Panel/VBoxContainer" unique_id=209002044]
+layout_mode = 2

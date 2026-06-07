@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://dnqi321noo3nn"]
+
+[ext_resource type="Script" uid="uid://cg451dygjktx6" path="res://console.gd" id="1_8t2xt"]
+
+[node name="Console" type="Control" unique_id=688114998]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8t2xt")
+
+[node name="Panel" type="Panel" parent="." unique_id=2086947956]
+layout_mode = 0
+offset_left = 758.0
+offset_top = 419.0
+offset_right = 1152.0
+offset_bottom = 648.0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=334906700]
+layout_mode = 0
+offset_right = 394.0
+offset_bottom = 198.0
+
+[node name="Rows" type="VBoxContainer" parent="Panel/ScrollContainer" unique_id=490591884]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel" unique_id=211355408]
+layout_mode = 0
+offset_top = 198.0
+offset_right = 394.0
+offset_bottom = 229.0
+
+[node name="CommandLine" type="LineEdit" parent="Panel/HBoxContainer" unique_id=334428054]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SendButton" type="Button" parent="Panel/HBoxContainer" unique_id=1939443502]
+layout_mode = 2
+text = ">>>"

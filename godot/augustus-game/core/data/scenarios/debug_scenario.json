@@ -1,0 +1,28 @@
+{
+	"registry_type": "SCENARIO_DEFINITION",
+	"id": "debug_scenario",
+	"name": "Debug Scenario",
+	"description": "desc_debug_scenario",
+	"map_id": "core_debug_map",
+	"start_date": "1836-01-01",
+	"companies": [
+		{
+			"instance_id": "debug_small_company",
+			"template_id": "core_startup_company_001",
+			"name": "Small Company",
+			"capital": 10000
+		}
+	],
+	"nodes": [
+		{
+			"instance_id": "core_debug_london",
+			"market_id": "core_east_market_001",
+			"population": 200000,
+			"additional_pipelines": ["core_population_demand_024"],
+			"starting_inventory": {
+				"core_grain_005": 500,
+				"core_wood_001": 200
+			}
+		}
+	]
+}

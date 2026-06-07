@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://cd2sjaa1lfxbp"]
+
+[ext_resource type="Script" uid="uid://c6einupq7g2r2" path="res://inventory_panel.gd" id="1_qbds2"]
+
+[node name="InventoryPanel" type="Control" unique_id=1353262533]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_qbds2")
+
+[node name="Panel" type="Panel" parent="." unique_id=1428027138]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Inventory
+"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=459193068]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 649.0
+
+[node name="ItemList" type="VBoxContainer" parent="Panel/ScrollContainer" unique_id=1688026945]
+layout_mode = 2

@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://df4c7bx6f3fhv"]
+
+[ext_resource type="Script" uid="uid://bbh5eaxgcmymq" path="res://manpower_scene.gd" id="1_g3r7l"]
+
+[node name="ManpowerPanel" type="Control" unique_id=209102798]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_g3r7l")
+
+[node name="Panel" type="Panel" parent="." unique_id=2143148511]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=692176480]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ManpowerLabel" type="Label" parent="Panel/VBoxContainer" unique_id=666083595]
+layout_mode = 2

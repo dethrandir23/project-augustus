@@ -1,0 +1,18 @@
+{
+  "registry_type": "ECONOMY_DEFINITIONS",
+  "entries": {
+    "price": {
+      "min": 0.01,
+      "max": 10000,
+      "recruit_base": 10.0
+    },
+    "interest": {
+      "base_rate": 0.05,
+      "central_bank_rate": 0.03
+    },
+    "market": {
+      "tax_rate": 0.02,
+      "liquidity_premium": 0.1
+    }
+  }
+}

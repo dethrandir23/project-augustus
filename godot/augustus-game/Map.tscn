@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bab8axf0aqf2h"]
+
+[ext_resource type="Script" uid="uid://c2eukk0cq1bcg" path="res://map.gd" id="1_gfjgm"]
+[ext_resource type="Script" uid="uid://bpfvee64w8aqe" path="res://camera.gd" id="2_3vi7k"]
+
+[node name="Map" type="Node2D" unique_id=1553805637]
+script = ExtResource("1_gfjgm")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=194778883]
+
+[node name="Camera" type="Camera2D" parent="." unique_id=182017637]
+script = ExtResource("2_3vi7k")
+
+[node name="TradeNodesLayer" type="Node2D" parent="." unique_id=905351154]

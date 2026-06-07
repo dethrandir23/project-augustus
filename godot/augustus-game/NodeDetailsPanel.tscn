@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://doceeaf7fxt2v"]
+
+[ext_resource type="Script" uid="uid://btspqmetqiidm" path="res://node_details_panel.gd" id="1_4c0th"]
+
+[node name="NodeDetailsPanel" type="Control" unique_id=1762897877]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -441.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_4c0th")
+
+[node name="Panel" type="Panel" parent="." unique_id=1754573153]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel" unique_id=838503830]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/ScrollContainer" unique_id=1157473624]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="Panel" unique_id=686321031]
+layout_mode = 0
+offset_left = 643.0
+offset_right = 711.0
+offset_bottom = 40.0
+text = "Close"

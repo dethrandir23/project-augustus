@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://cf4ex7pyhwnuj"]
+
+[ext_resource type="Script" uid="uid://c6e6ht6y4vosr" path="res://budget_panel.gd" id="1_qljpk"]
+
+[node name="BudgetPanel" type="Control" unique_id=1332581685]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+script = ExtResource("1_qljpk")
+
+[node name="Panel" type="Panel" parent="." unique_id=1835117580]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Budget"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=1484884253]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="CapitalLabel" type="Label" parent="Panel/VBoxContainer" unique_id=782428183]
+layout_mode = 2
+
+[node name="DebtLabel" type="Label" parent="Panel/VBoxContainer" unique_id=928126309]
+layout_mode = 2

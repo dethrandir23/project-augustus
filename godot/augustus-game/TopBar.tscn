@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://dylkvlnpk7562"]
+
+[ext_resource type="Script" uid="uid://chtpgfbrgpqcy" path="res://top_bar.gd" id="1_cq03w"]
+[ext_resource type="Theme" uid="uid://e1h0t6qi61l4" path="res://MainTheme.tres" id="1_nf15x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ilfs"]
+bg_color = Color(0.14509805, 0.15294118, 0.16078432, 1)
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="TopBar" type="Control" unique_id=1161787745]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -230.0
+offset_bottom = -608.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_nf15x")
+script = ExtResource("1_cq03w")
+
+[node name="Panel" type="Panel" parent="." unique_id=957247583]
+layout_mode = 0
+offset_right = 922.0
+offset_bottom = 40.0
+theme = ExtResource("1_nf15x")
+theme_override_styles/panel = SubResource("StyleBoxFlat_7ilfs")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel" unique_id=825571461]
+layout_mode = 0
+offset_right = 922.0
+offset_bottom = 40.0
+
+[node name="CompanyNameLabel" type="Label" parent="Panel/HBoxContainer" unique_id=773528901]
+layout_mode = 2
+
+[node name="MoneyLabel" type="Label" parent="Panel/HBoxContainer" unique_id=949576968]
+layout_mode = 2
