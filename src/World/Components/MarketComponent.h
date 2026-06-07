@@ -32,6 +32,31 @@ public:
         return books.at(itemId).lastTradedPrice;
     }
 
+    double getSmartPrice(const std::string& itemId, double basePrice) const {
+        if (books.find(itemId) == books.end() || basePrice <= 0.0) return basePrice;
+
+        const auto& book = books.at(itemId);
+        double lastPrice = book.lastTradedPrice;
+
+        double buyVolume = 0.0;
+        for (const auto& o : book.buyOrders) buyVolume += o.remaining();
+        double sellVolume = 0.0;
+        for (const auto& o : book.sellOrders) sellVolume += o.remaining();
+
+        double price = lastPrice > 0.0 ? lastPrice : basePrice;
+
+        double demandRatio = (sellVolume > 0.0) ? (buyVolume / sellVolume) : (buyVolume > 0.0 ? 2.0 : 0.5);
+
+        if (demandRatio > 1.0) {
+            price = price * (1.0 + GameConstants::SELL_DEMAND_PRICE_BOOST * std::min(demandRatio - 1.0, 5.0));
+        } else if (demandRatio < 1.0) {
+            double discount = GameConstants::SELL_NO_DEMAND_DISCOUNT + (1.0 - GameConstants::SELL_NO_DEMAND_DISCOUNT) * demandRatio;
+            price = price * discount;
+        }
+
+        return std::max(price, basePrice * 0.3);
+    }
+
     nlohmann::json ToJson() const override {
         nlohmann::json j_books = nlohmann::json::object();
         for (const auto& [itemId, book] : books) {

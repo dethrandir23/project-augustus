@@ -47,10 +47,19 @@ inline constexpr float GLOBAL_PRODUCTION_MODIFIER = 1.0f;
 inline constexpr float INPUT_BUFFER_MULTIPLIER = 5.0f;
 inline constexpr float MIN_WORKER_EFFICIENCY = 0.001f;
 inline constexpr double LABOR_POINTS_PER_WORKER = 10.0;
-inline constexpr double LABOR_POINTS_PER_POP = 0.3;
+inline constexpr double LABOR_POINTS_PER_POP = 0.05;
+inline constexpr double LABOR_ONLY_DIMINISHING_EXPONENT = 0.5;
 
 // === MarketSystem ===
 inline constexpr double REFUND_EPSILON = 0.0001;
+
+// === Order Expiry ===
+inline constexpr int ORDER_MAX_TICKS = 5;
+
+// === Price Mechanics ===
+inline constexpr float SELL_NO_DEMAND_DISCOUNT = 0.85f;
+inline constexpr float SELL_DEMAND_PRICE_BOOST = 0.05f;
+inline constexpr float BUY_NO_SUPPLY_PREMIUM = 1.2f;
 
 // === InputHandler ===
 inline constexpr double FAKE_DEMAND_PRICE_MULT = 2.0;

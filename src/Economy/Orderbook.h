@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Types.h"
+#include "Core/GameConstants.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -38,9 +39,35 @@ public:
 
   void addOrder(MarketOrder order) {
     if (order.type == OrderType::BUY) {
-      buyOrders.insert(std::move(order));
+      auto it = std::find_if(buyOrders.begin(), buyOrders.end(),
+        [&](const MarketOrder& existing) {
+          return existing.ownerId == order.ownerId
+              && existing.itemId == order.itemId
+              && std::abs(existing.price - order.price) < 0.0001;
+        });
+      if (it != buyOrders.end()) {
+        MarketOrder merged = *it;
+        merged.quantity += order.quantity;
+        buyOrders.erase(it);
+        buyOrders.insert(std::move(merged));
+      } else {
+        buyOrders.insert(std::move(order));
+      }
     } else {
-      sellOrders.insert(std::move(order));
+      auto it = std::find_if(sellOrders.begin(), sellOrders.end(),
+        [&](const MarketOrder& existing) {
+          return existing.ownerId == order.ownerId
+              && existing.itemId == order.itemId
+              && std::abs(existing.price - order.price) < 0.0001;
+        });
+      if (it != sellOrders.end()) {
+        MarketOrder merged = *it;
+        merged.quantity += order.quantity;
+        sellOrders.erase(it);
+        sellOrders.insert(std::move(merged));
+      } else {
+        sellOrders.insert(std::move(order));
+      }
     }
     matchOrders();
   }
@@ -49,14 +76,15 @@ public:
     while (!buyOrders.empty() && !sellOrders.empty()) {
       auto bestBuyIt = buyOrders.begin();
       auto bestSellIt = sellOrders.begin();
+
+      if (bestBuyIt->ownerId == bestSellIt->ownerId) {
+        ++bestSellIt;
+        if (bestSellIt == sellOrders.end()) break;
+        if (bestBuyIt->ownerId == bestSellIt->ownerId) break;
+      }
+
       const MarketOrder& bestBuy = *bestBuyIt;
       const MarketOrder& bestSell = *bestSellIt;
-
-      if (bestBuy.ownerId == bestSell.ownerId) {
-        buyOrders.erase(bestBuyIt);
-        sellOrders.erase(bestSellIt);
-        continue;
-      }
 
       if (bestBuy.price >= bestSell.price) {
         double executionPrice = bestBuy.timestamp < bestSell.timestamp
@@ -117,5 +145,42 @@ public:
       }
     }
     return false;
+  }
+
+  struct ExpiredOrders {
+    std::vector<MarketOrder> buyOrders;
+    std::vector<MarketOrder> sellOrders;
+  };
+
+  ExpiredOrders ageAndExpire() {
+    ExpiredOrders expired;
+    std::vector<MarketOrder> survivingBuys;
+    std::vector<MarketOrder> survivingSells;
+
+    for (auto it = buyOrders.begin(); it != buyOrders.end(); ) {
+      MarketOrder order = *it;
+      order.age++;
+      it = buyOrders.erase(it);
+      if (order.isExpired()) {
+        expired.buyOrders.push_back(order);
+      } else {
+        survivingBuys.push_back(std::move(order));
+      }
+    }
+    for (auto it = sellOrders.begin(); it != sellOrders.end(); ) {
+      MarketOrder order = *it;
+      order.age++;
+      it = sellOrders.erase(it);
+      if (order.isExpired()) {
+        expired.sellOrders.push_back(order);
+      } else {
+        survivingSells.push_back(std::move(order));
+      }
+    }
+
+    for (auto& o : survivingBuys) buyOrders.insert(std::move(o));
+    for (auto& o : survivingSells) sellOrders.insert(std::move(o));
+
+    return expired;
   }
 };

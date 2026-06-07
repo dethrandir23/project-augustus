@@ -103,8 +103,8 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
 
     if (assets->ownedAssets.empty()) return;
 
-    // Şirketlerin bir "local market"i yok, tüm marketlere eşit uzaktalar
     uuids::uuid noMarket;
+    uuids::uuid companyId = company.GetId();
 
     for (const auto& fId : assets->ownedAssets) {
         Entity* factory = gamestate.getEntity(fId);
@@ -121,6 +121,10 @@ void CompanyBrain::buyInputs(Entity& company, Gamestate& gamestate) {
         for (const auto& req : missing) {
             float inStorage = storage->GetInternalInventory().getAmount(req.id);
             float stillNeeded = req.quantity - inStorage;
+            if (stillNeeded <= 0.0f) continue;
+
+            float alreadyOrdered = MarketSystem::getBuyOrderForOwner(gamestate, companyId, req.id);
+            stillNeeded -= alreadyOrdered;
             if (stillNeeded <= 0.0f) continue;
 
             // Cross-market: en iyi fiyatı bul (kendi satışlarımızı atla)
@@ -245,12 +249,10 @@ void CompanyBrain::sellSurplus(Entity& company, Gamestate& gamestate) {
         float toSell = surplus - alreadyListed[item.id];
         if (toSell < GameConstants::MIN_SELL_UNIT) continue;
 
-        double price = mc->getPrice(item.id);
-        if (price <= 0.0) {
-            price = ItemManager::items.count(item.id)
+        double price = mc->getSmartPrice(item.id,
+            ItemManager::items.count(item.id)
                 ? static_cast<double>(ItemManager::items.at(item.id).base_price)
-                : GameConstants::FALLBACK_PRICE;
-        }
+                : GameConstants::FALLBACK_PRICE);
 
         InputHandler::handleInput(gamestate,
             makeInput("MARKET_SELL_ITEM", {

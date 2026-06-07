@@ -76,7 +76,8 @@ BestMarket MarketSystem::findBestBuyMarket(Gamestate& gamestate, const std::stri
             }
         }
         if (!fallbackMarketId.is_nil()) {
-            result = {fallbackMarketId, basePrice, basePrice, uuids::uuid{}};
+            double fallbackPrice = basePrice * GameConstants::BUY_NO_SUPPLY_PREMIUM;
+            result = {fallbackMarketId, fallbackPrice, fallbackPrice, uuids::uuid{}};
         }
     }
 
@@ -220,7 +221,11 @@ void MarketSystem::placeOrder(Gamestate &gamestate, uuids::uuid marketId,
       Entity* buyerEntity = gamestate.getEntity(order.ownerId);
       if (buyerEntity) {
         auto* marketMember = buyerEntity->GetComponent<MarketMemberComponent>("MarketMemberComponent");
-        if (marketMember && marketMember->marketId != marketId) {
+        if (marketMember) {
+          if (marketMember->marketId != marketId) {
+            tariffMultiplier = 1.0 + static_cast<double>(marketComp->tariffRate);
+          }
+        } else {
           tariffMultiplier = 1.0 + static_cast<double>(marketComp->tariffRate);
         }
       }
@@ -290,12 +295,15 @@ void MarketSystem::executeTrade(Gamestate &gamestate, uuids::uuid buyerId,
   if (marketEntity && buyerEntity) {
     auto* marketComp = marketEntity->GetComponent<MarketComponent>("MarketComponent");
     auto* buyerMarketMember = buyerEntity->GetComponent<MarketMemberComponent>("MarketMemberComponent");
-    if (marketComp && buyerMarketMember && buyerMarketMember->marketId != marketId) {
-      double tariff = price * qty * static_cast<double>(marketComp->tariffRate);
-      if (buyer.walletComp && buyer.walletComp->balance >= tariff) {
-        buyer.walletComp->balance -= tariff;
-        auto* marketWallet = marketEntity->GetComponent<WalletComponent>("WalletComponent");
-        if (marketWallet) marketWallet->addMoney(tariff);
+    if (marketComp) {
+      bool isLocal = buyerMarketMember && buyerMarketMember->marketId == marketId;
+      if (!isLocal) {
+        double tariff = price * qty * static_cast<double>(marketComp->tariffRate);
+        if (buyer.walletComp && buyer.walletComp->balance >= tariff) {
+          buyer.walletComp->balance -= tariff;
+          auto* marketWallet = marketEntity->GetComponent<WalletComponent>("WalletComponent");
+          if (marketWallet) marketWallet->addMoney(tariff);
+        }
       }
     }
   }

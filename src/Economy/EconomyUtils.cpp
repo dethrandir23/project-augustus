@@ -1,5 +1,6 @@
 #include "EconomyUtils.h"
 #include <algorithm>
+#include <cmath>
 #include "Core/GameConstants.h"
 #include "Core/Components/InventoryComponent.h"
 #include "Core/ECS/Entity.h"
@@ -88,17 +89,17 @@ ProductionResult processProduction(
             }
         }
 
-        double laborRatio = 1.0;
+double laborRatio = 1.0;
         double laborOnlyScale = 0.0;
         if (availableLabor >= 0.0) {
             if (resourceLaborDemand > availableLabor && resourceLaborDemand > 0.0) {
-                // Resource-constrained pipelines zaten tüm işgücünü yiyor
                 laborRatio = availableLabor / resourceLaborDemand;
                 laborOnlyScale = 0.0;
             } else {
                 double remainingLabor = availableLabor - resourceLaborDemand;
                 if (totalLaborOnlyCost > 0.0 && remainingLabor > 0.0) {
-                    laborOnlyScale = remainingLabor / totalLaborOnlyCost;
+                    double rawScale = remainingLabor / totalLaborOnlyCost;
+                    laborOnlyScale = std::pow(rawScale, GameConstants::LABOR_ONLY_DIMINISHING_EXPONENT);
                 } else {
                     laborOnlyScale = 0.0;
                 }

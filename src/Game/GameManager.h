@@ -18,4 +18,5 @@ private:
     static void processFactories(Gamestate& gamestate);
     static void processTradeNodes(Gamestate& gamestate);
     static void processAI(Gamestate& gamestate);
+    static void expireOrders(Gamestate& gamestate);
 };

@@ -1,6 +1,7 @@
 // GameManager.cpp
 #include "GameManager.h"
 #include "Core/GameConstants.h"
+#include "Core/ECS/Entity.h"
 #include "Core/Components/InventoryComponent.h"
 #include "Economy/Components/AssetOwnerComponent.h"
 #include "Economy/Components/PerkComponent.h"
@@ -27,14 +28,8 @@ void GameManager::tick(Gamestate &gamestate) {
 
     processTradeNodes(gamestate);
     processDemographics(gamestate);
+    expireOrders(gamestate);
     processAI(gamestate);
-
-    // DEBUG: TO CHECK IF GAME REALLY TICKS
-    // Entity* playerCompany = gamestate.getPlayerCompany();
-    // if (playerCompany) {
-    //     auto* mp = playerCompany->GetComponent<ManpowerPoolComponent>("ManpowerPoolComponent");
-    //     if (mp) mp->add(100);
-    // }
 
     gamestate.getEventHandler().tickEvents(gamestate);
 }
@@ -202,4 +197,35 @@ void GameManager::processTradeNodes(Gamestate& gamestate) {
 
 void GameManager::processAI(Gamestate& gamestate) {
     AIManager::processAll(gamestate);
+}
+
+void GameManager::expireOrders(Gamestate& gamestate) {
+    for (auto* entity : gamestate.getEntitiesByType("market")) {
+        auto* marketComp = entity->GetComponent<MarketComponent>("MarketComponent");
+        if (!marketComp) continue;
+
+        for (auto& [itemId, book] : marketComp->books) {
+            auto expired = book.ageAndExpire();
+
+            for (const auto& order : expired.buyOrders) {
+                Entity* owner = gamestate.getEntity(order.ownerId);
+                if (!owner) continue;
+                auto* wallet = owner->GetComponent<WalletComponent>("WalletComponent");
+                if (wallet) {
+                    double refund = order.price * order.remaining();
+                    wallet->addMoney(refund);
+                }
+            }
+
+            for (const auto& order : expired.sellOrders) {
+                Entity* owner = gamestate.getEntity(order.ownerId);
+                if (!owner) continue;
+                auto* inv = owner->GetComponent<InventoryComponent>("Storage");
+                if (!inv) inv = owner->GetComponent<InventoryComponent>("MainStorage");
+                if (inv) {
+                    inv->Add(order.itemId, order.remaining());
+                }
+            }
+        }
+    }
 }

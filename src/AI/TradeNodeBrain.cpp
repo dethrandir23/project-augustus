@@ -73,12 +73,10 @@ void TradeNodeBrain::sellSurplus(Entity& node, Gamestate& gamestate) {
             float newSell = toSell - alreadyListed[output.id];
             if (newSell < GameConstants::MIN_SELL_UNIT) continue;
 
-            double price = marketComp->getPrice(output.id);
-            if (price <= 0.0) {
-                price = ItemManager::items.count(output.id)
+            double price = marketComp->getSmartPrice(output.id,
+                ItemManager::items.count(output.id)
                     ? static_cast<double>(ItemManager::items.at(output.id).base_price)
-                    : GameConstants::FALLBACK_PRICE;
-            }
+                    : GameConstants::FALLBACK_PRICE);
 
             InputHandler::handleInput(gamestate,
                 makeInput("MARKET_SELL_ITEM", {

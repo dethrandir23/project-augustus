@@ -5,7 +5,7 @@
       "id": "core_startup_company_001",
       "namespace": "core_startup_company",
       "manpower": 2000,
-      "capital": 10000,
+      "capital": 50000,
       "debt": 0,
       "perks": [
         "core_newborn_company_001"

@@ -11,6 +11,7 @@
 #include "nlohmann/json.hpp"
 #include "uuid/uuid.h"
 #include "Game/IdUtils.h"
+#include "Core/GameConstants.h"
 #include <string>
 #include <utility>
 
@@ -95,23 +96,21 @@ struct MarketOrder {
     float quantity;         // Toplam miktar
     float filledQuantity;   // Ne kadarı gerçekleşti?
     long timestamp;         // Zaman damgası (Önce gelen önce alır)
+    int age = 0;            // Kaç tick yaşadı (expiry için)
 
     MarketOrder(uuids::uuid owner, std::string item, OrderType type, double price, float qty)
         : ownerId(owner), itemId(item), type(type), price(price), quantity(qty) 
     {
-        // Otomatik doldurulanlar:
         this->id = IdUtils::generateUuid();
         this->filledQuantity = 0.0f;
-        this->timestamp = std::time(nullptr); // Şu anki zaman
+        this->timestamp = std::time(nullptr);
     }
 
-    // Boş constructor (Serialization için lazım olabilir)
     MarketOrder() = default;
 
-    // Helper: Tamamlandı mı?
     bool isComplete() const { return filledQuantity >= quantity; }
-    // Helper: Kalan miktar
     float remaining() const { return quantity - filledQuantity; }
+    bool isExpired() const { return age >= GameConstants::ORDER_MAX_TICKS; }
 };
 
 // --- JSON Serialization ---
@@ -129,7 +128,8 @@ inline void to_json(nlohmann::json& j, const MarketOrder& o) {
         {"price", o.price},
         {"quantity", o.quantity},
         {"filled", o.filledQuantity},
-        {"time", o.timestamp}
+        {"time", o.timestamp},
+        {"age", o.age}
     };
 }
 
@@ -142,6 +142,7 @@ inline void from_json(const nlohmann::json& j, MarketOrder& order) {
     j.at("quantity").get_to(order.quantity);
     j.at("filled").get_to(order.filledQuantity);
     j.at("time").get_to(order.timestamp);
+    order.age = j.value("age", 0);
 }
 
 // 1. Position
